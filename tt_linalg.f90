@@ -164,19 +164,22 @@ contains
     integer, intent(in):: n,m
     real(8), intent(in):: A(n,m)
     real(8), intent(inout), optional, target :: B(m,n)
-    double precision, pointer :: C(:,:)
+!     double precision, pointer :: C(:,:)
+    real(8) C(m,n)
     integer i,j
-    if ( present(B) ) then
-       C => B
-    else
-       allocate(C(m,n))
-    end if
+!     if ( present(B) ) then
+!        C => B
+!     else
+!        allocate(C(m,n))
+!     end if
     do i=1,n
        call dcopy(m, A(i,1), n, C(1,i),1)
     end do
     if ( .not. present(B) ) then
        call dcopy(n*m, C, 1, A, 1)
-       deallocate(C)
+    else
+       call dcopy(n*m, C, 1, B, 1)
+!        deallocate(C)
     end if
   end subroutine dtransp2
 

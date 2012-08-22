@@ -1,10 +1,10 @@
 module ttio_lib
  use tt_lib
  implicit none
- 
+
  integer,parameter,private :: un=51, rec1=1
  character(len=*),parameter,private :: frm='unformatted', acc='stream'
-  
+
  integer(kind=4),private  :: ver(2)=(/ 1, 0 /)
 
  type,private :: tthead
@@ -24,7 +24,7 @@ module ttio_lib
  end interface
 
 contains
- 
+
  subroutine dtt_write(arg,fnam,info)
   implicit none
   type(dtt),intent(in) :: arg
@@ -34,7 +34,7 @@ contains
   type(tthead) :: head
   integer :: io,u,i,l,m
   logical :: ex,op
-  
+
   if(present(info))info=-11
   inquire (file=fnam, exist=ex, opened=op)
   if(op)then
@@ -44,7 +44,7 @@ contains
    close(unit=u,status='keep')
    write(*,*)subnam,': closed ok'
   end if
-  
+
   u=un; op=.true.
   do  while(op)
    inquire(unit=u,opened=op)
@@ -55,7 +55,7 @@ contains
   end do
 
   open(unit=u,file=fnam,form=frm,access=acc,action='write',position='rewind',status='replace',err=101,iostat=io)
-  
+
   head%i(1)=arg%l
   head%i(2)=arg%m
   l=arg%l; m=arg%m
@@ -94,7 +94,7 @@ contains
   if(present(info))info=io
   return
  end subroutine
- 
+
  subroutine dtt_read(arg,fnam,info)
   implicit none
   type(dtt),intent(inout) :: arg
@@ -102,12 +102,13 @@ contains
   integer,intent(out),optional :: info
   character(len=*),parameter :: subnam='dtt_read'
   type(tthead) :: head
-  integer :: io,u,i,l,m
+  integer(4) :: io,u,i,l,m
+  integer(4), allocatable :: n4(:), r4(:)
   logical :: ex,op
-  
+
   if(present(info))info=-11
   inquire (file=fnam, exist=ex, opened=op)
-  if(.not.ex)then 
+  if(.not.ex)then
    write(*,*)subnam,': file not exist: ',fnam
    if(present(info))info=-1
    return
@@ -119,7 +120,7 @@ contains
    close(unit=u,status='keep')
    write(*,*)subnam,': closed ok'
   end if
-  
+
   u=un; op=.true.
   do  while(op)
    inquire(unit=u,opened=op)
@@ -131,17 +132,17 @@ contains
 
   open(unit=u,file=fnam,form=frm,access=acc,action='read',position='rewind',status='old',err=101,iostat=io)
   read(u,err=111,iostat=io) head
-  
+
   if(head%txt(1:2).ne.'TT')then
    write(*,*)subnam,': not TT header in file: ',fnam
    if(present(info))info=-2
    return
-  end if 
+  end if
   if(head%ver(1).ne.ver(1))then
    write(*,*)subnam,': not correct version of TT file: ',head%ver
    if(present(info))info=-3
    return
-  end if 
+  end if
 
   read(u,err=112,iostat=io) l,m
   arg%l=l; arg%m=m
@@ -149,7 +150,13 @@ contains
    write(*,*)subnam,': read strange l,m: ',l,m
   end if
 
-  read(u,err=113,iostat=io) arg%n(l:m),arg%r(l-1:m)
+  allocate(n4(m-l+1), r4(m-l+2))
+
+!   read(u,err=113,iostat=io) arg%n(l:m),arg%r(l-1:m)
+  read(u,err=113,iostat=io) n4(1:m-l+1), r4(1:m-l+2)
+  arg%n(l:m) = n4(1:m-l+1)
+  arg%r(l-1:m) = r4(1:m-l+2)
+
   call alloc(arg)
   do i=l,m
    read(u,err=114,iostat=io) arg%u(i)%p
@@ -183,7 +190,7 @@ contains
   if(present(info))info=io
   return
  end subroutine
- 
+
 
 
 
@@ -196,7 +203,7 @@ contains
   type(tthead) :: head
   integer :: io,u,i,l,m
   logical :: ex,op
-  
+
   if(present(info))info=-11
   inquire (file=fnam, exist=ex, opened=op)
   if(op)then
@@ -206,7 +213,7 @@ contains
    close(unit=u,status='keep')
    write(*,*)subnam,': closed ok'
   end if
-  
+
   u=un; op=.true.
   do  while(op)
    inquire(unit=u,opened=op)
@@ -217,7 +224,7 @@ contains
   end do
 
   open(unit=u,file=fnam,form=frm,access=acc,action='write',position='rewind',status='replace',err=101,iostat=io)
-  
+
   head%i(1)=arg%l
   head%i(2)=arg%m
   l=arg%l; m=arg%m
@@ -268,10 +275,10 @@ contains
   type(tthead) :: head
   integer :: io,u,i,l,m
   logical :: ex,op
-  
+
   if(present(info))info=-11
   inquire (file=fnam, exist=ex, opened=op)
-  if(.not.ex)then 
+  if(.not.ex)then
    write(*,*)subnam,': file not exist: ',fnam
    if(present(info))info=-1
    return
@@ -283,7 +290,7 @@ contains
    close(unit=u,status='keep')
    write(*,*)subnam,': closed ok'
   end if
-  
+
   u=un; op=.true.
   do  while(op)
    inquire(unit=u,opened=op)
@@ -295,17 +302,17 @@ contains
 
   open(unit=u,file=fnam,form=frm,access=acc,action='read',position='rewind',status='old',err=101,iostat=io)
   read(u,err=111,iostat=io) head
-  
+
   if(head%txt(1:2).ne.'TT')then
    write(*,*)subnam,': not TT header in file: ',fnam
    if(present(info))info=-2
    return
-  end if 
+  end if
   if(head%ver(1).ne.ver(1))then
    write(*,*)subnam,': not correct version of TT file: ',head%ver
    if(present(info))info=-3
    return
-  end if 
+  end if
 
   read(u,err=112,iostat=io) l,m
   arg%l=l; arg%m=m
@@ -347,5 +354,5 @@ contains
   if(present(info))info=io
   return
  end subroutine
- 
+
 end module
