@@ -1,5 +1,4 @@
 module tensor_util_lib
-use time_lib
 contains
   subroutine next_ind(ind,n,d)
     integer, intent(in) :: d
