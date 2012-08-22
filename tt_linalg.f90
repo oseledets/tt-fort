@@ -160,6 +160,51 @@ contains
   end subroutine dbfun3
 
 
+  subroutine dtransp2(n, m, A, B)
+    integer, intent(in):: n,m
+    real(8), intent(in):: A(n,m)
+    real(8), intent(inout), optional, target :: B(m,n)
+    double precision, pointer :: C(:,:)
+    integer i,j
+    if ( present(B) ) then
+       C => B
+    else
+       allocate(C(m,n))
+    end if
+    do i=1,n
+       call dcopy(m, A(i,1), n, C(1,i),1)
+    end do
+    if ( .not. present(B) ) then
+       call dcopy(n*m, C, 1, A, 1)
+       deallocate(C)
+    end if
+  end subroutine dtransp2
+
+  subroutine dbfun32(rx1, m, rx2, ry1, n, ry2, ra1, ra2, phi1, A, phi2, x, y)
+    ! sizes of res1, res2: max(rx1*m*ra2*ry2, rx1*ra1*n*ry2)
+    integer, intent(in) :: rx1, m, rx2, ry1, n, ry2, ra1, ra2
+    real(8), intent(in) :: phi1(*), A(*), phi2(*), x(*)
+    real(8), intent(inout) :: y(*)
+    double precision :: res1(rx1,m,ra2,ry2)
+    double precision :: res2(ra1,n,ry2,rx1)
+    double precision :: dnrm2
+    !phi2(rx2,ra2,ry2)
+    !phi1(ry1,rx1,ra1)
+    call dgemm('N', 'N', rx1*m, ra2*ry2, rx2, 1d0, x, rx1*m, phi2, rx2, 0d0, res1, rx1*m)
+    !    res1: rx1,m,ra2,ry2: b1,j1,a2,c2
+    call dtransp2(rx1, m*ra2*ry2, res1)
+    !     j1, a2, c2, b1
+    call dgemm('N', 'N', ra1*n, ry2*rx1, m*ra2, 1d0, A, ra1*n, res1, m*ra2, 0d0, res2, ra1*n) !Here it would be a difference
+    !     res2: ra1,n,ry2,rx1 : a1, i1, c2, b1                                                !rx1
+    call dtransp2(ra1*n*ry2,rx1,res2)
+    !     b1,a1,i1,c2
+    !    phi1: c1, b1, a1 : ry1, rx1, ra1
+    call dgemm('N', 'N', ry1, n*ry2, rx1*ra1, 1d0, phi1, ry1, res2, rx1*ra1, 0d0, y, ry1)
+    !     y: c1,i1,c2
+
+  end subroutine dbfun32
+
+
   subroutine dbfun3_right(rx1, m, rx2, ry1, n, ry2, ra1, ra2, A, phi2, x, y, res1, res2)
     ! sizes of res1, res2: max(rx1*m*ra2*ry2, rx1*ra1*n*ry2)
     integer, intent(in) :: rx1, m, rx2, ry1, n, ry2, ra1, ra2
@@ -634,10 +679,12 @@ contains
        ! r0
        if (.not.((ptype=='n').or.(ptype=='N'))) then
           call djac_apply(ptype, rx1, n, rx2, jacs, sol, w, res1)
-          call dbfun3(rx1,n,rx2, rx1,n,rx2, ra1, ra2, Phi1,A,Phi2, w, w, res1, res2)
+!           call dbfun3(rx1,n,rx2, rx1,n,rx2, ra1, ra2, Phi1,A,Phi2, w, w, res1, res2)
+          call dbfun32(rx1,n,rx2, rx1,n,rx2, ra1, ra2, Phi1,A,Phi2, w, w)
        end if
        if ((ptype=='n').or.(ptype=='N')) then
-          call dbfun3(rx1,n,rx2, rx1,n,rx2, ra1, ra2, Phi1,A,Phi2, sol, w, res1, res2);
+!           call dbfun3(rx1,n,rx2, rx1,n,rx2, ra1, ra2, Phi1,A,Phi2, sol, w, res1, res2);
+          call dbfun32(rx1,n,rx2, rx1,n,rx2, ra1, ra2, Phi1,A,Phi2, sol, w);
        end if
        call daxpy(sz,-1d0,rhs,1,w,1)
        !         call dscal(sz,-1d0,w,1)
@@ -681,10 +728,12 @@ contains
           ! precvec, matvec
           if (.not.((ptype=='n').or.(ptype=='N'))) then
              call djac_apply(ptype, rx1, n, rx2, jacs, w, w, res1);
-             call dbfun3(rx1,n,rx2, rx1,n,rx2, ra1, ra2, Phi1,A,Phi2, w, w, res1, res2);
+!              call dbfun3(rx1,n,rx2, rx1,n,rx2, ra1, ra2, Phi1,A,Phi2, w, w, res1, res2);
+             call dbfun32(rx1,n,rx2, rx1,n,rx2, ra1, ra2, Phi1,A,Phi2, w, w);
           end if
           if ((ptype=='n').or.(ptype=='N')) then
-             call dbfun3(rx1,n,rx2, rx1,n,rx2, ra1, ra2, Phi1,A,Phi2, w, w, res1, res2);
+!              call dbfun3(rx1,n,rx2, rx1,n,rx2, ra1, ra2, Phi1,A,Phi2, w, w, res1, res2);
+             call dbfun32(rx1,n,rx2, rx1,n,rx2, ra1, ra2, Phi1,A,Phi2, w, w);
           end if
 
           ! Orthog w to j projectors

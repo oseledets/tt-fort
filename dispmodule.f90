@@ -1,7 +1,7 @@
 ! DISPMODULE, A FORTRAN 95 MODULE FOR PRETTY-PRINTING MATRICES.
 ! Version number 1.03 16-February-2009. This version published as Algorithm 892 in ACM TOMS.
 !
-! NOTE: THE MAIN MODULE, DISPMODULE, IS LATER IN THIS FILE. 
+! NOTE: THE MAIN MODULE, DISPMODULE, IS LATER IN THIS FILE.
 !
 ! The usage documentation for DISPMODULE is in a separate document, that exists
 ! in several formats:
@@ -10,59 +10,7 @@
 !   dispmodule_userman.pdf   PDF file
 !   dispmodule_userman.html  HTML file
 !   dispmodule_userman.txt   Text file
-    
-MODULE PUTSTRMODULE ! DUMMY VERSION
-  ! An auxilliary module that accompanies DISPMODULE. This module contains dummy versions of the
-  ! subroutines putstr and putnl that do nothing. It is needed to avoid an "undefined symbol" link
-  ! error for these. In addition it defines the named constant (or parameter) DEFAULT_UNIT = -3,
-  ! which makes the asterisk unit (usually the screen) the default to display on.
-  !
-  ! The purpose of having this module is to make displaying possible in situations where ordinary
-  ! print- and write-statements do not work. Then this module should be replaced by one defining
-  ! functional versions of putstr and putnl. An example is given by the commented out PUTSTRMODULE 
-  ! for Matlab mex files below.
-  !
-  integer, parameter :: DEFAULT_UNIT = -3
-  !
-CONTAINS
-  subroutine putstr(s)
-    character(*), intent(in) :: s
-    integer ldummy, ldummy1  ! these variables exist to avoid unused variable warnings
-    ldummy = len(s)
-    ldummy1 = ldummy
-    ldummy = ldummy1      
-  end subroutine putstr
-  subroutine putnl()
-  end subroutine putnl
-END MODULE PUTSTRMODULE
 
-
-
-! MODULE PUTSTRMODULE  ! for Matlab mex files.
-!   ! This module contains functional versions of subroutines putstr and putnl. It also sets
-!   ! DEFAULT_UNIT = -2, which makes putstr/putnl the default to display with. Using this module,
-!   ! instead of the dummy module above allows DISPMODULE to be used with Matlab mex files.
-!   ! used (commented in) instead of the one above (which should then be commented out), then
-!   ! DISPMODULE can be used with Matlab mex files. A shorter version (given in the user manual)
-!   ! may be used with g95, but the one below works for both g95 and gfortran.
-!   !
-!   use, intrinsic :: ISO_C_BINDING
-!   integer, parameter :: default_unit = -2
-!   interface
-!     subroutine mexprintf(s) bind(C, name = 'mexPrintf')
-!       import c_char
-!       character(c_char) s(*)
-!     end subroutine mexprintf
-!   end interface
-! CONTAINS
-!   subroutine putstr(s)
-!     character(*), intent(in) :: s
-!     call mexprintf(s//char(0))
-!   end subroutine putstr
-!   subroutine putnl()
-!     call mexprintf(char(10)//char(0))
-!   end subroutine putnl
-! END MODULE PUTSTRMODULE
 
 
 
@@ -100,7 +48,7 @@ MODULE DISPMODULE_UTIL
   end type disp_settings
 
   type tostring_settings
-    ! Settings used by function tostring. 
+    ! Settings used by function tostring.
     character(10) :: ifmt = 'I0'
     character(16) :: rfmt = '1PG12.5'  ! 'SP,1P,G20.11E3' has length 14 and is about max
     character(9)  :: sep = ', '
@@ -191,7 +139,7 @@ CONTAINS
   end function number_cols
 
   subroutine preparebox(title, SE, m, n, wid, widp, lin1, wleft, boxp)
-    ! Determine format to use to write matrix to box and row where matrix begins, copy 
+    ! Determine format to use to write matrix to box and row where matrix begins, copy
     character(*),   intent(in)    :: title     ! The title to use for the matrix
     type(settings), intent(in)    :: SE        ! Settings
     integer,        intent(in)    :: m         ! Row count of matrix
@@ -215,7 +163,7 @@ CONTAINS
     ! ----wleft---                lm wrow    wa       rm       wrow    wa
     !    wt   wrow    wa         ----====-----------======     ----===========
     ! --------====-----------    THIS-IS-A-VERY-LONG-TITLE            TITLE
-    !               1     2                1     2                   1     2      
+    !               1     2                1     2                   1     2
     ! MATRIX = 1   4.50  6.80         1   4.50  6.80            1   4.50  6.80
     !          2   6.88  9.22         2   6.88  9.22            2   6.88  9.22
     !          3  19.44  0.08         3  19.44  0.08            3  19.44  0.08
@@ -230,7 +178,7 @@ CONTAINS
     widp = wid
     if (SE % number) then
       fmt = '(SS,I0)'
-      if (number_cols(SE)) then 
+      if (number_cols(SE)) then
         write(col_nums, fmt) (/ (i, i = n1, n1 + n - 1) /)
         widp = max(wid, len_trim(col_nums))
       endif
@@ -336,7 +284,7 @@ CONTAINS
     if (SE % adv >= 2) call dispnewline(SE % lun)
   end subroutine finishbox
 
-  subroutine find_editdesc_real(exp, expm, dmx,  edesc, flen, ndec, posit) 
+  subroutine find_editdesc_real(exp, expm, dmx,  edesc, flen, ndec, posit)
     ! Subroutine of find_editdesc_sngl and find_editdesc_dble
     integer,       intent(in)    :: expm, dmx
     integer,       intent(inout) :: exp
@@ -448,7 +396,7 @@ CONTAINS
       select case(upper(orient))
       case('ROW');  row = .true.
       case('COL');  row = .false.
-      case default; 
+      case default;
         call disp_errmsg('DISP: error, wrong value of orient: '//orient(1:len_trim(orient))//', using "COL"')
         row = .false.
       end select
@@ -532,7 +480,7 @@ CONTAINS
     n1 = 1
     if (present(lbound)) then
       number = .true.
-      if (size(lbound) == 1) then        
+      if (size(lbound) == 1) then
         if (vec .and. row) then
           n1 = lbound(1)
         else
@@ -798,7 +746,7 @@ CONTAINS
       if (k>0) k = k + sepl
       n = len_trim(sar(i))
       st(k+1:k+n) = trim(sar(i))
-      st(k+n+1:k+n+3) = ' '//sgn(i)//' '     
+      st(k+n+1:k+n+3) = ' '//sgn(i)//' '
       k = k + n + 3
       n = len_trim(sai(i))
       st(k+1:k+n) = trim(sai(i))
@@ -1050,7 +998,7 @@ MODULE DISPMODULE
   integer, parameter :: dble = kind(0d0)     ! double precision
   integer, parameter :: dlog = kind(.false.) ! default logical
 
-  ! The above are also used as specific procedure (i.e. module procedure) name extensions, together 
+  ! The above are also used as specific procedure (i.e. module procedure) name extensions, together
   ! with the following:
   !        cplx = complex single precision (default complex)
   !        cpld = complex double precision
@@ -1291,7 +1239,7 @@ CONTAINS
       nbl = w - wid
     endif
   end subroutine getwid_dint
-  
+
   ! ********* DEFAULT INTEGER TOSTRING PROCEDURES *********
   function tostring_s_dint(x) result(st)
     ! Scalar to string
@@ -1411,7 +1359,7 @@ CONTAINS
       call disp_sngl(title, reshape(x, (/size(x), 1/)), SE)
     end if
   end subroutine disp_tv_sngl
-  
+
   subroutine disp_tm_sngl(title, x, fmt, advance, digmax, lbound, sep, style, trim, unit, zeroas)
     ! Single precision matrix with title
     character(*), intent(in)           :: title      ! The title to use for the matrix
@@ -1423,7 +1371,7 @@ CONTAINS
     character(*), intent(in), optional :: sep        ! Separator between matrix columns (e.g. ", ")
     character(*), intent(in), optional :: zeroas     ! Zeros are replaced with this string if it is not empty
     character(*), intent(in), optional :: style      ! Style(s): See NOTE 1 below
-    character(*), intent(in), optional :: trim       ! 'Auto' (the default) to trim if fmt absent, 'no' for no 
+    character(*), intent(in), optional :: trim       ! 'Auto' (the default) to trim if fmt absent, 'no' for no
     !                                                ! trimming, 'yes' for trimming
     integer,      intent(in), optional :: lbound(:)  ! Lower bounds of x
     type(settings) :: SE
@@ -1555,7 +1503,7 @@ CONTAINS
   end subroutine find_editdesc_sngl
 
   subroutine getwid_sngl(xmaxv, xminv, xzero, xallz, xnonn, xalln, SE,  wid, nbl)
-    ! determine length of the strings that result when writing with edit descriptor SE%ed a 
+    ! determine length of the strings that result when writing with edit descriptor SE%ed a
     ! vector v where v(i) is xmaxv(i) or xminv(i) depending on which gives longer output
     real(sngl),     intent(in)  :: xmaxv(:), xminv(:) ! max and min values in each column
     logical,        intent(in)  :: xzero(:), xallz(:) ! true for columns with some/all zeros
@@ -1622,8 +1570,8 @@ CONTAINS
       st = errormsg
       return
     elseif (w == 0) then
-      ww = maxw_sngl(x, d)    
-      call replace_w(fmt1, ww)      
+      ww = maxw_sngl(x, d)
+      call replace_w(fmt1, ww)
     endif
     write(sa, fmt1) x
     call trim_real(sa, gedit, w)
@@ -1711,7 +1659,7 @@ CONTAINS
     call get_SE(SE, title, shape(x), fmt, advance, lbound, sep, style, trim, unit, orient, digmax=digmax)
     if (present(fmt_imag)) then
       if (.not.present(fmt)) then
-        call disp_errmsg('DISP: error, FMT must be present if FMT_IMAG is present'); return; 
+        call disp_errmsg('DISP: error, FMT must be present if FMT_IMAG is present'); return;
       endif
       call get_SE(SEim, title, shape(x), fmt_imag)
     else
@@ -1737,7 +1685,7 @@ CONTAINS
     character(*), intent(in), optional :: advance    ! 'No' to print next matrix to right of current, otherewise 'Yes'
     character(*), intent(in), optional :: sep        ! Separator between matrix columns (e.g. ", ")
     character(*), intent(in), optional :: style      ! Style(s): See NOTE 1 below
-    character(*), intent(in), optional :: trim       ! 'Auto' (the default) to trim if fmt absent, 'no' for no 
+    character(*), intent(in), optional :: trim       ! 'Auto' (the default) to trim if fmt absent, 'no' for no
     !                                                ! trimming, 'yes' for trimming
     integer,      intent(in), optional :: lbound(:)  ! Lower bounds of x
     !
@@ -1921,7 +1869,7 @@ CONTAINS
       call disp_dble(title, reshape(x, (/size(x), 1/)), SE)
     end if
   end subroutine disp_tv_dble
-  
+
   subroutine disp_tm_dble(title, x, fmt, advance, digmax, lbound, sep, style, trim, unit, zeroas)
     ! Double precision matrix with title
     character(*), intent(in)           :: title      ! The title to use for the matrix
@@ -1933,7 +1881,7 @@ CONTAINS
     character(*), intent(in), optional :: sep        ! Separator between matrix columns (e.g. ", ")
     character(*), intent(in), optional :: zeroas     ! Zeros are replaced with this string if it is not empty
     character(*), intent(in), optional :: style      ! Style(s): See NOTE 1 below
-    character(*), intent(in), optional :: trim       ! 'Auto' (the default) to trim if fmt absent, 'no' for no 
+    character(*), intent(in), optional :: trim       ! 'Auto' (the default) to trim if fmt absent, 'no' for no
     !                                                ! trimming, 'yes' for trimming
     integer,      intent(in), optional :: lbound(:)  ! Lower bounds of x
     type(settings) :: SE
@@ -2065,7 +2013,7 @@ CONTAINS
   end subroutine find_editdesc_dble
 
   subroutine getwid_dble(xmaxv, xminv, xzero, xallz, xnonn, xalln, SE,  wid, nbl)
-    ! determine length of the strings that result when writing with edit descriptor SE%ed a 
+    ! determine length of the strings that result when writing with edit descriptor SE%ed a
     ! vector v where v(i) is xmaxv(i) or xminv(i) depending on which gives longer output
     real(dble),     intent(in)  :: xmaxv(:), xminv(:) ! max and min values in each column
     logical,        intent(in)  :: xzero(:), xallz(:) ! true for columns with some/all zeros
@@ -2132,8 +2080,8 @@ CONTAINS
       st = errormsg
       return
     elseif (w == 0) then
-      ww = maxw_dble(x, d)    
-      call replace_w(fmt1, ww)      
+      ww = maxw_dble(x, d)
+      call replace_w(fmt1, ww)
     endif
     write(sa, fmt1) x
     call trim_real(sa, gedit, w)
@@ -2221,7 +2169,7 @@ CONTAINS
     call get_SE(SE, title, shape(x), fmt, advance, lbound, sep, style, trim, unit, orient, digmax=digmax)
     if (present(fmt_imag)) then
       if (.not.present(fmt)) then
-        call disp_errmsg('DISP: error, FMT must be present if FMT_IMAG is present'); return; 
+        call disp_errmsg('DISP: error, FMT must be present if FMT_IMAG is present'); return;
       endif
       call get_SE(SEim, title, shape(x), fmt_imag)
     else
@@ -2247,7 +2195,7 @@ CONTAINS
     character(*), intent(in), optional :: advance    ! 'No' to print next matrix to right of current, otherewise 'Yes'
     character(*), intent(in), optional :: sep        ! Separator between matrix columns (e.g. ", ")
     character(*), intent(in), optional :: style      ! Style(s): See NOTE 1 below
-    character(*), intent(in), optional :: trim       ! 'Auto' (the default) to trim if fmt absent, 'no' for no 
+    character(*), intent(in), optional :: trim       ! 'Auto' (the default) to trim if fmt absent, 'no' for no
     !                                                ! trimming, 'yes' for trimming
     integer,      intent(in), optional :: lbound(:)  ! Lower bounds of x
     !
@@ -2627,7 +2575,7 @@ CONTAINS
   end subroutine disp_tm_dchr
 
   subroutine disp_dchr(title, x, SE)
-    ! Default character item to box 
+    ! Default character item to box
     character(*), intent(in)      :: title, x(:,:)
     type(settings), intent(inout) :: SE
     character(13)                 :: edesc
@@ -2688,5 +2636,5 @@ CONTAINS
   !   changed to dble, the procedure name suffixes _sngl and _cplx changed to _dble and _cpld, and
   !   single changed to double (only appears in comments). The add-on module DISP_R16MOD is another
   !   copy of these procedures (for quad precision).
-  
+
 END MODULE DISPMODULE

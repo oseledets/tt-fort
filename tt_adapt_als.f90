@@ -4,7 +4,7 @@ module tt_adapt_als
 
   implicit none
   real(8), allocatable :: result_core(:)
-  character*120 :: matlab_ist_dumme_kuh
+!   character*120 :: matlab_ist_dumme_kuh
 
   type :: dpoint
      !   double precision,dimension(:),pointer :: p=>null()
@@ -62,6 +62,7 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine tt_mvk4(d,n,m,rx,ra,crA, crX, crY0, ry, eps, rmax, kickrank, nswp, verb)
     use tt_linalg
+    use dispmodule
 
     integer,intent(in) :: d,n(*),m(*),rx(*),ra(*), rmax
     integer,intent(inout) :: ry(*)
@@ -247,6 +248,7 @@ contains
        call daxpy(ry(i)*n(i)*ry(i+1), -1d0, curcr, 1, tau, 1)
        err = dnrm2(ry(i)*n(i)*ry(i+1), tau, 1) / dnrm2(ry(i)*n(i)*ry(i+1), curcr, 1)
        if (verb0>=2) then ! verb on, carriage_return, no matlab. Otherwise - a lot of shit comes...
+          call disp('als_fort: iteration:['// tostring(swp*1d0) // ',' // tostring(i*1d0) // ']  err:' // tostring(err) // '  ry(i):' // tostring(ry(i)*1d0) // '  err_max:' // tostring(err_max));
           !      write(*,"(A,I0,A,I0,A,ES10.3,A,I0,A,ES10.3,20X$)"), 'als_fort:  iteration:[', swp, ',', i, ']  err:', err, '  ry(i):', ry(i), '  err_max:', err_max
           !!       write(*,"(A,I0,A,I0,A,ES10.3,A,I0,A,ES10.3)")  'als_fort:  iteration:[', swp, ',', i, ']  err:', err, '  ry(i):', ry(i), '  err_max:', err_max
        end if
@@ -415,6 +417,7 @@ contains
        if ((dir>0) .and. (i==d)) then
           call dcopy(ry(i)*n(i)*ry(i+1), curcr, 1, cr(1,i), 1)
           if (verb0>=1) then
+            call disp('als_fort: iteration:'// tostring(swp*1d0) // '(' // tostring(dir*1d0) // ')  max(ry):' // tostring(maxval(rx(1:d+1))*1d0) // ' err_max:' // tostring(err_max));
              !!    write(matlab_ist_dumme_kuh,"(A,I0,A,I0,A,I0,A,ES10.3)") 'als_fort:  iteration:', swp, '(', dir, ')  max(ry):', maxval(ry(1:d+1)), '  err_max:', err_max
              ! 	write(*,"(A,I0,A,I0,A,I0,A,ES10.3$)"), 'als_fort:  iteration:', swp, '(', dir, ')  max(ry):', maxval(ry), '  err_max:', err_max
              ! 	call mexPrintf(matlab_ist_dumme_kuh//achar(10))
@@ -432,6 +435,7 @@ contains
        if ((dir<0) .and. (i==1)) then
           call dcopy(ry(i)*n(i)*ry(i+1), curcr, 1, cr(1,i), 1)
           if (verb0>=1) then
+            call disp('als_fort: iteration:'// tostring(swp*1d0) // '(' // tostring(dir*1d0) // ')  max(ry):' // tostring(maxval(rx(1:d+1))*1d0) // ' err_max:' // tostring(err_max));
              !!    write(matlab_ist_dumme_kuh,"(A,I0,A,I0,A,I0,A,ES10.3)") 'als_fort:  iteration:', swp, '(', dir, ')  max(ry):', maxval(ry(1:d+1)), '  err_max:', err_max
              ! 	write(*,"(A,I0,A,I0,A,I0,A,ES10.3$)"), 'als_fort:  iteration:', swp, '(', dir, ')  max(ry):', maxval(ry), '  err_max:', err_max
              ! 	call mexPrintf(matlab_ist_dumme_kuh//achar(10))
@@ -487,6 +491,7 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   subroutine tt_amr_solve(d,n,m,ry,ra,crA, crY, crX0, rx, eps, kickrank, nswp, verb, prec, nrestart, niters)
     use tt_linalg
+    use dispmodule
 
     integer,intent(in) :: d,n(*),m(*),ry(*),ra(*)
     integer,intent(inout) :: rx(*)
@@ -701,7 +706,8 @@ contains
        nn = rx(i)*m(i)*rx(i+1)
 
        ! R0
-       call dbfun3(rx(i), m(i), rx(i+1), rx(i), n(i), rx(i+1), ra(i), ra(i+1), phiA(i)%p, crA(pa(i)), phiA(i+1)%p, cr(i)%p, work, res1, res2)
+!        call dbfun3(rx(i), m(i), rx(i+1), rx(i), n(i), rx(i+1), ra(i), ra(i+1), phiA(i)%p, crA(pa(i)), phiA(i+1)%p, cr(i)%p, work, res1, res2)
+       call dbfun32(rx(i), m(i), rx(i+1), rx(i), n(i), rx(i+1), ra(i), ra(i+1), phiA(i)%p, crA(pa(i)), phiA(i+1)%p, cr(i)%p, work)
        !     print *, 'R0, curcr size:', size(curcr)
        call daxpy(nn, -1d0, rhs, 1, work, 1)
        norm_rhs = dnrm2(nn, rhs, 1)
@@ -748,7 +754,8 @@ contains
           end if
           call daxpy(nn, -1d0, work, 1, cr(i)%p, 1)
 
-          call dbfun3(rx(i), m(i), rx(i+1), rx(i), n(i), rx(i+1), ra(i), ra(i+1), phiA(i)%p, crA(pa(i)), phiA(i+1)%p, cr(i)%p, tau, res1, res2)
+!           call dbfun3(rx(i), m(i), rx(i+1), rx(i), n(i), rx(i+1), ra(i), ra(i+1), phiA(i)%p, crA(pa(i)), phiA(i+1)%p, cr(i)%p, tau, res1, res2)
+          call dbfun32(rx(i), m(i), rx(i+1), rx(i), n(i), rx(i+1), ra(i), ra(i+1), phiA(i)%p, crA(pa(i)), phiA(i+1)%p, cr(i)%p, tau)
           call daxpy(nn, -1d0, rhs, 1, tau, 1)
           res_new = dnrm2(nn, tau, 1)/norm_rhs
 
@@ -762,7 +769,8 @@ contains
        !     print *, 'newres', dnrm2(nn, R, 1), dnrm2(nn, rhs(1:nn)-cr(i)%p(1:nn), 1)
 
        if (verb0>=2) then ! verb on, carriage_return, no matlab. Otherwise - a lot of shit comes...
-          !       write(*,"(A,I0,A,I0,A,ES10.3,A,I0,A,ES10.3,20X,A$)"), 'als_fort:  iteration:[', swp, ',', i, ']  err:', err, '  ry(i):', ry(i), '  err_max:', err_max, 13
+         call disp('als_fort: iteration:['// tostring(swp*1d0) // ',' // tostring(i*1d0) // ']  err:' // tostring(err) // '  ry(i):' // tostring(ry(i)*1d0) // '  err_max:' // tostring(err_max) // ' res_max:' // tostring(res_max));
+!                 write(*,"(A,I0,A,I0,A,ES10.3,A,I0,A,ES10.3,20X,A$)"), 'als_fort:  iteration:[', swp, ',', i, ']  err:', err, '  ry(i):', ry(i), '  err_max:', err_max, 13
           !!      write(*,"(A,I0,A,I0,A,ES10.3,A,I0,A,ES10.3,A,ES10.3)")  'als_fort:  iteration:[', swp, ',', i, ']  err:', err, '  ry(i):', rx(i), '  err_max:', err_max, '  res_max:', res_max
        end if
 
@@ -783,7 +791,8 @@ contains
                 ! 	  call dcopy(rx(i+1), R(nn), rnew, tau, 1)
                 ! 	  call dscal(rx(i+1), 0d0, R(nn), rnew)
                 call dgemm('N', 'N', rx(i)*n(i), rx(i+1), nn, 1d0, curcr, rx(i)*n(i), R, rnew, 0d0, work, rx(i)*n(i))
-                call dbfun3(rx(i),n(i),rx(i+1),rx(i),n(i),rx(i+1),ra(i),ra(i+1),phiA(i)%p, crA(pa(i)), phiA(i+1)%p, work, work, res1, res2)
+!                 call dbfun3(rx(i),n(i),rx(i+1),rx(i),n(i),rx(i+1),ra(i),ra(i+1),phiA(i)%p, crA(pa(i)), phiA(i+1)%p, work, work, res1, res2)
+                call dbfun32(rx(i),n(i),rx(i+1),rx(i),n(i),rx(i+1),ra(i),ra(i+1),phiA(i)%p, crA(pa(i)), phiA(i+1)%p, work, work)
                 call daxpy(rx(i)*n(i)*rx(i+1), -1d0, rhs, 1, work, 1)
                 err = dnrm2(rx(i)*n(i)*rx(i+1), work, 1)/norm_rhs
                 if ((err>res_new*2d0).and.(err>eps2)) then
@@ -897,7 +906,8 @@ contains
                 ! 	  call dcopy(rx(i+1), R(nn), rnew, tau, 1)
                 ! 	  call dscal(rx(i+1), 0d0, R(nn), rnew)
                 call dgemm('N', 'N', rx(i), n(i)*rx(i+1), nn, 1d0, R, rx(i), curcr, rx(i), 0d0, work, rx(i))
-                call dbfun3(rx(i),n(i),rx(i+1),rx(i),n(i),rx(i+1),ra(i),ra(i+1),phiA(i)%p, crA(pa(i)), phiA(i+1)%p, work, work, res1, res2)
+!                 call dbfun3(rx(i),n(i),rx(i+1),rx(i),n(i),rx(i+1),ra(i),ra(i+1),phiA(i)%p, crA(pa(i)), phiA(i+1)%p, work, work, res1, res2)
+                call dbfun32(rx(i),n(i),rx(i+1),rx(i),n(i),rx(i+1),ra(i),ra(i+1),phiA(i)%p, crA(pa(i)), phiA(i+1)%p, work, work)
                 call daxpy(rx(i)*n(i)*rx(i+1), -1d0, rhs, 1, work, 1)
                 err = dnrm2(rx(i)*n(i)*rx(i+1), work, 1)/norm_rhs
                 if ((err>res_new*2d0).and.(err>eps2)) then
@@ -915,7 +925,7 @@ contains
              !           call dscal(rx(i), tau(j), R(j), nn)
              !         end do
              !         print *, 'curcr, R'
-             rnew = nn;  
+             rnew = nn;
 
              ! kick
              if (kickrank0>0) then
@@ -931,7 +941,7 @@ contains
                 call dbfun3_right(rx(i), m(i), rx(i+1), rx(i), n(i), rx(i+1), ra(i), ra(i+1), crA(pa(i)), phiA(i+1)%p, cr(i)%p, tau, res1, res2)
                 call drow_add(ry(i),n(i)*rx(i+1),rx(i)*ra(i),kick_block,tau)
                 call duchol_fort('N', rx(i)*ra(i)+ry(i), n(i)*rx(i+1), kick_block,  min(kickrank0, n(i)*rx(i+1)), work, tau, mm);
-                call dcopy(n(i)*rx(i+1)*mm, work, 1, curcr(n(i)*rx(i+1)*nn+1), 1) 
+                call dcopy(n(i)*rx(i+1)*mm, work, 1, curcr(n(i)*rx(i+1)*nn+1), 1)
 
                 do j=1,mm*rx(i)
                    tau(j)=0d0
@@ -1009,6 +1019,7 @@ contains
        if ((dir>0) .and. (i==d)) then
           !       call dcopy(rx(i)*n(i)*rx(i+1), curcr, 1, cr(i)%p, 1) ! done at gmres
           if (verb0>=1) then
+            call disp('als_fort: iteration:'// tostring(swp*1d0) // '(' // tostring(dir*1d0) // ')  max(ry):' // tostring(maxval(rx(1:d+1))*1d0) // ' err_max:' // tostring(err_max) // ' res_max:' // tostring(res_max));
              !         write(matlab_ist_dumme_kuh,"(A,I0,A,I0,A,I0,A,ES10.3,A,ES10.3$)"), 'als_fort:  iteration:', swp, '(', dir, ')  max(ry):', maxval(rx(1:d+1)), '  err_max:', err_max, '  res_max:', res_max
              !!        write(*,"(A,I0,A,I0,A,I0,A,ES10.3,A,ES10.3)") 'als_fort:  iteration:', swp, '(', dir, ')  max(ry):', maxval(rx(1:d+1)), '  err_max:', err_max, '  res_max:', res_max
 
@@ -1030,6 +1041,7 @@ contains
        if ((dir<0) .and. (i==1)) then
           !       call dcopy(rx(i)*n(i)*rx(i+1), curcr, 1, cr(i)%p, 1) ! done at gmres
           if (verb0>=1) then
+            call disp('als_fort: iteration:'// tostring(swp*1d0) // '(' // tostring(dir*1d0) // ')  max(ry):' // tostring(maxval(rx(1:d+1))*1d0) // ' err_max:' // tostring(err_max) // ' res_max:' // tostring(res_max));
              !!        write(*,"(A,I0,A,I0,A,I0,A,ES10.3,A,ES10.3)") 'als_fort:  iteration:', swp, '(', dir, ')  max(rx):', maxval(rx(1:d+1)), '  err_max:', err_max, '  res_max:', res_max
              !         write(matlab_ist_dumme_kuh,"(A,I0,A,I0,A,I0,A,ES10.3,A,ES10.3$)"), 'als_fort:  iteration:', swp, '(', dir, ')  max(rx):', maxval(rx(1:d+1)), '  err_max:', err_max, '  res_max:', res_max
 
