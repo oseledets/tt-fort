@@ -41,8 +41,8 @@ contains
 
  double precision function check_abmi_z(a,b) result (err)
   implicit none
-  double complex,intent(in) :: a(:,:),b(:,:)
-  double complex,allocatable :: c(:,:)
+  complex(8),intent(in) :: a(:,:),b(:,:)
+  complex(8),allocatable :: c(:,:)
   integer :: i,m,n
   double precision,external :: dznrm2
   if(size(a,1).ne.size(b,2) .or. size(a,2).ne.size(b,1))then
@@ -80,8 +80,8 @@ contains
  end function check_abmc_d
  double precision function check_abmc_z(a,b,c) result (err)
   implicit none
-  double complex,intent(in) :: a(:,:),b(:,:),c(:,:)
-  double complex,allocatable :: ab(:,:)
+  complex(8),intent(in) :: a(:,:),b(:,:),c(:,:)
+  complex(8),allocatable :: ab(:,:)
   integer :: m,n,k
   double precision :: nrm
   double precision,external :: dznrm2
@@ -118,8 +118,8 @@ contains
  end function check_ort_d
  double precision function check_ort_z(a) result (err)
   implicit none
-  double complex,intent(in) :: a(:,:)
-  double complex,allocatable :: g(:,:)
+  complex(8),intent(in) :: a(:,:)
+  complex(8),allocatable :: g(:,:)
   integer :: m,n,i
   double precision,external :: dznrm2
   m=size(a,1); n=size(a,2)

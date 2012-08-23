@@ -33,7 +33,6 @@ contains
     real(8), intent(inout) :: work(*), tau(*)
     integer info
     integer rnew, k,j
-
     call dgeqrf(n, m, A, n, tau, work,lwork,info)
     if (info.ne.0) then
        print *, 'qr: dgeqrf failed'
@@ -538,6 +537,7 @@ contains
 !!!!!!!!!!!!!
 
   subroutine duchol_fort(trans, m, n, dA, numvec, du, lam, real_numvec) bind(c)
+    use dispmodule
     character, intent(in) :: trans
     integer, intent(in) :: m,n,numvec
     real(8), intent(in) :: dA(m,n)
@@ -553,8 +553,9 @@ contains
     integer idamax
 
     if (numvec>n) then
-       write (*, "(A,I0,A,I0)"), 'UCHOL: warning: numvec=', numvec, ' > n=', n
-    end if
+       !write (*, "(A,I0,A,I0)"), 'UCHOL: warning: numvec=', numvec, ' > n=', n
+       call disp('UCHOL: warning: numvec='//tostring(numvec*1d0)//' >n='//tostring(n))
+   end if
 
     !   print *, m,n,numvec
 
@@ -649,6 +650,7 @@ contains
   subroutine dgmresr_hh_fort(Phi1, A, Phi2, rhs, rx1, n, rx2, ra1, ra2, nrestart, tol, niters, ptype, jacs, sol, verb) bind(c)
     ! right preconditioned - for residual tolerance
     ! This one with Householder tranforms
+    use dispmodule
     real(8),intent(in) :: Phi1(*), A(*), Phi2(*), rhs(*), jacs(*)
     integer, intent(in) :: rx1,n,rx2, ra1,ra2, nrestart, niters, verb
     real(8), intent(in) :: tol
@@ -793,8 +795,9 @@ contains
           ! residual
           curres = abs(tau(j+1))/nrmrhs;
           if (verb>1) then
-         write(*,"(A,I0,A,I0,A,ES10.3)"),  'iter [', it, ',', j, '], res: ', curres
-          end if
+         !write(*,"(A,I0,A,I0,A,ES10.3)"),  'iter [', it, ',', j, '], res: ', curres
+        call disp('iter ['//tostring(1d0*it)//','//tostring(j*1d0)//'], res:',tostring(curres))
+        end if
 
           if (curres<tol) then
              exit
@@ -833,7 +836,8 @@ contains
     if (verb>0) then
        !       call dbfun3(rx1,n,rx2, rx1,n,rx2, ra1, ra2, Phi1,A,Phi2, sol, w, res1, res2);
        !       call daxpy(sz,-1d0,rhs,1,w,1)
-       write(*,"(A,I0,A,I0,A,ES10.3)"), 'gmres conducted [', it, ',', j, '] iters to relres ', curres
+       !write(*,"(A,I0,A,I0,A,ES10.3)"), 'gmres conducted [', it, ',', j, '] iters to relres ', curres
+       call disp('gmres conducted['//tostring(it*1.d0)//','//tostring(j*1d0)//'] iters to relres'//tostring(curres))
     end if
 
     deallocate(U,w,tau,JJ,R,res1,res2)

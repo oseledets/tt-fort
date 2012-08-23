@@ -150,7 +150,7 @@ contains
   character(len=4) :: verb
   double precision,external :: dznrm2
   integer,external :: izamax
-  real(8) cdabs
+  real(8) abs
   m=size(a,1); n=size(a,2); t0=timef()
   
   if(present(tol))then; eps=tol;else;eps=tol_def;endif
@@ -165,7 +165,7 @@ contains
    call zcopy(m*n,a,1,z,1)   ! z=a
    call zgetrf(m,n,z,m,p,info)
    if(info.ne.0)then; write(*,*)subnam,': zgetrf(mxn) info: ',info; stop; end if
-   forall(i=1:n)v(i)=dlog(cdabs(z(i,i))); vol=sum(v)
+   forall(i=1:n)v(i)=dlog(abs(z(i,i))); vol=sum(v)
    q=(/ (i,i=1,n) /)
    call zgetri(n,z,m,q,work,lwork,info)
    if(info.ne.0)then; write(*,*)subnam,': zgetri(mxn) info: ',info; stop; end if
@@ -189,7 +189,7 @@ contains
 !$OMP END parallel do
    j=maxloc(v,1); i=q(j)
    
-   amax=cdabs(z(i,j))
+   amax=abs(z(i,j))
    if(amax.lt.1.d0+eps .or. p(j).eq.i)goto 100
    ip=p(j); p(j)=i
    !write(*,'(a,i4,a,e11.5,a,i7,a,i7)') 'iter: ',iter,' amax: ',amax,' swap: ',ip,' <-> ',i
@@ -425,7 +425,7 @@ contains
    vol=-888.d0
    return
   end if
-  forall(i=1:n) d(i)=dlog(cdabs(b(i,i)))
+  forall(i=1:n) d(i)=dlog(abs(b(i,i)))
   vol=sum(d)
   deallocate(b,d,p)
   return
