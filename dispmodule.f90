@@ -1241,6 +1241,21 @@ CONTAINS
   end subroutine getwid_dint
 
   ! ********* DEFAULT INTEGER TOSTRING PROCEDURES *********
+  pure function len_f_dint(x, fmt) result(wtot)
+    ! Total width of tostring representation of x
+    integer(dint), intent(in)        :: x(:)
+    character(*), intent(in)         :: fmt
+    character(widthmax_dint(x, fmt)) :: sa(size(x))
+    integer                          :: wtot, w, d
+    logical                          :: gedit
+    character(nnblk(fmt)+5)          :: fmt1
+    call readfmt(fmt, fmt1, w, d, gedit)
+    if (w < 0) then; wtot = len(errormsg); return; endif
+    write(sa, fmt1) x
+    if (tosset % trimb == 'YES' .or. w == 0) sa = adjustl(sa)
+    wtot = sum(len_trim(sa)) + (size(x) - 1)*(tosset % seplen)
+  end function len_f_dint
+  
   function tostring_s_dint(x) result(st)
     ! Scalar to string
     integer(dint), intent(in)                   :: x
@@ -1279,20 +1294,6 @@ CONTAINS
     call tostring_get(sa, st)
   end function tostring_f_dint
 
-  pure function len_f_dint(x, fmt) result(wtot)
-    ! Total width of tostring representation of x
-    integer(dint), intent(in)        :: x(:)
-    character(*), intent(in)         :: fmt
-    character(widthmax_dint(x, fmt)) :: sa(size(x))
-    integer                          :: wtot, w, d
-    logical                          :: gedit
-    character(nnblk(fmt)+5)          :: fmt1
-    call readfmt(fmt, fmt1, w, d, gedit)
-    if (w < 0) then; wtot = len(errormsg); return; endif
-    write(sa, fmt1) x
-    if (tosset % trimb == 'YES' .or. w == 0) sa = adjustl(sa)
-    wtot = sum(len_trim(sa)) + (size(x) - 1)*(tosset % seplen)
-  end function len_f_dint
 
   pure function widthmax_dint(x, fmt) result(w)
     ! Maximum width of string representation of an element in x
@@ -2044,6 +2045,40 @@ CONTAINS
   end subroutine getwid_dble
 
   ! ******** TOSTRING DOUBLE PRECISION PROCEDURES ***********
+  pure function widthmax_dble(x, fmt) result(w)
+    ! Maximum width of an element of x
+    real(dble), intent(in)   :: x(:)
+    character(*), intent(in) :: fmt
+    character(nnblk(fmt)+5)  :: fmt1
+    integer w, d
+    logical gedit
+    call readfmt(fmt, fmt1, w, d, gedit)
+    if (w < 0) then ! illegal format, use 1
+      w = 1
+    elseif (w == 0) then
+      w = maxw_dble(x, d)
+    endif
+  end function widthmax_dble
+  
+  pure function len_f_dble(x, fmt) result(wtot)
+    ! Total length of returned string, vector s
+    real(dble), intent(in)           :: x(:)
+    character(*), intent(in)         :: fmt
+    character(widthmax_dble(x, fmt)) :: sa(size(x))
+    integer                          :: wtot, w, d, ww
+    logical                          :: gedit
+    character(nnblk(fmt)+8)          :: fmt1  !(5 for readfmt and 3 for replace_w)
+    call readfmt(fmt, fmt1, w, d, gedit)
+    if (w < 0) then; wtot = len(errormsg); return; endif
+    if (w == 0) then
+      ww = maxw_dble(x, d)
+      call replace_w(fmt1, ww)
+    endif
+    write(sa, fmt1) x
+    call trim_real(sa, gedit, w)
+    wtot = sum(len_trim(sa)) + (size(x) - 1)*(tosset % seplen)
+  end function len_f_dble
+  
   function tostring_s_dble(x) result(st)
     ! Scalar to string
     real(dble), intent(in) :: x
@@ -2088,39 +2123,7 @@ CONTAINS
     call tostring_get(sa, st)
   end function tostring_f_dble
 
-  pure function len_f_dble(x, fmt) result(wtot)
-    ! Total length of returned string, vector s
-    real(dble), intent(in)           :: x(:)
-    character(*), intent(in)         :: fmt
-    character(widthmax_dble(x, fmt)) :: sa(size(x))
-    integer                          :: wtot, w, d, ww
-    logical                          :: gedit
-    character(nnblk(fmt)+8)          :: fmt1  !(5 for readfmt and 3 for replace_w)
-    call readfmt(fmt, fmt1, w, d, gedit)
-    if (w < 0) then; wtot = len(errormsg); return; endif
-    if (w == 0) then
-      ww = maxw_dble(x, d)
-      call replace_w(fmt1, ww)
-    endif
-    write(sa, fmt1) x
-    call trim_real(sa, gedit, w)
-    wtot = sum(len_trim(sa)) + (size(x) - 1)*(tosset % seplen)
-  end function len_f_dble
 
-  pure function widthmax_dble(x, fmt) result(w)
-    ! Maximum width of an element of x
-    real(dble), intent(in)   :: x(:)
-    character(*), intent(in) :: fmt
-    character(nnblk(fmt)+5)  :: fmt1
-    integer w, d
-    logical gedit
-    call readfmt(fmt, fmt1, w, d, gedit)
-    if (w < 0) then ! illegal format, use 1
-      w = 1
-    elseif (w == 0) then
-      w = maxw_dble(x, d)
-    endif
-  end function widthmax_dble
 
   ! *************************************** END OF DOUBLE PRECISION PROCEDURES ***************************************
 

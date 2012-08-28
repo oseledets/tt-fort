@@ -544,8 +544,8 @@ contains
     real(8), intent(inout) :: du(n,numvec), lam(*)
     integer, intent(inout) :: real_numvec
 
-    real(8),allocatable :: ddiag(:), du2(:,:), work(:), dx(:), dv(:,:);
-    integer i,j,cnt, maxi, lwork;
+    real(8),allocatable :: ddiag(:), du2(:,:), work(:), dx(:), dv(:,:)
+    integer i,j,cnt, maxi, lwork
     real(8) maxa, maxx
 
     ! functions
@@ -554,7 +554,7 @@ contains
 
     if (numvec>n) then
        !write (*, "(A,I0,A,I0)"), 'UCHOL: warning: numvec=', numvec, ' > n=', n
-       call disp('UCHOL: warning: numvec='//tostring(numvec*1d0)//' >n='//tostring(n))
+       call disp('UCHOL: warning: numvec='//tostring(numvec*1d0)//' >n='//tostring(n*1d0))
    end if
 
     !   print *, m,n,numvec
@@ -837,7 +837,7 @@ contains
        !       call dbfun3(rx1,n,rx2, rx1,n,rx2, ra1, ra2, Phi1,A,Phi2, sol, w, res1, res2);
        !       call daxpy(sz,-1d0,rhs,1,w,1)
        !write(*,"(A,I0,A,I0,A,ES10.3)"), 'gmres conducted [', it, ',', j, '] iters to relres ', curres
-       call disp('gmres conducted['//tostring(it*1.d0)//','//tostring(j*1d0)//'] iters to relres'//tostring(curres))
+       call disp('gmres conducted['//tostring(it*1d0)//','//tostring(j*1d0)//'] iters to relres'//tostring(curres))
     end if
 
     deallocate(U,w,tau,JJ,R,res1,res2)
