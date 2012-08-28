@@ -22,7 +22,6 @@ contains
     integer :: sz1(4),sz2(2)
     integer :: prm1(4),prm2(2)
     max_mem=0
-    !print *,'d=',d,'n=',n,'m=',m
     do i=1,d
        max_mem = max(max_mem,r(i)*n(i)*m(i)*r(i+1))
     end do
@@ -35,7 +34,6 @@ contains
        max_mem = max(max_mem,c_size)
        c_size = n(i)*r(i+1)*c_size/(r(i)*m(i)) 
     end do 
-    !print *,'max_mem2=',max_mem
 
     allocate(c(max_mem))
     allocate(b(max_mem))
