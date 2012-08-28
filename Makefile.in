@@ -18,6 +18,25 @@ ifeq ($(CPU),mac-gfort)
       #LIB     = -framework veclib
       #/usr/local/lib  -llapack -lblas -lfftw3
 endif
+ifeq ($(CPU),mac-gfort-py)
+      FOPT    = -std=f2008 -ffree-line-length-none #-xSSE4.2
+      FC = gfortran
+	  LDR     = gcc -lgfortran
+      CC      = gcc # ${FOPT}
+      MATLAB = matlab
+	  #LIB     = -L/usr/local/lib  -lgoto2 -lfftw3
+      #LIB     = -L/usr/local/lib -lpthread -llapack_goto -lblas_goto -ldfftpack -lfftw3
+      #LIB = -L/Library/Frameworks/EPD64.framework/Versions/7.2/lib -lmkl_intel_ilp64 -lmkl_intel_thread -lmkl_core -liomp5 -lpthread -lm
+      #LIB =  -L/usr/local/lib libgoto2.a
+      #LIB = -L/usr/local/lib/ -lmkl  -llapack  -lgomp
+      #LDFLAG = '-undefined dynamic_lookup ${LIB}'
+      LIB = -llapack -lblas -lgomp
+      #LIB = /Applications/MATLAB_R2011a.app/bin/maci64/mkl.dylib  /Applications/MATLAB_R2011a.app/bin/maci64/mllapack.dylib
+      #LIB = -L/Applications/MATLAB_R2011a.app/bin/maci64/ -lmwlapack -lmwblas
+      #LIB =  -L/usr/local/lib/    -lmkl_intel_ilp64
+      #LIB     = -framework veclib
+      #/usr/local/lib  -llapack -lblas -lfftw3
+endif
 ifeq ($(CPU),fujik-sun)
       FORT   = sunf95 -O3 -xopenmp -xautopar ${FOPT}
       FORTNO = sunf95 -O0 ${FOPT}
