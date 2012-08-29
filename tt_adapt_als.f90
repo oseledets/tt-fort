@@ -14,7 +14,11 @@ module tt_adapt_als
 contains
 
 
-
+subroutine deallocate_result
+  if ( allocated(result_core) ) then
+    deallocate(result_core)
+  end if
+end subroutine deallocate_result
 
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
