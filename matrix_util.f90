@@ -251,7 +251,7 @@ contains
   end subroutine compute_ps
 
   ! RELATIVE accuracy
-  real(8) function my_chop3(n, s, eps)
+    integer function my_chop3(n, s, eps)
     real(8), intent(in) :: s(*), eps
     integer, intent(in) :: n
     real(8) cursum, nrm

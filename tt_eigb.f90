@@ -9,7 +9,7 @@ use dispmodule
  type, public ::  pointd
     double precision, dimension(:), pointer :: p=>null()
  end type pointd
- integer, parameter :: primme_kind = 8
+ integer, parameter :: primme_kind = 4
 
 contains 
  subroutine primme_matvec(x,y,k,primme, debug)
@@ -361,7 +361,10 @@ call disp('Looking for '//tostring(B*1d0)//' eigenvalues with accuracy '//tostri
      
      erloc = (fvold - fv)/abs(fv)
      ermax = max(ermax, erloc)
-     call disp('swp: '//tostring(1d0*swp)//' i: ['//tostring(1d0*i)//'/'//tostring(1d0*d)//'] loc_size: '//tostring(1d0*ry(i)*n(i)*ry(i+1))//' matvecs: '//tostring(1d0*num_matvecs)//' res: ' //tostring(res)//' ermax: '//tostring(ermax)//' dfv:'//tostring(fvold-fv))
+     call disp('swp: '//tostring(1d0*swp)//' i: ['//tostring(1d0*i)//'/'//&
+              tostring(1d0*d)//'] loc_size: '//tostring(1d0*ry(i)*n(i)*ry(i+1))//&
+              ' matvecs: '//tostring(1d0*num_matvecs)//' res: ' //tostring(res)//&
+              ' ermax: '//tostring(ermax)//' dfv:'//tostring(fvold-fv))
      
      !print *,' fv: ', fv
      total_mv = total_mv + num_matvecs
@@ -412,7 +415,8 @@ call disp('Looking for '//tostring(B*1d0)//' eigenvalues with accuracy '//tostri
            deallocate(phinew(i)%p)
            allocate(phinew(i)%p(ry(i)*ry(i)*ra(i)*2))
         end if
-        call dphi_right(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), ra(i), ra(i+1), phinew(i+1)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phinew(i)%p)
+        call dphi_right(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), &
+        ra(i), ra(i+1), phinew(i+1)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phinew(i)%p)
      end if 
      if ( (dir > 0) .and. (i < d) ) then
         !curcr is ry(i)*n(i)*ry(i+1)*B
@@ -450,7 +454,8 @@ call disp('Looking for '//tostring(B*1d0)//' eigenvalues with accuracy '//tostri
            deallocate(phinew(i+1)%p)
            allocate(phinew(i+1)%p(ry(i+1)*ry(i+1)*ra(i+1)*2))
         end if
-        call dphi_left(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phinew(i+1)%p)
+        call dphi_left(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), &
+        ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phinew(i+1)%p)
      end if
 
 
