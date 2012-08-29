@@ -299,7 +299,8 @@ contains
 
           !phinew(i+1) is ry(i)*n(i)*ry(i+1)
           allocate(phinew(i+1)%p(ry(i+1)*ry(i+1)*ra(i+1)*2))
-          call dphi_left(ry(i), m(i), ry(i+1), ry(i), n(i), ry(i+1), ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, &
+          call dphi_left(ry(i), m(i), ry(i+1), ry(i), n(i), ry(i+1), ra(i),&
+               ra(i+1), phinew(i)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, &
                phinew(i+1)%p)
        end if
        i = i+dir
@@ -327,7 +328,8 @@ contains
              !In this case, we have to put S(i+1) backwards in time (heh)
              call dqr(n(i)*ry(i), ry(i+1), curcr, R) 
 
-             call dphi_left(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), curcr, curcr, phitmp)
+             call dphi_left(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), & 
+             ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), curcr, curcr, phitmp)
              call dinit_sfun(ry(i+1), ry(i+1), ra(i+1), ry(i+1), ry(i+1), phitmp, phinew(i+1)%p)
              anorm = normest(ry(i+1)*ry(i+1), 4, dsfun_matvec, dsfun_matvec_transp)
              call exp_mv(ry(i+1)*ry(i+1), 30, -tau/2, R, Stmp, eps, anorm, dsfun_matvec)
@@ -347,7 +349,8 @@ contains
                 deallocate(phinew(i)%p)
                 allocate(phinew(i)%p(ry(i)*ry(i)*ra(i)*2))
              end if
-             call dphi_right(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), ra(i), ra(i+1), phinew(i+1)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phinew(i)%p)
+             call dphi_right(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), ra(i), &
+             ra(i+1), phinew(i+1)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phinew(i)%p)
           end if
        end if
        if ( dir > 0 ) then
@@ -361,7 +364,8 @@ contains
           if ( i < d ) then
              call dqr(ry(i)*n(i),ry(i+1),crnew(i)%p,R)
              !The size of the updated s would be ry(i+1) -> 
-             call dphi_left(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phitmp)
+             call dphi_left(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), ra(i), &
+             ra(i+1), phinew(i)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phitmp)
              call dinit_sfun(ry(i+1), ry(i+1), ra(i+1), ry(i+1), ry(i+1), phitmp, phinew(i+1)%p)
              anorm = normest(ry(i+1)*ry(i+1),4,dsfun_matvec,dsfun_matvec_transp)
              call exp_mv(ry(i+1)*ry(i+1), 30, -tau/2, R, Stmp, eps, anorm, dsfun_matvec)
@@ -384,7 +388,8 @@ contains
                 deallocate(phinew(i+1)%p)
                 allocate(phinew(i+1)%p(ry(i+1)*ry(i+1)*ra(i+1)*2))
              end if
-             call dphi_left(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phinew(i+1)%p)
+             call dphi_left(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), ra(i), &
+             ra(i+1), phinew(i)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phinew(i+1)%p)
           end if
        end if
 
@@ -538,7 +543,8 @@ contains
 
           !phinew(i+1) is ry(i)*n(i)*ry(i+1)
           allocate(phinew(i+1)%p(ry(i+1)*ry(i+1)*ra(i+1)*2))
-          call zphi_left(ry(i), m(i), ry(i+1), ry(i), n(i), ry(i+1), ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, &
+          call zphi_left(ry(i), m(i), ry(i+1), ry(i), n(i), ry(i+1), &
+                        ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, &
                phinew(i+1)%p)
        end if
        i = i+dir
@@ -567,7 +573,8 @@ contains
              !In this case, we have to put S(i+1) backwards in time (heh)
              call zqr(n(i)*ry(i), ry(i+1), curcr, R) 
 
-             call zphi_left(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), curcr, curcr, phitmp)
+             call zphi_left(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), &
+                           ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), curcr, curcr, phitmp)
              call zinit_sfun(ry(i+1), ry(i+1), ra(i+1), ry(i+1), ry(i+1), phitmp, phinew(i+1)%p)
              !anorm = znormest(ry(i+1)*ry(i+1), 4, zsfun_matvec, zsfun_matvec_transp)
              anorm = 1d0
@@ -588,7 +595,8 @@ contains
                 deallocate(phinew(i)%p)
                 allocate(phinew(i)%p(ry(i)*ry(i)*ra(i)*2))
              end if
-             call zphi_right(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), ra(i), ra(i+1), phinew(i+1)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phinew(i)%p, work, full_core)
+             call zphi_right(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), &
+                            ra(i), ra(i+1), phinew(i+1)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phinew(i)%p, work, full_core)
           end if
        end if
        if ( dir > 0 ) then
@@ -602,7 +610,8 @@ contains
           if ( i < d ) then
              call zqr(ry(i)*n(i),ry(i+1),crnew(i)%p,R)
              !The size of the updated s would be ry(i+1) -> 
-             call zphi_left(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phitmp)
+             call zphi_left(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), ra(i), &
+             ra(i+1), phinew(i)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phitmp)
              call zinit_sfun(ry(i+1), ry(i+1), ra(i+1), ry(i+1), ry(i+1), phitmp, phinew(i+1)%p)
              !anorm = znormest(ry(i+1)*ry(i+1),4,zsfun_matvec,zsfun_matvec_transp)
              anorm = 1d0
@@ -627,7 +636,8 @@ contains
                 deallocate(phinew(i+1)%p)
                 allocate(phinew(i+1)%p(ry(i+1)*ry(i+1)*ra(i+1)*2))
              end if
-             call zphi_left(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phinew(i+1)%p)
+             call zphi_left(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), &
+             ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phinew(i+1)%p)
           end if
        end if
 
