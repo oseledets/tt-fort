@@ -9,7 +9,7 @@ use dispmodule
  type, public ::  pointd
     double precision, dimension(:), pointer :: p=>null()
  end type pointd
- integer, parameter :: primme_kind = 4
+ integer, parameter :: primme_kind = 8
 
 contains 
  subroutine primme_matvec(x,y,k,primme, debug)

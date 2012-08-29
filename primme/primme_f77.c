@@ -34,6 +34,7 @@ extern "C" {
  * Wrapper for calling dprimme from Fortran 77/90. 
  * The only difference from primme: the return value passed as parameter 
  *****************************************************************************/
+#define F77UNDERSCORE 
 #ifdef F77UNDERSCORE
 void dprimme_f77_(double *evals, double *evecs, double *rnorms, 
 		primme_params **primme, int *ierr) {
@@ -80,6 +81,11 @@ void primme_free_f77_(primme_params **primme) {
 void primme_free_f77(primme_params **primme) {
 #endif
  primme_Free(*primme);
+}
+
+void primme_initialize_f90(primme_params **primme){
+   *primme = (primme_params *)primme_calloc(1,sizeof(primme_params),"primme");
+   primme_initialize(*primme);
 }
 
 /*****************************************************************************
