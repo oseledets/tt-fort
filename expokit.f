@@ -1,3 +1,8 @@
+      function  mycomplex(a,b) result(c)
+      real(8) :: a,b
+      complex(8) :: c
+      c = a + b * (0d0,1d0)
+      end function mycomplex
 *----------------------------------------------------------------------|
       subroutine DMEXPV( n, m, t, v, w, tol, anorm,
      .                   wsp,lwsp, iwsp,liwsp, matvec, itrace,iflag )
@@ -764,7 +769,7 @@
       implicit none
       double precision t
       integer          ideg, m, ldh, lwsp, iexph, ns, iflag, ipiv(m)
-      complex*16       H(ldh,m), wsp(lwsp)
+      complex(8)       H(ldh,m), wsp(lwsp)
 
 *-----Purpose----------------------------------------------------------|
 *
@@ -808,10 +813,11 @@
 *
       integer i,j,k,icoef,mm,ih2,iodd,iused,ifree,iq,ip,iput,iget
       double precision hnorm
-      complex*16 cp, cq, scale, scale2, ZERO, ONE
-
+      complex(8) cp, cq, scale, scale2, ZERO, ONE
+      
       parameter( ZERO=(0.0d0,0.0d0), ONE=(1.0d0,0.0d0) )
-      intrinsic ABS, COMPLEX, DBLE, INT, LOG, MAX
+      intrinsic ABS, DBLE, INT, LOG, MAX
+      complex(8) mycomplex
 
 *---  check restrictions on input parameters ...
       mm = m*m
@@ -846,7 +852,7 @@
       hnorm = ABS( t*hnorm )
       if ( hnorm.eq.0.0d0 ) stop 'Error - null H in input of ZGPADM.'
       ns = MAX( 0,INT(LOG(hnorm)/LOG(2.0d0))+2 )
-      scale =  COMPLEX( t/DBLE(2**ns),0.0d0 )
+      scale =  mycomplex( t/DBLE(2**ns),0.0d0 )
       scale2 = scale*scale
       !print *,INT(LOG(hnorm))
 *
@@ -937,7 +943,7 @@
       implicit none
       double precision t
       integer          ideg, m, ldh, lwsp, iexph, ns, iflag, ipiv(m)
-      complex*16       H(ldh,m), wsp(lwsp)
+      complex(8)       H(ldh,m), wsp(lwsp)
 
 *-----Purpose----------------------------------------------------------|
 *
@@ -981,11 +987,11 @@
 *
       integer i,j,k,icoef,mm,ih2,iodd,iused,ifree,iq,ip,iput,iget
       double precision hnorm
-      complex*16 cp, cq, scale, scale2, ZERO, ONE
+      complex(8) cp, cq, scale, scale2, ZERO, ONE
 
       parameter( ZERO=(0.0d0,0.0d0), ONE=(1.0d0,0.0d0) )
-      intrinsic ABS, COMPLEX, DBLE, INT, LOG, MAX
-
+      intrinsic ABS,  DBLE, INT, LOG, MAX
+      complex(8) mycomplex
 *---  check restrictions on input parameters ...
       mm = m*m
       iflag = 0
@@ -1019,7 +1025,7 @@
       hnorm = ABS( t*hnorm )
       if ( hnorm.eq.0.0d0 ) stop 'Error - null H in input of ZHPADM.'
       ns = MAX( 0,INT(LOG(hnorm)/LOG(2.0d0))+2 )
-      scale =  COMPLEX( t/DBLE(2**ns),0.0d0 )
+      scale =  mycomplex( t/DBLE(2**ns),0.0d0 )
       scale2 = scale*scale
 *
 *---  compute Pade coefficients ...
@@ -1109,7 +1115,7 @@
       implicit none
       integer          m, ldh, iflag, iwsp(m)
       double precision t, H(ldh,m), y(m)
-      complex*16       wsp(m*(m+2))
+      complex(8)       wsp(m*(m+2))
 
 *-----Purpose----------------------------------------------------------|
 *
@@ -1145,7 +1151,7 @@
       integer ndeg, i, j, ip, ih, iy, iz
       parameter ( ndeg=7 )
       double precision alpha0
-      complex*16 alpha(ndeg), theta(ndeg)
+      complex(8) alpha(ndeg), theta(ndeg)
 
       intrinsic DBLE
       
@@ -1204,7 +1210,7 @@
       implicit none
       integer          m, ldh, iflag, iwsp(m)
       double precision t, H(ldh,m), y(m)
-      complex*16       wsp(m*(m+2))
+      complex(8)       wsp(m*(m+2))
 
 *-----Purpose----------------------------------------------------------|
 *
@@ -1240,9 +1246,9 @@
       integer ndeg, i, j, ip, ih, iy, iz
       parameter ( ndeg=7 )
       double precision alpha0
-      complex*16 alpha(ndeg), theta(ndeg), w
+      complex(8) alpha(ndeg), theta(ndeg), w
 
-      intrinsic ABS,COMPLEX,DBLE,MIN
+      intrinsic ABS,DBLE,MIN
       
 *---  Pointers ...
 
@@ -1299,7 +1305,7 @@
       implicit none
       integer          m, ldh, iflag, iwsp(m)
       double precision t
-      complex*16       H(ldh,m), y(m), wsp(m*(m+2))
+      complex(8)       H(ldh,m), y(m), wsp(m*(m+2))
 
 *-----Purpose----------------------------------------------------------|
 *
@@ -1335,7 +1341,7 @@
       integer     ndeg, i, j, ip, ih, iy, iz
       parameter ( ndeg=7 )
       double      precision alpha0
-      complex*16  alpha(2*ndeg), theta(2*ndeg)
+      complex(8)  alpha(2*ndeg), theta(2*ndeg)
       
 *---  Pointers ...
 
@@ -1398,7 +1404,7 @@
       implicit none
       integer          m, ldh
       double precision t, H(ldh,m), y(m)
-      complex*16       wsp(m*(m+2))
+      complex(8)       wsp(m*(m+2))
 
 *-----Purpose----------------------------------------------------------|
 *
@@ -1429,14 +1435,14 @@
 *     ACM - Transactions On Mathematical Software, 24(1):130-156, 1998
 *----------------------------------------------------------------------|
 *
-      complex*16 ZERO
+      complex(8) ZERO
       integer ndeg, i, j, k, ip, ih, iy, iz
       parameter ( ndeg=7, ZERO=(0.0d0,0.0d0) )
       double precision alpha0
-      complex*16 alpha(ndeg), theta(ndeg), tmpc
+      complex(8) alpha(ndeg), theta(ndeg), tmpc
 
       intrinsic ABS,DBLE,MIN
-      
+      complex(8) mycomplex
 *---  Pointers ...
 
       ih = 1
@@ -1513,7 +1519,7 @@
       implicit none
       integer          m, ldh
       double precision t
-      complex*16       H(ldh,m), y(m), wsp(m*(m+2))
+      complex(8)       H(ldh,m), y(m), wsp(m*(m+2))
 
 *-----Purpose----------------------------------------------------------|
 *
@@ -1544,14 +1550,14 @@
 *     ACM - Transactions On Mathematical Software, 24(1):130-156, 1998
 *----------------------------------------------------------------------|
 *
-      complex*16 ZERO
+      complex(8) ZERO
       integer ndeg, i, j, k, ip, ih, iy, iz
       parameter ( ndeg=7, ZERO=(0.0d0,0.0d0) )
       double precision alpha0
-      complex*16 alpha(ndeg), theta(ndeg), tmpc
+      complex(8) alpha(ndeg), theta(ndeg), tmpc
 
       intrinsic ABS,DBLE,CONJG,MIN
-      
+      complex(8) mycomplex
 *---  Pointers ...
 
       ih = 1
@@ -2400,7 +2406,7 @@
       implicit none
       integer          n, m, lwsp, liwsp, itrace, iflag, iwsp(liwsp)
       double precision t, tol, anorm
-      complex*16       v(n), w(n), wsp(lwsp)
+      complex(8)       v(n), w(n), wsp(lwsp)
       external         matvec
 
 *-----Purpose----------------------------------------------------------|
@@ -2446,7 +2452,7 @@
 *
 *     matvec : external subroutine for matrix-vector multiplication.
 *              synopsis: matvec( x, y )
-*                        complex*16 x(*), y(*)
+*                        complex(8) x(*), y(*)
 *              computes: y(1:n) <- A*x(1:n)
 *                        where A is the principal matrix.
 *
@@ -2522,7 +2528,7 @@
 *     ACM - Transactions On Mathematical Software, 24(1):130-156, 1998
 *----------------------------------------------------------------------|
 
-      complex*16 ZERO, ONE
+      complex(8) ZERO, ONE
       parameter( ZERO=(0.0d0,0.0d0), ONE=(1.0d0,0.0d0) )
       integer i, j, k1, mh, mx, iv, ih, j1v, ns, ifree, lfree, iexph,
      .        ireject,ibrkflag,mbrkdwn, nmult, nreject, nexph, nscale,
@@ -2531,10 +2537,10 @@
      .                 s_error, x_error, t_now, t_new, t_step, t_old,
      .                 xm, beta, break_tol, p1, p2, p3, eps, rndoff,
      .                 vnorm, avnorm, hj1j, hump, SQR1
-      complex*16 hij
+      complex(8) hij
 
-      intrinsic AINT,ABS,COMPLEX,DBLE,INT,LOG10,MAX,MIN,NINT,SIGN,SQRT
-      !complex*16 ZDOTC
+      intrinsic AINT,ABS,DBLE,INT,LOG10,MAX,MIN,NINT,SIGN,SQRT
+      complex(8) mycomplex
       double precision DZNRM2
 *
 *---  check restrictions on input parameters ...
@@ -2642,7 +2648,7 @@
             t_step = t_out-t_now
             goto 300
          endif
-         wsp(ih+(j-1)*mh+j) = COMPLEX( hj1j, 0d0 )
+         wsp(ih+(j-1)*mh+j) = mycomplex( hj1j, 0d0 )
          call ZDSCAL( n, 1.0d0/hj1j, wsp(j1v),1 )
          j1v = j1v + n
  200  continue
@@ -2737,7 +2743,7 @@
 *---  now update w = beta*V*exp(t_step*H)*e1 and the hump ...
 *
       mx = mbrkdwn + MAX( 0,k1-1 )
-      hij = COMPLEX( beta, 0d0 )
+      hij = mycomplex( beta, 0d0 )
       call ZGEMV( 'n', n,mx,hij,wsp(iv),n,wsp(iexph),1,ZERO,w,1 )
       beta = DZNRM2( n, w,1 )
       hump = MAX( hump, beta )
@@ -2782,16 +2788,16 @@
       iwsp(6) = ibrkflag
       iwsp(7) = mbrkdwn
 
-      wsp(1)  = COMPLEX( step_min, 0d0 )
-      wsp(2)  = COMPLEX( step_max, 0d0 )
-      wsp(3)  = COMPLEX( 0.0d0, 0d0 )
-      wsp(4)  = COMPLEX( 0.0d0, 0d0 )
-      wsp(5)  = COMPLEX( x_error, 0d0 )
-      wsp(6)  = COMPLEX( s_error, 0d0 )
-      wsp(7)  = COMPLEX( tbrkdwn, 0d0 )
-      wsp(8)  = COMPLEX( sgn*t_now, 0d0 )
-      wsp(9)  = COMPLEX( hump/vnorm, 0d0 )
-      wsp(10) = COMPLEX( beta/vnorm, 0d0 )
+      wsp(1)  = mycomplex( step_min, 0d0 )
+      wsp(2)  = mycomplex( step_max, 0d0 )
+      wsp(3)  = mycomplex( 0.0d0, 0d0 )
+      wsp(4)  = mycomplex( 0.0d0, 0d0 )
+      wsp(5)  = mycomplex( x_error, 0d0 )
+      wsp(6)  = mycomplex( s_error, 0d0 )
+      wsp(7)  = mycomplex( tbrkdwn, 0d0 )
+      wsp(8)  = mycomplex( sgn*t_now, 0d0 )
+      wsp(9)  = mycomplex( hump/vnorm, 0d0 )
+      wsp(10) = mycomplex( beta/vnorm, 0d0 )
       END
 *----------------------------------------------------------------------|
 *----------------------------------------------------------------------|
@@ -2801,7 +2807,7 @@
       implicit none
       integer          n, m, lwsp, liwsp, itrace, iflag, iwsp(liwsp)
       double precision t, tol, anorm
-      complex*16       v(n), w(n), wsp(lwsp)
+      complex(8)       v(n), w(n), wsp(lwsp)
       external         matvec
 
 *-----Purpose----------------------------------------------------------|
@@ -2846,7 +2852,7 @@
 *
 *     matvec : external subroutine for matrix-vector multiplication.
 *              synopsis: matvec( x, y )
-*                        complex*16 x(*), y(*)
+*                        complex(8) x(*), y(*)
 *              computes: y(1:n) <- A*x(1:n)
 *                        where A is the principal matrix.
 *
@@ -2923,7 +2929,7 @@
 *     ACM - Transactions On Mathematical Software, 24(1):130-156, 1998
 *----------------------------------------------------------------------|
 *
-      complex*16 ZERO, ONE
+      complex(8) ZERO, ONE
       parameter( ZERO=(0.0d0,0.0d0), ONE=(1.0d0,0.0d0) )
       integer i, j, k1, mh, mx, iv, ih, j1v, ns, ifree, lfree, iexph,
      .        ireject,ibrkflag,mbrkdwn, nmult, nreject, nexph, nscale,
@@ -2932,10 +2938,10 @@
      .                 s_error, x_error, t_now, t_new, t_step, t_old,
      .                 xm, beta, break_tol, p1, p2, p3, eps, rndoff,
      .                 vnorm, avnorm, hj1j, hump, SQR1
-      complex*16 hjj
+      complex(8) hjj
 
-      intrinsic AINT,ABS,COMPLEX,DBLE,INT,LOG10,MAX,MIN,NINT,SIGN,SQRT
-      complex*16 ZDOTC
+      intrinsic AINT,ABS,DBLE,INT,LOG10,MAX,MIN,NINT,SIGN,SQRT
+      complex(8) mycomplex
       double precision DZNRM2
 *
 *---  check restrictions on input parameters ...
@@ -3039,8 +3045,8 @@
             t_step = t_out-t_now
             goto 300
          endif
-         wsp(ih+(j-1)*mh+j) = COMPLEX( hj1j, 0d0 )
-         wsp(ih+j*mh+j-1) = COMPLEX( hj1j, 0d0 )
+         wsp(ih+(j-1)*mh+j) = mycomplex( hj1j, 0d0 )
+         wsp(ih+j*mh+j-1) = mycomplex( hj1j, 0d0 )
          call ZDSCAL( n, 1.0d0/hj1j, wsp(j1v),1 )
          j1v = j1v + n
  200  continue
@@ -3129,7 +3135,7 @@
 *---  now update w = beta*V*exp(t_step*H)*e1 and the hump ...
 *
       mx = mbrkdwn + MAX( 0,k1-1 )
-      hjj = COMPLEX( beta, 0d0 )
+      hjj = mycomplex( beta, 0d0 )
       print *,'bef zgemv 2'
       call ZGEMV( 'n', n,mx,hjj,wsp(iv),n,wsp(iexph),1,ZERO,w,1 )
       print *,'aft zgemv 2'
@@ -3176,16 +3182,16 @@
       iwsp(6) = ibrkflag
       iwsp(7) = mbrkdwn
 
-      wsp(1)  = COMPLEX( step_min, 0d0 )
-      wsp(2)  = COMPLEX( step_max, 0d0 )
-      wsp(3)  = COMPLEX( 0.0d0, 0d0 )
-      wsp(4)  = COMPLEX( 0.0d0, 0d0 )
-      wsp(5)  = COMPLEX( x_error, 0d0 )
-      wsp(6)  = COMPLEX( s_error, 0d0 )
-      wsp(7)  = COMPLEX( tbrkdwn, 0d0 )
-      wsp(8)  = COMPLEX( sgn*t_now, 0d0 )
-      wsp(9)  = COMPLEX( hump/vnorm, 0d0 )
-      wsp(10) = COMPLEX( beta/vnorm, 0d0 )
+      wsp(1)  = mycomplex( step_min, 0d0 )
+      wsp(2)  = mycomplex( step_max, 0d0 )
+      wsp(3)  = mycomplex( 0.0d0, 0d0 )
+      wsp(4)  = mycomplex( 0.0d0, 0d0 )
+      wsp(5)  = mycomplex( x_error, 0d0 )
+      wsp(6)  = mycomplex( s_error, 0d0 )
+      wsp(7)  = mycomplex( tbrkdwn, 0d0 )
+      wsp(8)  = mycomplex( sgn*t_now, 0d0 )
+      wsp(9)  = mycomplex( hump/vnorm, 0d0 )
+      wsp(10) = mycomplex( beta/vnorm, 0d0 )
       END
 *----------------------------------------------------------------------|
 *----------------------------------------------------------------------|
@@ -3917,7 +3923,7 @@
       implicit none
       integer          n, m, lwsp, liwsp, itrace, iflag, iwsp(liwsp)
       double precision t, tol, anorm
-      complex*16       u(n), v(n), w(n), wsp(lwsp)
+      complex(8)       u(n), v(n), w(n), wsp(lwsp)
       external         matvec
 
 *-----Purpose----------------------------------------------------------|
@@ -4030,7 +4036,7 @@
 *     ACM - Transactions On Mathematical Software, 24(1):130-156, 1998
 *----------------------------------------------------------------------|
 *
-      complex*16 ZERO, ONE
+      complex(8) ZERO, ONE
       parameter( ZERO=(0.0d0,0.0d0), ONE=(1.0d0,0.0d0) )
       integer i, j, k1, mh, mx, iv, ih, j1v, ns, ifree, lfree, iexph,
      .        ireject,ibrkflag,mbrkdwn, nmult, nreject, nexph, nscale,
@@ -4039,10 +4045,10 @@
      .                 s_error, x_error, t_now, t_new, t_step, t_old,
      .                 xm, beta, break_tol, p1, p2, p3, eps, rndoff,
      .                 avnorm, hj1j, SQR1
-      complex*16 hij
+      complex(8) hij
 
-      intrinsic AINT,ABS,COMPLEX,DBLE,INT,LOG10,MAX,MIN,NINT,SIGN,SQRT
-      complex*16 ZDOTC
+      intrinsic AINT,ABS,DBLE,INT,LOG10,MAX,MIN,NINT,SIGN,SQRT
+      complex(8) mycomplex
       double precision DZNRM2
 *
 *---  check restrictions on input parameters ...
@@ -4144,7 +4150,7 @@
             t_step = t_out-t_now
             goto 300
          endif
-         wsp(ih+(j-1)*mh+j) = COMPLEX( hj1j, 0d0 )
+         wsp(ih+(j-1)*mh+j) = mycomplex( hj1j, 0d0 )
          call ZDSCAL( n, 1.0d0/hj1j, wsp(j1v),1 )
          j1v = j1v + n
  200  continue
@@ -4228,7 +4234,7 @@
       endif
 *
       mx = mbrkdwn + MAX( 0,k1-2 )
-      hij = COMPLEX( beta, 0d0 )
+      hij = mycomplex( beta, 0d0 )
       call ZGEMV( 'n', n,mx,hij,wsp(iv),n,wsp(iphih),1,ONE,w,1 )
 *
 *---  suggested value for the next stepsize ...
@@ -4271,14 +4277,14 @@
       iwsp(6) = ibrkflag
       iwsp(7) = mbrkdwn
 
-      wsp(1)  = COMPLEX( step_min, 0d0 )
-      wsp(2)  = COMPLEX( step_max, 0d0 )
-      wsp(3)  = COMPLEX( 0.0d0, 0d0 )
-      wsp(4)  = COMPLEX( 0.0d0, 0d0 )
-      wsp(5)  = COMPLEX( x_error, 0d0 )
-      wsp(6)  = COMPLEX( s_error, 0d0 )
-      wsp(7)  = COMPLEX( tbrkdwn, 0d0 )
-      wsp(8)  = COMPLEX( sgn*t_now, 0d0 )
+      wsp(1)  = mycomplex( step_min, 0d0 )
+      wsp(2)  = mycomplex( step_max, 0d0 )
+      wsp(3)  = mycomplex( 0.0d0, 0d0 )
+      wsp(4)  = mycomplex( 0.0d0, 0d0 )
+      wsp(5)  = mycomplex( x_error, 0d0 )
+      wsp(6)  = mycomplex( s_error, 0d0 )
+      wsp(7)  = mycomplex( tbrkdwn, 0d0 )
+      wsp(8)  = mycomplex( sgn*t_now, 0d0 )
       END
 *----------------------------------------------------------------------|
 *----------------------------------------------------------------------|
@@ -4288,7 +4294,7 @@
       implicit none
       integer          n, m, lwsp, liwsp, itrace, iflag, iwsp(liwsp)
       double precision t, tol, anorm
-      complex*16       u(n), v(n), w(n), wsp(lwsp)
+      complex(8)       u(n), v(n), w(n), wsp(lwsp)
       external         matvec
 
 *-----Purpose----------------------------------------------------------|
@@ -4400,7 +4406,7 @@
 *     ACM - Transactions On Mathematical Software, 24(1):130-156, 1998
 *----------------------------------------------------------------------|
 *
-      complex*16 ZERO, ONE
+      complex(8) ZERO, ONE
       parameter( ZERO=(0.0d0,0.0d0), ONE=(1.0d0,0.0d0) )
       integer i, j, k1, mh, mx, iv, ih, j1v, ns, ifree, lfree, iexph,
      .        ireject,ibrkflag,mbrkdwn, nmult, nreject, nexph, nscale,
@@ -4409,10 +4415,10 @@
      .                 s_error, x_error, t_now, t_new, t_step, t_old,
      .                 xm, beta, break_tol, p1, p2, p3, eps, rndoff,
      .                 avnorm, hj1j, SQR1
-      complex*16 hjj
+      complex(8) hjj
 
-      intrinsic AINT,ABS,COMPLEX,DBLE,INT,LOG10,MAX,MIN,NINT,SIGN,SQRT
-      complex*16 ZDOTC
+      intrinsic AINT,ABS,DBLE,INT,LOG10,MAX,MIN,NINT,SIGN,SQRT
+      complex(8) mycomplex
       double precision DZNRM2
 *
 *---  check restrictions on input parameters ...
@@ -4513,8 +4519,8 @@
             t_step = t_out-t_now
             goto 300
          endif
-         wsp(ih+(j-1)*mh+j) = COMPLEX( hj1j, 0d0 )
-         wsp(ih+j*mh+j-1) = COMPLEX( hj1j, 0d0 )
+         wsp(ih+(j-1)*mh+j) = mycomplex( hj1j, 0d0 )
+         wsp(ih+j*mh+j-1) = mycomplex( hj1j, 0d0 )
          call ZDSCAL( n, 1.0d0/hj1j, wsp(j1v),1 )
          j1v = j1v + n
  200  continue
@@ -4599,7 +4605,7 @@
       endif
 *
       mx = mbrkdwn + MAX( 0,k1-2 )
-      hjj = COMPLEX( beta, 0d0 )
+      hjj = mycomplex( beta, 0d0 )
       print *,'bef zgemv 4'
       call ZGEMV( 'n', n,mx,hjj,wsp(iv),n,wsp(iphih),1,ONE,w,1 )
       print *,'aft zgemv 4'
@@ -4644,13 +4650,13 @@
       iwsp(6) = ibrkflag
       iwsp(7) = mbrkdwn
 
-      wsp(1)  = COMPLEX( step_min, 0d0 )
-      wsp(2)  = COMPLEX( step_max, 0d0  )
-      wsp(3)  = COMPLEX( 0.0d0, 0d0  )
-      wsp(4)  = COMPLEX( 0.0d0, 0d0  )
-      wsp(5)  = COMPLEX( x_error, 0d0 )
-      wsp(6)  = COMPLEX( s_error, 0d0  )
-      wsp(7)  = COMPLEX( tbrkdwn, 0d0 )
-      wsp(8)  = COMPLEX( sgn*t_now, 0d0 )
+      wsp(1)  = mycomplex( step_min, 0d0 )
+      wsp(2)  = mycomplex( step_max, 0d0  )
+      wsp(3)  = mycomplex( 0.0d0, 0d0  )
+      wsp(4)  = mycomplex( 0.0d0, 0d0  )
+      wsp(5)  = mycomplex( x_error, 0d0 )
+      wsp(6)  = mycomplex( s_error, 0d0  )
+      wsp(7)  = mycomplex( tbrkdwn, 0d0 )
+      wsp(8)  = mycomplex( sgn*t_now, 0d0 )
       END
 *----------------------------------------------------------------------|
