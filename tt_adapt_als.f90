@@ -417,7 +417,7 @@ contains
        if ((dir>0) .and. (i==d)) then
           call dcopy(ry(i)*n(i)*ry(i+1), curcr, 1, cr(1,i), 1)
           if (verb0>=1) then
-            call disp('als_fort: iteration:'// tostring(swp*1d0) // '(' // tostring(dir*1d0) // ')  max(ry):' // tostring(maxval(rx(1:d+1))*1d0) // ' err_max:' // tostring(err_max));
+            call disp('als_fort: iteration:'// tostring(swp*1d0) // '(' // tostring(dir*1d0) // ')  max(ry):' // tostring(maxval(ry(1:d+1))*1d0) // ' err_max:' // tostring(err_max));
              !!    write(matlab_ist_dumme_kuh,"(A,I0,A,I0,A,I0,A,ES10.3)") 'als_fort:  iteration:', swp, '(', dir, ')  max(ry):', maxval(ry(1:d+1)), '  err_max:', err_max
              ! 	write(*,"(A,I0,A,I0,A,I0,A,ES10.3$)"), 'als_fort:  iteration:', swp, '(', dir, ')  max(ry):', maxval(ry), '  err_max:', err_max
              ! 	call mexPrintf(matlab_ist_dumme_kuh//achar(10))
@@ -435,7 +435,7 @@ contains
        if ((dir<0) .and. (i==1)) then
           call dcopy(ry(i)*n(i)*ry(i+1), curcr, 1, cr(1,i), 1)
           if (verb0>=1) then
-            call disp('als_fort: iteration:'// tostring(swp*1d0) // '(' // tostring(dir*1d0) // ')  max(ry):' // tostring(maxval(rx(1:d+1))*1d0) // ' err_max:' // tostring(err_max));
+            call disp('als_fort: iteration:'// tostring(swp*1d0) // '(' // tostring(dir*1d0) // ')  max(ry):' // tostring(maxval(ry(1:d+1))*1d0) // ' err_max:' // tostring(err_max));
              !!    write(matlab_ist_dumme_kuh,"(A,I0,A,I0,A,I0,A,ES10.3)") 'als_fort:  iteration:', swp, '(', dir, ')  max(ry):', maxval(ry(1:d+1)), '  err_max:', err_max
              ! 	write(*,"(A,I0,A,I0,A,I0,A,ES10.3$)"), 'als_fort:  iteration:', swp, '(', dir, ')  max(ry):', maxval(ry), '  err_max:', err_max
              ! 	call mexPrintf(matlab_ist_dumme_kuh//achar(10))
