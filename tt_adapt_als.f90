@@ -254,7 +254,7 @@ end subroutine deallocate_result
        call daxpy(ry(i)*n(i)*ry(i+1), -1d0, curcr, 1, tau, 1)
        err = dnrm2(ry(i)*n(i)*ry(i+1), tau, 1) / dnrm2(ry(i)*n(i)*ry(i+1), curcr, 1)
        if (verb0>=2) then ! verb on, carriage_return, no matlab. Otherwise - a lot of shit comes...
-          call disp('als_fort: iteration:['// tostring(swp*1d0) // ',' // & 
+          call disp('als_fort: iteration:['// tostring(swp*1d0) // ',' // &
           tostring(i*1d0) // ']  err:' // tostring(err) // '  ry(i):' // &
           tostring(ry(i)*1d0) // '  err_max:' // tostring(err_max))
           !      write(*,"(A,I0,A,I0,A,ES10.3,A,I0,A,ES10.3,20X$)"), 'als_fort:  iteration:[', swp, ',', i, ']  err:', err, '  ry(i):', ry(i), '  err_max:', err_max
@@ -429,7 +429,7 @@ end subroutine deallocate_result
           call dcopy(ry(i)*n(i)*ry(i+1), curcr, 1, cr(1,i), 1)
           if (verb0>=1) then
             call disp('als_fort: iteration:'// tostring(swp*1d0) // '(' // &
-            tostring(dir*1d0) // ')  max(ry):' // tostring(maxval(rx(1:d+1))*1d0) &
+            tostring(dir*1d0) // ')  max(ry):' // tostring(maxval(ry(1:d+1))*1d0) &
             // ' err_max:' // tostring(err_max));
              !!    write(matlab_ist_dumme_kuh,"(A,I0,A,I0,A,I0,A,ES10.3)") 'als_fort:  iteration:', swp, '(', dir, ')  max(ry):', maxval(ry(1:d+1)), '  err_max:', err_max
              ! 	write(*,"(A,I0,A,I0,A,I0,A,ES10.3$)"), 'als_fort:  iteration:', swp, '(', dir, ')  max(ry):', maxval(ry), '  err_max:', err_max
@@ -449,7 +449,7 @@ end subroutine deallocate_result
           call dcopy(ry(i)*n(i)*ry(i+1), curcr, 1, cr(1,i), 1)
           if (verb0>=1) then
             call disp('als_fort: iteration:'// tostring(swp*1d0) // '(' // tostring(dir*1d0) &
-            // ')  max(ry):' // tostring(maxval(rx(1:d+1))*1d0) // ' err_max:' // tostring(err_max))
+            // ')  max(ry):' // tostring(maxval(ry(1:d+1))*1d0) // ' err_max:' // tostring(err_max));
              !!    write(matlab_ist_dumme_kuh,"(A,I0,A,I0,A,I0,A,ES10.3)") 'als_fort:  iteration:', swp, '(', dir, ')  max(ry):', maxval(ry(1:d+1)), '  err_max:', err_max
              ! 	write(*,"(A,I0,A,I0,A,I0,A,ES10.3$)"), 'als_fort:  iteration:', swp, '(', dir, ')  max(ry):', maxval(ry), '  err_max:', err_max
              ! 	call mexPrintf(matlab_ist_dumme_kuh//achar(10))
@@ -790,7 +790,7 @@ end subroutine deallocate_result
 
        if (verb0>=2) then ! verb on, carriage_return, no matlab. Otherwise - a lot of shit comes...
          call disp('als_fort: iteration:['// tostring(swp*1d0) // ',' // tostring(i*1d0) &
-         // ']  err:' // tostring(err) // '  ry(i):' // tostring(ry(i)*1d0) // '  err_max:' // & 
+         // ']  err:' // tostring(err) // '  ry(i):' // tostring(ry(i)*1d0) // '  err_max:' // &
          tostring(err_max) // ' res_max:' // tostring(res_max))
 !                 write(*,"(A,I0,A,I0,A,ES10.3,A,I0,A,ES10.3,20X,A$)"), 'als_fort:  iteration:[', swp, ',', i, ']  err:', err, '  ry(i):', ry(i), '  err_max:', err_max, 13
           !!      write(*,"(A,I0,A,I0,A,ES10.3,A,I0,A,ES10.3,A,ES10.3)")  'als_fort:  iteration:[', swp, ',', i, ']  err:', err, '  ry(i):', rx(i), '  err_max:', err_max, '  res_max:', res_max
