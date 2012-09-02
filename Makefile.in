@@ -61,7 +61,7 @@ ifeq ($(CPU),spring-ifort)
       #LIB   = -L /opt/local/acml/ifort64_mp/lib -lacml_mp -lfftw3
 endif
 ifeq ($(CPU),dc-laptop-intel)
-      FOPT    = -i8 -O2 -fPIC -vec-report=0
+      FOPT    = -i8 -O2 -fPIC -vec-report=0 -DMATLAB
       FC   = ifort
       LDR   = ifort -static-intel
       CC    = icc
