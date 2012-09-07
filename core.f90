@@ -19,7 +19,7 @@ module core
  
 
  subroutine dmat_mat_loc(n,m,k,r1,r2,p1,p2,core1,core2,res_core) 
-     use matrix_util, only : dtransp
+     use matrix_util, only : dtransp, dperm321
      integer, intent(in) :: n,m,k,r1,r2,p1,p2
      real(8), intent(in) :: core1(*), core2(*)
      real(8), intent(inout) :: res_core(*)
@@ -30,6 +30,7 @@ module core
      call dtransp(p1,m*k*p2,core2,tmp_core2)
      call dgemm('n','n',r2*r1*n,k*p2*p1,m,1d0,tmp_core1,r2*r1*n,tmp_core2,m,0d0,res_core,r2*r1*n)
      !We have a2,a1,i1,k1,b2,b1 -> but! we need (?) a1, b1, 
+     call dperm321(r2,r1*n*k*p2,p1,res_core)
  end subroutine dmat_mat_loc
  
  subroutine zmat_mat_loc(n,m,k,r1,r2,p1,p2,core1,core2,res_core) 

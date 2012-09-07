@@ -273,6 +273,55 @@ contains
 
     my_chop3 = min(i+1, n)
   end function my_chop3
+  
+  
+  subroutine dperm321(n1, n2, n3, A, B)
+    integer, intent(in):: n1,n2,n3
+    real(8), intent(in):: A(n1,n2,n3)
+    real(8), intent(inout), optional, target :: B(n3,n2,n1)
+    double precision, pointer :: C(:,:,:)
+    integer i1,i2,i3
+    if ( present(B) ) then
+       C => B
+    else 
+       allocate(C(n3,n2,n1))
+    end if
+    do i1 = 1,n1
+       do i2 = 1,n2
+          do i3 = 1,n3
+             C(i3,i2,i1) = A(i1,i2,i3)
+          end do 
+       end do
+    end do 
+    if ( .not. present(B) ) then
+       call dcopy(n1*n2*n3, C, 1, A, 1)
+       deallocate(C)
+    end if
+  end subroutine dperm321
+  
+  subroutine zperm321(n1, n2, n3, A, B)
+    integer, intent(in):: n1,n2,n3
+    complex(8), intent(in):: A(n1,n2,n3)
+    complex(8), intent(inout), optional, target :: B(n3,n2,n1)
+    complex(8), pointer :: C(:,:,:)
+    integer i1,i2,i3
+    if ( present(B) ) then
+       C => B
+    else 
+       allocate(C(n3,n2,n1))
+    end if
+    do i1 = 1,n1
+       do i2 = 1,n2
+          do i3 = 1,n3
+             C(i3,i2,i1) = A(i1,i2,i3)
+          end do 
+       end do
+    end do 
+    if ( .not. present(B) ) then
+       call zcopy(n1*n2*n3, C, 1, A, 1)
+       deallocate(C)
+    end if
+  end subroutine zperm321
 
 end module matrix_util
 
