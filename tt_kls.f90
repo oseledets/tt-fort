@@ -693,6 +693,352 @@ contains
 
 
   end subroutine ztt_kls
+  !! What we have: we have a starting vector + a matrix (no vector X!) 
+  
+  subroutine tt_ksl(d,n,m,ra,crA, crY0, ry, tau, rmax, kickrank, nswp, verb)
+    use dispmodule
+    use matrix_util ! dqr
+    use ttals   ! als stuff
+    use estnorm  !1-norm estimation
+    use bfun_kls !bfun declarations
+    use sfun_kls !We have to do this
+    use explib !Krylov exponential
+    implicit none
+    integer,intent(in) :: d,n(d),m(d),ra(d+1), rmax
+    integer,intent(inout) :: ry(d+1)
+    integer, intent(in), optional :: kickrank, nswp, verb
+    ! verb: 0: off; 1: matlab; 2: console
+    integer :: kickrank0, nswp0, verb0
+    real(8), intent(in) :: crA(*), crY0(*)
+    double precision, intent(in) :: tau
+    type(pointd) :: crnew(d+1)
+    type(pointd) :: phinew(d+1)
+    real(8),allocatable, target :: curcr(:)
+    real(8),allocatable, target :: work(:)
+    real(8),allocatable :: R(:)
+    real(8),allocatable :: full_core(:)
+    double precision eps
+    double precision :: sv(rmax)
+    real(8), allocatable :: rnorms(:), W(:,:), X(:,:), Bmat(:,:), U(:,:), phitmp(:), Stmp(:)
+    integer,allocatable :: pa(:)
+    integer :: i,j, k, swp, dir, lwork, mm, nn, rnew, max_matvecs, rmax2 
+    double precision :: err, ermax, res, res_old, min_res
+    double precision anorm
+    real(8) dznrm2
+
+    min_res = 1d-1
+    rmax2 = rmax 
+    !Inner parameters
+    eps = 1e-8 !For local solvers
+
+    call disp('Solving a real-valued dynamical problem with tau='//tostring(tau))
+
+    kickrank0 = 5;
+    if (present(kickrank)) then
+       kickrank0 = kickrank
+    end if
+    nswp0 = 20
+    if (present(nswp)) then
+       nswp0 = nswp
+    end if
+    verb0 = 1
+    if (present(verb)) then
+       verb0 = verb
+    end if
+    allocate(pa(d+1))
+
+    call compute_ps(d,ra,n(1:d)*m(1:d),pa)
+
+
+
+    lwork = rmax*maxval(n(1:d))*rmax
+
+    nn = maxval(ra(1:d+1))*rmax*rmax
+    allocate(curcr(lwork))
+    nn = maxval(ra(1:d+1))*rmax*max(maxval(n(1:d)),maxval(m(1:d)))*rmax
+    allocate(work(nn))
+    allocate(R(lwork))
+    allocate(full_core(nn))
+    allocate(phitmp(maxval(ra(1:d+1))*maxval(ry(1:d+1))**2))
+    allocate(Stmp(maxval(ry(1:d+1))**2))
+
+    mm = 1
+    do i=1,d
+       allocate(crnew(i)%p(ry(i)*n(i)*ry(i+1)*2))
+       call dcopy(ry(i)*n(i)*ry(i+1), crY0(mm), 1, crnew(i)%p, 1)
+       mm = mm + ry(i)*n(i)*ry(i+1)
+    end do
+    allocate(phinew(1)%p(1))
+    allocate(phinew(d+1)%p(1))
+    phinew(1)%p(1) = 1d0
+    phinew(d+1)%p(1) = 1d0
+
+    !   QR, psi
+    dir = 1
+    i = 1
+    do while (i < d)
+       rnew = min(ry(i)*n(i), ry(i+1))
+       call dqr(ry(i)*n(i), ry(i+1), crnew(i) % p, R)
+       if ( i < d ) then
+          call dgemm('N', 'N', rnew, n(i+1)*ry(i+2), ry(i+1), 1d0, R, rnew, crnew(i+1)%p, ry(i+1), 0d0, curcr, rnew)
+          call dcopy(rnew*n(i+1)*ry(i+2), curcr, 1, crnew(i+1)%p,1)
+          ry(i+1) = rnew;
+          !     Phir
+
+          !phinew(i+1) is ry(i)*n(i)*ry(i+1)
+          allocate(phinew(i+1)%p(ry(i+1)*ry(i+1)*ra(i+1)*2))
+          call dphi_left(ry(i), m(i), ry(i+1), ry(i), n(i), ry(i+1), ra(i),&
+               ra(i+1), phinew(i)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, &
+               phinew(i+1)%p)
+       end if
+       i = i+dir
+    end do
+    i = d
+    ermax = 0d0
+    dir = -1
+    swp = 1
+
+    call init_seed()
+    ermax = 0d0
+    swp = 1
+    !   Algorithm is utterly funny: do a tau step in the core,     
+    do i = d,1,-1
+        call init_bfun_sizes(ry(i),n(i),ry(i+1),ry(i),n(i),ry(i+1),ra(i),ra(i+1),ry(i)*n(i)*ry(i+1),ry(i)*n(i)*ry(i+1))
+        call dinit_bfun_main(phinew(i)%p,crA(pa(i):pa(i+1)-1),phinew(i+1)%p)
+        anorm = normest(ry(i)*n(i)*ry(i+1),4, dmatvec, dmatvec_transp)
+        call exp_mv(ry(i)*n(i)*ry(i+1),30,tau,crnew(i)%p,curcr,eps,anorm,dmatvec)
+        !Incorrect, we have to put other guy back in time
+        if ( i > 1) then
+            call dtransp(ry(i),n(i)*ry(i+1), curcr)
+            call dqr(n(i)*ry(i+1), ry(i), curcr, R)
+            call dtransp(n(i)*ry(i+1), ry(i), curcr, crnew(i)%p)
+            call dphi_right(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), ra(i), &
+            ra(i+1), phinew(i+1)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phitmp)
+             !We have to orthogonalize and put it back in time
+              
+            call dinit_sfun(ry(i), ry(i), ra(i), ry(i), ry(i), phinew(i)%p, phitmp)
+            anorm = normest(ry(i)*ry(i), 4, dsfun_matvec, dsfun_matvec_transp)
+            call dsfun_matvec(R,Stmp)
+            call exp_mv(ry(i)*ry(i), 30, -1.0*tau, R, Stmp, eps, anorm, dsfun_matvec)
+            call dgemm('n','t',ry(i-1)*n(i),ry(i), ry(i), 1d0, crnew(i-1)%p, ry(i-1)*n(i), Stmp, ry(i), 0d0, curcr, ry(i-1)*n(i))
+            call dcopy(ry(i-1)*n(i)*ry(i), curcr, 1, crnew(i-1)%p, 1)
+            call dcopy(ry(i) * ra(i) * ry(i), phitmp, 1, phinew(i) % p, 1)
+        else
+            call dcopy(ry(i) * n(i) * ry(i+1), curcr, 1, crnew(i) % p, 1)
+        end if
+    end do
+
+100 continue
+
+    nn = sum(ry(2:d+1)*ry(1:d)*n(1:d))
+    if ( allocated(result_core)) then
+       if ( size(result_core) < nn ) then
+          deallocate(result_core)
+       end if
+    end if
+    if ( .not. allocated(result_core) ) then
+       allocate(result_core(nn))
+    end if
+
+    nn = 1
+    do i=1,d
+       call dcopy(ry(i)*n(i)*ry(i+1), crnew(i)%p, 1, result_core(nn), 1)
+       nn = nn+ry(i)*n(i)*ry(i+1)
+    end do
+    do i = 1,d
+       if ( associated(crnew(i)%p)) then
+          deallocate(crnew(i)%p)
+       end if
+    end do
+    do i = 1,d+1
+       if ( associated(phinew(i)%p)) then
+          deallocate(phinew(i)%p)
+       end if
+    end do
+    deallocate(R)
+    deallocate(work)
+    deallocate(curcr)
+    deallocate(full_core)
+    deallocate(pa)
+
+
+  end subroutine tt_ksl
+
+  subroutine ztt_ksl(d,n,m,ra,crA, crY0, ry, tau, rmax, kickrank, nswp, verb)
+    use dispmodule
+    use matrix_util ! dqr
+    use ttals   ! als stuff
+    use estnorm  !1-norm estimation
+    use bfun_kls !bfun declarations
+    use sfun_kls !We have to do this
+    use explib !Krylov exponential
+    implicit none
+    integer,intent(in) :: d,n(d),m(d),ra(d+1), rmax
+    integer,intent(inout) :: ry(d+1)
+    integer, intent(in), optional :: kickrank, nswp, verb
+    ! verb: 0: off; 1: matlab; 2: console
+    integer :: kickrank0, nswp0, verb0
+    complex(8), intent(in) :: crA(*), crY0(*)
+    real(8), intent(in) :: tau
+    type(zpointd) :: crnew(d+1)
+    type(zpointd) :: phinew(d+1)
+    complex(8),allocatable, target :: curcr(:)
+    complex(8),allocatable, target :: work(:)
+    complex(8),allocatable :: R(:)
+    complex(8),allocatable :: full_core(:)
+    double precision eps
+    double precision :: sv(rmax)
+    complex(8), allocatable :: rnorms(:), W(:,:), X(:,:), Bmat(:,:), U(:,:), phitmp(:), Stmp(:)
+    integer,allocatable :: pa(:)
+    integer :: i,j, k, swp, dir, lwork, mm, nn, rnew, max_matvecs, rmax2 
+    double precision :: err, ermax, res, res_old, min_res
+    double precision anorm
+    real(8) dznrm2
+    complex(8) ZERO, ONE
+    parameter( ZERO=(0.0d0,0.0d0), ONE=(1.0d0,0.0d0) )
+
+    !Debug print
+    !print *,'d=',d,'n=',n,'m=',m,'ra=',ra,'ry=',ry
+    !print *,cry0(1:2*d)  
+    min_res = 1d-1
+    rmax2 = rmax 
+    !Inner parameters
+    eps = 1e-8 !For local solvers
+
+    call disp('Solving a complex-valued dynamical problem with tau='//tostring(tau))
+
+    kickrank0 = 5;
+    if (present(kickrank)) then
+       kickrank0 = kickrank
+    end if
+    nswp0 = 20
+    if (present(nswp)) then
+       nswp0 = nswp
+    end if
+    verb0 = 1
+    if (present(verb)) then
+       verb0 = verb
+    end if
+    allocate(pa(d+1))
+
+    call compute_ps(d,ra,n(1:d)*m(1:d),pa)
+
+
+
+    lwork = rmax*maxval(n(1:d))*rmax
+
+    nn = maxval(ra(1:d+1))*rmax*rmax
+    allocate(curcr(lwork))
+    nn = maxval(ra(1:d+1))*rmax*max(maxval(n(1:d)),maxval(m(1:d)))*rmax
+    allocate(work(nn))
+    allocate(R(lwork))
+    allocate(full_core(nn))
+    allocate(phitmp(maxval(ra(1:d+1))*maxval(ry(1:d+1))**2))
+    allocate(Stmp(maxval(ry(1:d+1))**2))
+
+    mm = 1
+    do i=1,d
+       allocate(crnew(i)%p(ry(i)*n(i)*ry(i+1)*2))
+       call zcopy(ry(i)*n(i)*ry(i+1), crY0(mm), 1, crnew(i)%p, 1)
+       mm = mm + ry(i)*n(i)*ry(i+1)
+    end do
+    allocate(phinew(1)%p(1))
+    allocate(phinew(d+1)%p(1))
+    phinew(1)%p(1) = ONE
+    phinew(d+1)%p(1) = ONE
+
+    !   QR, psi
+    dir = 1
+    i = 1
+    do while (i < d)
+       rnew = min(ry(i)*n(i), ry(i+1))
+       call zqr(ry(i)*n(i), ry(i+1), crnew(i) % p, R)
+       if ( i < d ) then
+          call zgemm('N', 'N', rnew, n(i+1)*ry(i+2), ry(i+1), ONE, R, rnew, crnew(i+1)%p, ry(i+1), ZERO, curcr, rnew)
+          call zcopy(rnew*n(i+1)*ry(i+2), curcr, 1, crnew(i+1)%p,1)
+          ry(i+1) = rnew;
+          !     Phir
+
+          !phinew(i+1) is ry(i)*n(i)*ry(i+1)
+          allocate(phinew(i+1)%p(ry(i+1)*ry(i+1)*ra(i+1)*2))
+          call zphi_left(ry(i), m(i), ry(i+1), ry(i), n(i), ry(i+1), &
+                        ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, &
+               phinew(i+1)%p)
+       end if
+       i = i+dir
+    end do
+    i = d
+
+    ermax = 0d0
+    i = d
+    dir = -1
+    swp = 1
+
+    call init_seed()
+    ermax = 0d0
+    swp = 1
+    !   Algorithm is utterly funny: do a tau step in the core,     
+    do i = d,1,-1
+        call init_bfun_sizes(ry(i),n(i),ry(i+1),ry(i),n(i),ry(i+1),ra(i),ra(i+1),ry(i)*n(i)*ry(i+1),ry(i)*n(i)*ry(i+1))
+        call zinit_bfun_main(phinew(i)%p,crA(pa(i):pa(i+1)-1),phinew(i+1)%p)
+        anorm = normest(ry(i)*n(i)*ry(i+1),4, zmatvec, zmatvec_transp)
+        call zexp_mv(ry(i)*n(i)*ry(i+1),30,tau,crnew(i)%p,curcr,eps,anorm,dmatvec)
+        !Incorrect, we have to put other guy back in time
+        if ( i > 1) then
+            call ztransp(ry(i),n(i)*ry(i+1), curcr)
+            call zqr(n(i)*ry(i+1), ry(i), curcr, R)
+            call ztransp(n(i)*ry(i+1), ry(i), curcr, crnew(i)%p)
+            call zphi_right(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), ra(i), &
+            ra(i+1), phinew(i+1)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phitmp)
+             !We have to orthogonalize and put it back in time
+              
+            call zinit_sfun(ry(i), ry(i), ra(i), ry(i), ry(i), phinew(i)%p, phitmp)
+            anorm = normest(ry(i)*ry(i), 4, zsfun_matvec, zsfun_matvec_transp)
+            call zsfun_matvec(R,Stmp)
+            call zexp_mv(ry(i)*ry(i), 30, -1.0*tau, R, Stmp, eps, anorm, dsfun_matvec)
+            call zgemm('n','t',ry(i-1)*n(i),ry(i), ry(i), ONE, crnew(i-1)%p, ry(i-1)*n(i), Stmp, ry(i), ZERO, curcr, ry(i-1)*n(i))
+            call zcopy(ry(i-1)*n(i)*ry(i), curcr, 1, crnew(i-1)%p, 1)
+            call zcopy(ry(i) * ra(i) * ry(i), phitmp, 1, phinew(i) % p, 1)
+        else
+            call zcopy(ry(i) * n(i) * ry(i+1), curcr, 1, crnew(i) % p, 1)
+        end if
+    end do
+
+105 continue
+
+    nn = sum(ry(2:d+1)*ry(1:d)*n(1:d))
+    if ( allocated(zresult_core)) then
+       if ( size(zresult_core) < nn ) then
+          deallocate(zresult_core)
+       end if
+    end if
+    if ( .not. allocated(zresult_core) ) then
+       allocate(zresult_core(nn))
+    end if
+
+    nn = 1
+    do i=1,d
+       call zcopy(ry(i)*n(i)*ry(i+1), crnew(i)%p, 1, zresult_core(nn), 1)
+       nn = nn+ry(i)*n(i)*ry(i+1)
+    end do
+    do i = 1,d
+       if ( associated(crnew(i)%p)) then
+          deallocate(crnew(i)%p)
+       end if
+    end do
+    do i = 1,d+1
+       if ( associated(phinew(i)%p)) then
+          deallocate(phinew(i)%p)
+       end if
+    end do
+    deallocate(R)
+    deallocate(work)
+    deallocate(curcr)
+    deallocate(full_core)
+    deallocate(pa)
+
+
+  end subroutine ztt_ksl
 
 
 end module dyn_tt
