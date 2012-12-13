@@ -1,14 +1,25 @@
 include Makefile.cpu
-ifeq ($(CPU),default)
+ifeq ($(CPU),default-x64)
       FOPT    = -fdefault-integer-8 -ffree-line-length-none -O2 -fPIC  -DMATLAB
       FC   = gfortran
       LDR   = gfortran
       CC    = gcc
       COPT = -O2 -fPIC
       LIB   = -llapack -lblas
-      MATLAB = /opt/local/matlab/bin/matlab
+      MATLAB = matlab
       MCFLAGS = -fexceptions -fPIC -fno-omit-frame-pointer -pthread
       MLLIB2 = 
+endif
+ifeq ($(CPU),default-x32)
+      FOPT    = -ffree-line-length-none -O2 -fPIC  -DMATLAB
+      FC   = gfortran
+      LDR   = gfortran
+      CC    = gcc
+      COPT = -O2 -fPIC
+      LIB   = -llapack -lblas
+      MATLAB = matlab
+      MCFLAGS = -fexceptions -fPIC -fno-omit-frame-pointer -pthread
+      MLLIB2 =
 endif
 ifeq ($(CPU),mac-gfort)
       FOPT    = -m64 -std=f2008 -ffree-line-length-none -fdefault-integer-8 #-xSSE4.2
