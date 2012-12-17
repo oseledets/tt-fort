@@ -178,14 +178,16 @@ contains
     call dtransp(ry1, rx1*ra1, phi2)
   end subroutine dphi_right
 
-  subroutine zphi_right(rx1, m, rx2, ry1, n, ry2, ra1, ra2, phi2_old, A, x, y, phi2, res1, res2)
+  subroutine zphi_right(rx1, m, rx2, ry1, n, ry2, ra1, ra2, phi2_old, A, x, y, phi2)
     ! sizes of res1, res2: max(rx1*m*ra2*ry2, rx1*ra1*n*ry2, rx1*ra1*ry1)
     integer, intent(in) :: rx1, m, rx2, ry1, n, ry2, ra1, ra2
     complex(8), intent(in) ::  A(*), phi2_old(*), x(*), y(*)
-    complex(8), intent(inout) :: phi2(*), res1(*), res2(*)
+    complex(8), intent(inout) :: phi2(*)
     complex(8) :: ycopy(ry1*n*ry2)
     complex(8) ::  ZERO, ONE
     parameter( ZERO=(0.0d0,0.0d0), ONE=(1.0d0,0.0d0) )
+    complex(8) :: res1(rx1*m*ra2*ry2)
+    complex(8) :: res2(ra1*n*ry2*rx1)
     
     ycopy(1:ry1*n*ry2) = conjg(y(1:ry1*n*ry2))
 

@@ -596,7 +596,7 @@ contains
                 allocate(phinew(i)%p(ry(i)*ry(i)*ra(i)*2))
              end if
              call zphi_right(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), &
-                            ra(i), ra(i+1), phinew(i+1)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phinew(i)%p, work, full_core)
+                            ra(i), ra(i+1), phinew(i+1)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phinew(i)%p)
           end if
        end if
        if ( dir > 0 ) then
