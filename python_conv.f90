@@ -35,13 +35,14 @@ contains
   subroutine zsdv_to_arrays(n,r,d,ps,cr,tt)
     implicit none
     integer, intent(in) :: d
-    integer, intent(in) :: n(d)
+    integer, intent(inout) :: n(d)
     integer, intent(out) :: r(d+1)
     integer, intent(out) :: ps(d+1)
     complex(8), allocatable, intent(out) :: cr(:)
     type(ztt), intent(in) :: tt
     integer :: M,i
     r=tt%r(tt%l-1:tt%m)
+    n(1:d) = tt%n(1:d) 
     ps(1) = 1
     do i=1,d
        ps(i+1)=ps(i)+tt%n(i)*r(i)*r(i+1)
