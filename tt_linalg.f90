@@ -283,6 +283,7 @@ contains
     !   deallocate(res1,res2,tmp)
   end subroutine dphi_right
   ! y'Ax
+  
   subroutine dphi_left(rx1, m, rx2, ry1, n, ry2, ra1, ra2, phi1_old, A, x, y, phi1, res1, res2)
     ! sizes of res1, res2: max(rx1*n*ra1*ry2, rx1*ra2*m*ry2, ry2*rx2*ra2)
     integer, intent(in) :: rx1, m, rx2, ry1, n, ry2, ra1, ra2

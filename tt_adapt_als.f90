@@ -503,7 +503,14 @@ end subroutine deallocate_result
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !! AMR lin. solver
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  subroutine tt_amr_solve(d,n,m,ry,ra,crA, crY, crX0, rx, eps, kickrank, nswp, verb, prec, nrestart, niters)
+! tt_amr_solve
+! Solution of linear systems in the TT-format
+! Input:
+! integer d, real(8) arrays n(d), m(d)
+! Matrix A: 
+! Multilevel matrix with mode sizes n(1)n(2)...n(d) x m(1) m(2) ... m(d)
+
+ subroutine tt_amr_solve(d,n,m,ry,ra,crA, crY, crX0, rx, eps, kickrank, nswp, verb, prec, nrestart, niters)
     use tt_linalg
     use dispmodule
 
