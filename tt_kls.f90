@@ -488,7 +488,8 @@ contains
     eps = 1e-8 !For local solvers
 
     call disp('Solving a complex-valued dynamical problem with tau='//tostring(tau))
-
+    print *,'d=',d
+    print *,'n=',n(1:d)
     kickrank0 = 5;
     if (present(kickrank)) then
        kickrank0 = kickrank
@@ -504,7 +505,6 @@ contains
     allocate(pa(d+1))
 
     call compute_ps(d,ra,n(1:d)*m(1:d),pa)
-
 
 
     lwork = rmax*maxval(n(1:d))*rmax
@@ -528,7 +528,6 @@ contains
     allocate(phinew(d+1)%p(1))
     phinew(1)%p(1) = ONE
     phinew(d+1)%p(1) = ONE
-
     !   QR, psi
     dir = 1
     i = 1
@@ -559,16 +558,20 @@ contains
     call init_seed()
     ermax = 0d0
     swp = 1
+    print *,'after qr'
     do while (swp .eq. 1)
        !True iteration when started from the left:
        !move (US), move S, next core
        !and backwards move S, move (US), prev. core
        if ( dir < 0 ) then
-          call init_bfun_sizes(ry(i),n(i),ry(i+1),ry(i),n(i),ry(i+1),ra(i),ra(i+1),ry(i)*n(i)*ry(i+1),ry(i)*n(i)*ry(i+1))
-          call zinit_bfun_main(phinew(i)%p,crA(pa(i):pa(i+1)-1),phinew(i+1)%p)
+          print *,'1'
+           call init_bfun_sizes(ry(i),n(i),ry(i+1),ry(i),n(i),ry(i+1),ra(i),ra(i+1),ry(i)*n(i)*ry(i+1),ry(i)*n(i)*ry(i+1))
+          print *,'2'
+           call zinit_bfun_main(phinew(i)%p,crA(pa(i):pa(i+1)-1),phinew(i+1)%p)
           !anorm = znormest(ry(i)*n(i)*ry(i+1),4, zmatvec, zmatvec_transp)
           anorm = 1d0
           call zexp_mv(ry(i)*n(i)*ry(i+1),30,tau/2,crnew(i)%p,curcr,eps,anorm,zmatvec)
+          print *,'3'
           if ( i < d ) then
              !In this case, we have to put S(i+1) backwards in time (heh)
              call zqr(n(i)*ry(i), ry(i+1), curcr, R) 
@@ -582,7 +585,7 @@ contains
              call zgemm('n','n',ry(i)*n(i),ry(i+1),ry(i+1),ONE,curcr, ry(i)*n(i), Stmp, ry(i+1), ZERO, crnew(i)%p, ry(i)*n(i))
              call zcopy(ry(i)*n(i)*ry(i+1),crnew(i)%p,1,curcr,1)
           end if
-
+          
           if ( i > 1 ) then
              call ztransp(ry(i),n(i)*ry(i+1), curcr)
              call zqr(n(i)*ry(i+1), ry(i), curcr, R)
