@@ -6,6 +6,7 @@
       DOUBLE PRECISION   EST
 *     ..
 *     .. Array Arguments ..
+
       INTEGER            IND( * ), INDH( * ), ISEED( 4 )
       DOUBLE PRECISION   H( * )
       COMPLEX*16         V( * ), X( LDX, * ), XOLD( LDXOLD, * )
