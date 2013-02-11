@@ -1,4 +1,4 @@
-module bfun_ksl
+module bfun_kls
   !Here we need to have all parameters required for the matrix-by-vector product (to call bfun3)
   integer, private  ::  rx1T,mT,rx2T,ry1T,nT,ry2T,ra1T,ra2T
   double precision, pointer, private :: phi1T(:), phi2T(:),res1T(:), res2T(:), AT(:)
@@ -82,9 +82,9 @@ contains
   end subroutine zinit_bfun_main
 
 
-end module bfun_ksl
+end module bfun_kls
 
-module sfun_ksl
+module sfun_kls
 
   integer, private :: rx1, rx2, ra, ry1, ry2
   double precision, private, pointer :: phi1(:), phi2(:)
@@ -182,7 +182,7 @@ contains
     !Seems to be OK.
   end subroutine zsfun_matvec_transp
 
-end module sfun_ksl
+end module sfun_kls
 
 
 module dyn_tt
@@ -207,13 +207,13 @@ contains
 
 
   !! What we have: we have a starting vector + a matrix (no vector X!) 
-  subroutine tt_ksl(d,n,m,ra,crA, crY0, ry, tau, rmax, kickrank, nswp, verb)
+  subroutine tt_kls(d,n,m,ra,crA, crY0, ry, tau, rmax, kickrank, nswp, verb)
     use dispmodule
     use matrix_util ! dqr
     use ttals   ! als stuff
     use estnorm  !1-norm estimation
-    use bfun_ksl !bfun declarations
-    use sfun_ksl !We have to do this
+    use bfun_kls !bfun declarations
+    use sfun_kls !We have to do this
     use explib !Krylov exponential
     implicit none
     integer,intent(in) :: d,n(d),m(d),ra(d+1), rmax
@@ -444,15 +444,15 @@ contains
     deallocate(pa)
 
 
-  end subroutine tt_ksl
+  end subroutine tt_kls
 
-  subroutine ztt_ksl(d,n,m,ra,crA, crY0, ry, tau, rmax, kickrank, nswp, verb)
+  subroutine ztt_kls(d,n,m,ra,crA, crY0, ry, tau, rmax, kickrank, nswp, verb)
     use dispmodule
     use matrix_util ! dqr
     use ttals   ! als stuff
     use estnorm  !1-norm estimation
-    use bfun_ksl !bfun declarations
-    use sfun_ksl !We have to do this
+    use bfun_kls !bfun declarations
+    use sfun_kls !We have to do this
     use explib !Krylov exponential
     implicit none
     integer,intent(in) :: d,n(d),m(d),ra(d+1), rmax
@@ -686,7 +686,7 @@ contains
     deallocate(pa)
 
 
-  end subroutine ztt_ksl
+  end subroutine ztt_kls
   !! What we have: we have a starting vector + a matrix (no vector X!) 
   
   subroutine tt_ksl(d,n,m,ra,crA, crY0, ry, tau, rmax, kickrank, nswp, verb)
@@ -694,8 +694,8 @@ contains
     use matrix_util ! dqr
     use ttals   ! als stuff
     use estnorm  !1-norm estimation
-    use bfun_ksl !bfun declarations
-    use sfun_ksl !We have to do this
+    use bfun_kls !bfun declarations
+    use sfun_kls !We have to do this
     use explib !Krylov exponential
     implicit none
     integer,intent(in) :: d,n(d),m(d),ra(d+1), rmax
@@ -863,8 +863,8 @@ contains
     use matrix_util ! dqr
     use ttals   ! als stuff
     use estnorm  !1-norm estimation
-    use bfun_ksl !bfun declarations
-    use sfun_ksl !We have to do this
+    use bfun_kls !bfun declarations
+    use sfun_kls !We have to do this
     use explib !Krylov exponential
     implicit none
     integer,intent(in) :: d,n(d),m(d),ra(d+1), rmax
