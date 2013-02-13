@@ -27,7 +27,7 @@ contains
     implicit none
     complex(8), intent(in) :: x(*)
     complex(8) :: y(*)
-    !call zcopy(rx1T*mT*ry1T, x, 1, y, 1)
+    call zcopy(rx1T*mT*ry1T, x, 1, y, 1)
     call zbfun3(rx1T, mT, rx2T, ry1T, nT, ry2T, ra1T, ra2T, zphi1T, zAT, zphi2T, x, y)
  end subroutine zmatvec
 
@@ -46,8 +46,8 @@ contains
     implicit none
     complex(8), intent(in) :: x(*)
     complex(8) :: y(*)
-    call zmatvec(x,y)
-    !call bfun3_transp(rx1T, mT, rx2T, ry1T, nT, ry2T, ra1T, ra2T, phi1T, AT, phi2T, x, y)
+    !call zmatvec(x,y)
+    call zbfun3_transp(rx1T, mT, rx2T, ry1T, nT, ry2T, ra1T, ra2T, zphi1T, zAT, zphi2T, x, y)
   end subroutine zmatvec_transp
 
 
@@ -479,6 +479,8 @@ contains
     complex(8) ZERO, ONE
     parameter( ZERO=(0.0d0,0.0d0), ONE=(1.0d0,0.0d0) )
 
+    !Save everything to a file and return 
+
     min_res = 1d-1
     rmax2 = rmax 
     !Inner parameters
@@ -519,6 +521,10 @@ contains
        call zcopy(ry(i)*n(i)*ry(i+1), crY0(mm), 1, crnew(i)%p, 1)
        mm = mm + ry(i)*n(i)*ry(i+1)
     end do
+    !open(unit=10,status='replace',file='test_ksl.dat',form='unformatted',access='stream')
+    !write(10) d,n(1:d),m(1:d),ra(1:d+1),ry(1:d+1),pa(d+1)-1,crA(1:(pa(d+1)-1)),mm-1,crY0(1:mm-1),tau,rmax,kickrank,nswp,verb 
+    !close(10)
+    !return
     allocate(phinew(1)%p(1))
     allocate(phinew(d+1)%p(1))
     phinew(1)%p(1) = ONE
@@ -543,7 +549,6 @@ contains
        end if
        i = i+dir
     end do
-    i = d
 
     ermax = 0d0
     i = d
@@ -560,79 +565,46 @@ contains
        if ( dir < 0 ) then
            call init_bfun_sizes(ry(i),n(i),ry(i+1),ry(i),n(i),ry(i+1),ra(i),ra(i+1),ry(i)*n(i)*ry(i+1),ry(i)*n(i)*ry(i+1))
            call zinit_bfun_main(phinew(i)%p,crA(pa(i):pa(i+1)-1),phinew(i+1)%p)
-          !anorm = znormest(ry(i)*n(i)*ry(i+1),4, zmatvec, zmatvec_transp)
+           !anorm = znormest(ry(i)*n(i)*ry(i+1),4, zmatvec, zmatvec_transp)
+           !print *, anorm
           anorm = 1d0
-          call zexp_mv(ry(i)*n(i)*ry(i+1),30,tau/2,crnew(i)%p,curcr,eps,anorm,zmatvec)
-          if ( i < d ) then
-             !In this case, we have to put S(i+1) backwards in time (heh)
-             call zqr(n(i)*ry(i), ry(i+1), curcr, R) 
-
-             call zphi_left(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), &
-                           ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), curcr, curcr, phitmp)
-             call zinit_sfun(ry(i+1), ry(i+1), ra(i+1), ry(i+1), ry(i+1), phitmp, phinew(i+1)%p)
-             !anorm = znormest(ry(i+1)*ry(i+1), 4, zsfun_matvec, zsfun_matvec_transp)
-             anorm = 1d0
-             call zexp_mv(ry(i+1)*ry(i+1), 30, -tau/2, R, Stmp, eps, anorm, zsfun_matvec)
-             call zgemm('n','n',ry(i)*n(i),ry(i+1),ry(i+1),ONE,curcr, ry(i)*n(i), Stmp, ry(i+1), ZERO, crnew(i)%p, ry(i)*n(i))
-             call zcopy(ry(i)*n(i)*ry(i+1),crnew(i)%p,1,curcr,1)
-          end if
-          
+          !allocate(X(ra(i)*n(i),n(i)*ra(i+1)))
+          !call zcopy(ry(i)*n(i)*n(i)*ra(i+1),crA(pa(i)),1,X,1)
+          !allocate(X(ry(i)*n(i)*ry(i+1),ry(i)*n(i)*ry(i+1)))
+          !call zBfull(ry(i),n(i),ry(i+1),ry(i),n(i),ry(i+1),ra(i),ra(i+1),phinew(i)%p, phinew(i+1)%p, crA(pa(i):pa(i+1)-1),X)
+          !call disp(X)
+          !pause
+          print *,'tau=',tau,'eps=',eps
+          call zexp_mv(ry(i)*n(i)*ry(i+1),30,tau,crnew(i)%p,curcr,eps,anorm,zmatvec)
+          ! I see the wrong way(!)
+          print *,i 
           if ( i > 1 ) then
-             call ztransp(ry(i),n(i)*ry(i+1), curcr)
-             call zqr(n(i)*ry(i+1), ry(i), curcr, R)
-             call ztransp(n(i)*ry(i+1), ry(i), curcr, crnew(i)%p)
-             call zgemm('n','t',ry(i-1)*n(i),ry(i), ry(i), ONE, crnew(i-1)%p, ry(i-1)*n(i), R, ry(i), ZERO, curcr, ry(i-1)*n(i))
-             call zcopy(ry(i-1)*n(i)*ry(i), curcr, 1, crnew(i-1)%p, 1)
-
-             !And recompute phi
-             if ( size(phinew(i)%p) < ry(i)*ry(i)*ra(i) ) then
+            call ztransp(ry(i),n(i)*ry(i+1),curcr)
+            call zqr(n(i)*ry(i+1), ry(i), curcr, R) 
+            call ztransp(n(i)*ry(i+1),ry(i), curcr)
+            call zcopy(ry(i)*n(i)*ry(i+1),curcr,1,crnew(i)%p,1)
+            call ztransp(ry(i),ry(i),R)
+            ! This phi_left is needed to recompute S
+            
+            call zphi_right(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), &
+                       ra(i), ra(i+1), phinew(i+1)%p, crA(pa(i)), curcr, curcr, phitmp)
+            
+            
+            call zinit_sfun(ry(i), ry(i), ra(i), ry(i), ry(i), phinew(i)%p, phitmp)
+            !anorm = znormest(ry(i+1)*ry(i+1), 4, zsfun_matvec, zsfun_matvec_transp)
+            anorm = 1d0
+            call zexp_mv(ry(i+1)*ry(i+1), 30, -tau, R, Stmp, eps, anorm, zsfun_matvec)
+            call zgemm('n','n',ry(i-1)*n(i-1),ry(i),ry(i),ONE,crnew(i-1)%p,ry(i-1)*n(i-1),Stmp,ry(i),ZERO,curcr,ry(i-1)*n(i-1))
+            call zcopy(ry(i-1)*n(i-1)*ry(i),curcr,1,crnew(i-1)%p,1)
+            if ( size(phinew(i)%p) < ry(i)*ry(i)*ra(i) ) then
                 deallocate(phinew(i)%p)
                 allocate(phinew(i)%p(ry(i)*ry(i)*ra(i)*2))
-             end if
-             call zphi_right(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), &
-                            ra(i), ra(i+1), phinew(i+1)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phinew(i)%p)
-          end if
-       end if
-       if ( dir > 0 ) then
-          !We will rewrite to (an ordinary) LR-iteration that starts from the first core, but it seems to be not the second order
-
-          !dqr ->
-          !step S
-          !update core
-          !dqr ->
-          !mul 
-          if ( i < d ) then
-             call zqr(ry(i)*n(i),ry(i+1),crnew(i)%p,R)
-             !The size of the updated s would be ry(i+1) -> 
-             call zphi_left(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), ra(i), &
-             ra(i+1), phinew(i)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phitmp)
-             call zinit_sfun(ry(i+1), ry(i+1), ra(i+1), ry(i+1), ry(i+1), phitmp, phinew(i+1)%p)
-             !anorm = znormest(ry(i+1)*ry(i+1),4,zsfun_matvec,zsfun_matvec_transp)
-             anorm = 1d0
-             call zexp_mv(ry(i+1)*ry(i+1), 30, -tau/2, R, Stmp, eps, anorm, zsfun_matvec)
-             call zgemm('n','n',ry(i)*n(i),ry(i+1),ry(i+1),ONE,crnew(i)%p,ry(i)*n(i),Stmp,ry(i+1),ZERO,curcr,ry(i)*n(i))
+            end if
+            call zcopy(ry(i)*ra(i)*ry(i),phitmp,1,phinew(i)%p,1) !Update phi  
           else
-             call zcopy(ry(i)*n(i)*ry(i+1),crnew(i)%p,1,curcr,1)
+            call zcopy(ry(i)*n(i)*ry(i+1),curcr,1,crnew(i)%p,1) 
           end if
-
-          call init_bfun_sizes(ry(i),n(i),ry(i+1),ry(i),n(i),ry(i+1),ra(i),ra(i+1),ry(i)*n(i)*ry(i+1),ry(i)*n(i)*ry(i+1))
-          call zinit_bfun_main(phinew(i)%p,crA(pa(i):pa(i+1)-1),phinew(i+1)%p)
-
-          !anorm = znormest(ry(i)*n(i)*ry(i+1),4, zmatvec, zmatvec_transp)
-          anorm = 1d0
-          call zexp_mv(ry(i)*n(i)*ry(i+1),30,tau/2,curcr,crnew(i)%p,eps,anorm,zmatvec)
-
-          if ( i < d ) then
-             call zqr(ry(i)*n(i),ry(i+1),crnew(i)%p,R)
-             call zgemm('n','n',ry(i+1),n(i+1)*ry(i+2),ry(i+1),ONE,R,ry(i+1),crnew(i+1)%p,ry(i+1),ZERO,curcr,ry(i+1))
-             call zcopy(ry(i+1)*n(i+1)*ry(i+2),curcr,1,crnew(i+1)%p,1)
-             if ( size(phinew(i+1)%p) < ry(i+1)*ry(i+1)*ra(i+1) ) then
-                deallocate(phinew(i+1)%p)
-                allocate(phinew(i+1)%p(ry(i+1)*ry(i+1)*ra(i+1)*2))
-             end if
-             call zphi_left(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), &
-             ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phinew(i+1)%p)
-          end if
+          
        end if
 
 
@@ -640,13 +612,12 @@ contains
        if ((dir>0) .and. (i==d )) then
           dir = -1
           i = d
-          !call disp('swp: '//tostring(1d0*swp)//' er = '//tostring(ermax)//' rmax:'//tostring(1d0*maxval(ry(1:d))))
           swp = swp + 1
           ermax = 0d0
        else if ((dir < 0) .and. (i == 1 )) then
           dir = 1
           i = 1
-          !goto 105
+          goto 105
        else
           i = i + dir
        end if
@@ -667,7 +638,7 @@ contains
     nn = 1
     do i=1,d
        call zcopy(ry(i)*n(i)*ry(i+1), crnew(i)%p, 1, zresult_core(nn), 1)
-       nn = nn+ry(i)*n(i)*ry(i+1)
+       nn = nn + ry(i)*n(i)*ry(i+1)
     end do
     do i = 1,d
        if ( associated(crnew(i)%p)) then

@@ -186,8 +186,8 @@ contains
     complex(8) :: ycopy(ry1*n*ry2)
     complex(8) ::  ZERO, ONE
     parameter( ZERO=(0.0d0,0.0d0), ONE=(1.0d0,0.0d0) )
-    complex(8) :: res1(rx1*m*ra2*ry2)
-    complex(8) :: res2(ra1*n*ry2*rx1)
+    complex(8) :: res1(rx1,m,ra2,ry2)
+    complex(8) :: res2(ra1,n,ry2,rx1)
     
     ycopy(1:ry1*n*ry2) = conjg(y(1:ry1*n*ry2))
 
@@ -197,17 +197,15 @@ contains
     !  x: b1,j1,b2: rx1,m,rx2
     call zgemm('N', 'N', rx1*m, ra2*ry2, rx2, ONE, x, rx1*m, phi2_old, rx2, ZERO, res1, rx1*m)
     !    res1: rx1,m,ra2,ry2: b1,j1,a2,c2
-    call ztransp(rx1, m*ra2*ry2, res1, res2)
-    call zcopy(m*ra2*ry2*rx1, res2, 1, res1, 1)
+    call ztransp(rx1, m*ra2*ry2, res1)
     !     j1, a2, c2, b1
     call zgemm('N', 'N', ra1*n, ry2*rx1, m*ra2, ONE, A, ra1*n, res1, m*ra2, ZERO, res2, ra1*n)
     !     res2: ra1,n,ry2,rx1 : a1, i1, c2, b1
-    call ztransp(ra1, n*ry2*rx1, res2, res1)
+    call ztransp(ra1, n*ry2*rx1, res2)
     !   i1,c2,b1,a1
-    call zgemm('N', 'N', ry1, rx1*ra1, n*ry2, ONE, ycopy, ry1, res1, n*ry2, ZERO, phi2, ry1)
+    call zgemm('N', 'N', ry1, rx1*ra1, n*ry2, ONE, ycopy, ry1, res2, n*ry2, ZERO, phi2, ry1)
     ! phi2: ry1, rx1, ra1
-    call ztransp(ry1, rx1*ra1, phi2, res1)
-    call zcopy(rx1*ra1*ry1, res1, 1, phi2, 1)
+    call ztransp(ry1, rx1*ra1, phi2)
   end subroutine zphi_right
 
 
@@ -343,21 +341,27 @@ contains
     call dcopy(ry1*n*ry2*rx1*m*rx2, res1, 1, B, 1)
   end subroutine dBfull
 
-  subroutine zBfull(rx1, m, rx2, ry1, n, ry2, ra1, ra2, phi1, A, phi2, B, res1, res2)
+  subroutine zBfull(rx1, m, rx2, ry1, n, ry2, ra1, ra2, phi1, A, phi2, B)
     use matrix_util
     ! sizes of res1, res2: max(ry1*n*rx1*m*ra2, rx2*ra2*ry2, ry1*n*ry2*rx1*m*rx2)
     integer, intent(in) :: rx1, m, rx2, ry1, n, ry2, ra1, ra2
     complex(8), intent(in) :: phi1(*), A(*), phi2(*)
-    complex(8), intent(inout) :: B(*), res1(*), res2(*)
-
+    complex(8), intent(inout) :: B(*)
+    complex(8) ::  ZERO, ONE
+    complex(8), allocatable :: res1(:),res2(:)
+    integer :: mx
+    parameter( ZERO=(0.0d0,0.0d0), ONE=(1.0d0,0.0d0) )
+    mx = max(ry1*n*rx1*m*ra2,rx2*ra2*ry2,ry1*n*ry2*rx1*m*rx2)
+    allocate(res1(mx))
+    allocate(res2(mx))
     ! phi1: ry1,rx1,ra1
-    call zgemm('N', 'N', ry1*rx1, n*m*ra2, ra1, (1d0,0d0), phi1, ry1*rx1, A, ra1, (0d0,0d0), res1, ry1*rx1)
+    call zgemm('N', 'N', ry1*rx1, n*m*ra2, ra1, ONE, phi1, ry1*rx1, A, ra1, ONE, res1, ry1*rx1)
     ! res1: ry1,rx1,n,m,ra2
     call zperm1324(ry1, rx1, n, m*ra2, res1, res2)
     call zcopy(ry1*n*rx1*m*ra2, res2, 1, res1, 1)
     ! phi2: rx2,ra2,ry2
     call ztransp(rx2, ra2*ry2, phi2, res2)
-    call zgemm('N', 'N', ry1*n*rx1*m, ry2*rx2, ra2, (1d0,0d0), res1, ry1*n*rx1*m, res2, ra2, (0d0,0d0), B, ry1*n*rx1*m);
+    call zgemm('N', 'N', ry1*n*rx1*m, ry2*rx2, ra2, ONE, res1, ry1*n*rx1*m, res2, ra2, ONE, B, ry1*n*rx1*m);
     call zperm1324(ry1*n, rx1*m, ry2, rx2, B, res1)
     ! now B: ry1,n,ry2,rx1,m,rx2
     call zcopy(ry1*n*ry2*rx1*m*rx2, res1, 1, B, 1)
