@@ -27,7 +27,7 @@ contains
     implicit none
     complex(8), intent(in) :: x(*)
     complex(8) :: y(*)
-    call zcopy(rx1T*mT*ry1T, x, 1, y, 1)
+    !call zcopy(rx1T*mT*rx2T, x, 1, y, 1)
     call zbfun3(rx1T, mT, rx2T, ry1T, nT, ry2T, ra1T, ra2T, zphi1T, zAT, zphi2T, x, y)
  end subroutine zmatvec
 
@@ -454,6 +454,7 @@ contains
     use bfun_ksl !bfun declarations
     use sfun_ksl !We have to do this
     use explib !Krylov exponential
+    use rnd_lib
     implicit none
     integer,intent(in) :: d,n(d),m(d),ra(d+1), rmax
     integer,intent(inout) :: ry(d+1)
@@ -472,7 +473,8 @@ contains
     double precision :: sv(rmax)
     complex(8), allocatable :: rnorms(:), W(:,:), X(:,:), Bmat(:,:), U(:,:), phitmp(:), Stmp(:)
     integer,allocatable :: pa(:)
-    integer :: i,j, k, swp, dir, lwork, mm, nn, rnew, max_matvecs, rmax2 
+    complex(8), allocatable :: tmp1(:), tmp2(:),tmp3(:,:,:)
+    integer :: i,j, k, sz,swp, dir, lwork, mm, nn, rnew, max_matvecs, rmax2 
     double precision :: err, ermax, res, res_old, min_res
     double precision anorm
     real(8) dznrm2
@@ -565,8 +567,11 @@ contains
        if ( dir < 0 ) then
            call init_bfun_sizes(ry(i),n(i),ry(i+1),ry(i),n(i),ry(i+1),ra(i),ra(i+1),ry(i)*n(i)*ry(i+1),ry(i)*n(i)*ry(i+1))
            call zinit_bfun_main(phinew(i)%p,crA(pa(i):pa(i+1)-1),phinew(i+1)%p)
-           !anorm = znormest(ry(i)*n(i)*ry(i+1),4, zmatvec, zmatvec_transp)
-           !print *, anorm
+          
+           !Compute the full matrix
+           
+           
+            !anorm = znormest(ry(i)*n(i)*ry(i+1),4, zmatvec, zmatvec_transp)
           anorm = 1d0
           !allocate(X(ra(i)*n(i),n(i)*ra(i+1)))
           !call zcopy(ry(i)*n(i)*n(i)*ra(i+1),crA(pa(i)),1,X,1)
@@ -574,7 +579,7 @@ contains
           !call zBfull(ry(i),n(i),ry(i+1),ry(i),n(i),ry(i+1),ra(i),ra(i+1),phinew(i)%p, phinew(i+1)%p, crA(pa(i):pa(i+1)-1),X)
           !call disp(X)
           !pause
-          print *,'tau=',tau,'eps=',eps
+          print *,'it:=',i,'tau=',tau,'eps=',eps
           call zexp_mv(ry(i)*n(i)*ry(i+1),30,tau,crnew(i)%p,curcr,eps,anorm,zmatvec)
           ! I see the wrong way(!)
           print *,i 
@@ -588,12 +593,36 @@ contains
             
             call zphi_right(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), &
                        ra(i), ra(i+1), phinew(i+1)%p, crA(pa(i)), curcr, curcr, phitmp)
-            
+            !phitmp is now ry(i) x ra(i) x ry(i) 
+            !allocate(tmp3(ry(i),ra(i),ry(i)))
+            !call zcopy(ry(i)*ra(i)*ry(i),phitmp,1,tmp3,1)
+            !allocate(X(ry(i),ry(i)))
+            !do j = 1,ra(i)
+            !    X(:,:) = tmp3(:,j,:)
+            !    print *,dznrm2(ry(i)*ry(i),X + (0d0,1d0)*transpose(X),1)
+            !    call disp(X)
+            !    read(*,*)
+            !end do
+            !deallocate(tmp3)
+            !deallocate(X)
             
             call zinit_sfun(ry(i), ry(i), ra(i), ry(i), ry(i), phinew(i)%p, phitmp)
+           sz = ry(i)*ry(i)
+            !allocate(X(sz,sz))
+            !allocate(tmp1(sz))
+            !do j = 1,sz
+            !   tmp1(1:sz) = ZERO
+            !   tmp1(j) = ONE
+            !   call zsfun_matvec(tmp1,X(:,j))
+            !end do 
+            !call disp(X(1:4,1:4))
+            !print *, dznrm2(sz*sz,X + conjg(transpose(X)),1)/dznrm2(sz*sz,X,1)
+            !read(*,*)
+            !deallocate(X)
+            !deallocate(tmp1)
             !anorm = znormest(ry(i+1)*ry(i+1), 4, zsfun_matvec, zsfun_matvec_transp)
             anorm = 1d0
-            call zexp_mv(ry(i+1)*ry(i+1), 30, -tau, R, Stmp, eps, anorm, zsfun_matvec)
+            call zexp_mv(ry(i)*ry(i), 30, -tau, R, Stmp, eps, anorm, zsfun_matvec)
             call zgemm('n','n',ry(i-1)*n(i-1),ry(i),ry(i),ONE,crnew(i-1)%p,ry(i-1)*n(i-1),Stmp,ry(i),ZERO,curcr,ry(i-1)*n(i-1))
             call zcopy(ry(i-1)*n(i-1)*ry(i),curcr,1,crnew(i-1)%p,1)
             if ( size(phinew(i)%p) < ry(i)*ry(i)*ra(i) ) then

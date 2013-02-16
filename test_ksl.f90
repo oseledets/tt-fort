@@ -6,6 +6,7 @@
  complex(8), allocatable ::  crA(:), crY(:)
  integer :: i
     open(unit=10,status='old',file='test_ksl.dat',form='unformatted',access='stream')
+    !open(unit=10,status='old',file='test_eye_ksl.dat',form='unformatted',access='stream')
     read(10) d
     allocate(n(d))
     allocate(m(d))
