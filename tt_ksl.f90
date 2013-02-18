@@ -568,9 +568,6 @@ contains
            call init_bfun_sizes(ry(i),n(i),ry(i+1),ry(i),n(i),ry(i+1),ra(i),ra(i+1),ry(i)*n(i)*ry(i+1),ry(i)*n(i)*ry(i+1))
            call zinit_bfun_main(phinew(i)%p,crA(pa(i):pa(i+1)-1),phinew(i+1)%p)
           
-           !Compute the full matrix
-           
-           
             !anorm = znormest(ry(i)*n(i)*ry(i+1),4, zmatvec, zmatvec_transp)
           anorm = 1d0
           !allocate(X(ra(i)*n(i),n(i)*ra(i+1)))
@@ -579,10 +576,7 @@ contains
           !call zBfull(ry(i),n(i),ry(i+1),ry(i),n(i),ry(i+1),ra(i),ra(i+1),phinew(i)%p, phinew(i+1)%p, crA(pa(i):pa(i+1)-1),X)
           !call disp(X)
           !pause
-          print *,'it:=',i,'tau=',tau,'eps=',eps
           call zexp_mv(ry(i)*n(i)*ry(i+1),30,tau,crnew(i)%p,curcr,eps,anorm,zmatvec)
-          ! I see the wrong way(!)
-          print *,i 
           if ( i > 1 ) then
             call ztransp(ry(i),n(i)*ry(i+1),curcr)
             call zqr(n(i)*ry(i+1), ry(i), curcr, R) 
@@ -630,7 +624,7 @@ contains
                 allocate(phinew(i)%p(ry(i)*ry(i)*ra(i)*2))
             end if
             call zcopy(ry(i)*ra(i)*ry(i),phitmp,1,phinew(i)%p,1) !Update phi  
-          else
+          else !i == 1 
             call zcopy(ry(i)*n(i)*ry(i+1),curcr,1,crnew(i)%p,1) 
           end if
           
@@ -687,7 +681,6 @@ contains
 
 
   end subroutine ztt_ksl
-  !! What we have: we have a starting vector + a matrix (no vector X!) 
   
 
 end module dyn_tt
