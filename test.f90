@@ -45,7 +45,10 @@
       !do i = 1,d
       !  cra(i) = 1d0
       !end do 
-      call  ztt_kls(d,n,n,ra,cra,cry,ry,1d-2,150,5,20, 0)
+      i = 1
+      do while ( i > 0 )
+        call  ztt_kls(d,n,n,ra,cra,cry,ry,1d-2,150,5,20, 0)
+      end do 
       deallocate(n)
       deallocate(ra)
       deallocate(ry)

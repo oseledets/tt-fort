@@ -1,10 +1,11 @@
 module explib
  contains 
-   subroutine exp_mv(n,m,tau,v,w,tol,anorm,matvec)
+   subroutine exp_mv(n, m, tau, v, w, tol, anorm, matvec, verb)
      integer, intent(in) :: n,m
      double precision, intent(in) :: tau, tol, anorm
      double precision, intent(in) :: v(n)
      double precision, intent(out) :: w(n)
+     integer, intent(in), optional :: verb
      integer :: m1
      integer :: ideg = 6
      integer :: lwsp 
@@ -21,23 +22,49 @@ module explib
      allocate(iwsp(liwsp))
      m1 = min(m,n) !Fix sizes
      if ( m1 .eq. 0 ) then !The matrix is 1 x 1 :)
-        call matvec(1d0,w)
-        w(1) = v(1) * exp(w(1) * tau)
+         call matvec(1d0,w)
+         w(1) = v(1) * exp(w(1) * tau)
      else
          call dgexpv(n,m1,tau,v,w,tol,anorm,wsp,lwsp,iwsp,liwsp,matvec,itrace,iflag)
-        if ( iflag .ne. 0 ) then
-           print *,'exp_mv failed with iflag=',iflag
-        end if
+         if ( iflag .ne. 0 ) then
+             print *,'exp_mv failed with iflag=',iflag
+         end if
+     end if
+     if ( present(verb) ) then 
+        write(*, '(a, I5)') 'matvecs: ', iwsp(1) 
      end if
      deallocate(wsp)
      deallocate(iwsp)
-   end subroutine exp_mv
+ end subroutine exp_mv
    
 
-   subroutine zexp_mv(n,m,tau,v,w,tol,anorm,matvec)
+   subroutine zexp_mv(n, m, tau, v, w, tol, anorm, matvec, verb)
+     ! Thin layer around EXPOKIT package
+     ! Input arguments:
+     !
+     ! integer n - the problem size
+     !
+     ! integer m - maximum size of the Krylov basis
+     !
+     ! real(8) tau - the time step
+     !
+     ! complexl(8) v(n), input - the starting vector
+     !
+     ! complex(8) w(n), output - the result
+     !
+     ! real(8) tol ---  solution tolerance
+     !
+     ! real(8) anorm --- norm estimate 
+     !
+     ! external matvec --- matrix-by-vector procedure, call matvec(x,y)
+     !
+     ! integer verb --- optional, verbosity level
+
+
      implicit none
-     integer, intent(in) :: n,m
+     integer, intent(in) :: n, m
      double precision, intent(in) :: tau, tol, anorm
+     integer, intent(in), optional :: verb
      complex(8), intent(in) :: v(n)
      complex(8), intent(out) :: w(n)
      integer :: m1
@@ -56,13 +83,19 @@ module explib
      allocate(iwsp(liwsp))
      m1 = min(m,n) !Fix sizes
      if ( m1 .eq. 1 ) then !The matrix is 1 x 1 :)
-        call matvec((1d0,0d0),w)
+        call matvec((1d0,0d0), w)
         w(1) = v(1) * exp(w(1) * tau)
      else
-        call zgexpv(n,m1,tau,v,w,tol,anorm,wsp,lwsp,iwsp,liwsp,matvec,itrace,iflag)
+        call zgexpv(n, m1, tau, v, w, tol, anorm, wsp, &
+                   lwsp, iwsp, liwsp, matvec, itrace, iflag)
         if ( iflag .ne. 0 ) then
            print *,'exp_mv failed with iflag=',iflag
         end if
+     end if
+     if ( present(verb) ) then 
+        write(*, '(a, I5)') 'matvecs: ', iwsp(1) 
+        print *,'time covered:', wsp(8)
+        print *,'error:', wsp(6) 
      end if
      deallocate(wsp)
      deallocate(iwsp)

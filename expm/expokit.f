@@ -2629,9 +2629,6 @@
          nmult = nmult + 1
          call matvec( wsp(j1v-n), wsp(j1v) )
          do i = 1,j
-            !print *,'wsp:',wsp(iv+(i-1)*n:iv+i*n-1)
-            !print *,'wsp2:', wsp(j1v:j1v+n-1)
-            !hij = ZDOTC( n, wsp(iv+(i-1)*n),1, wsp(j1v),1 )
             call zgemm('c','n',1,1,n,ONE,        
      *   wsp(iv+(i-1)*n),n,wsp(j1v),n,ZERO, hij, 1)
             call ZAXPY( n, -hij, wsp(iv+(i-1)*n),1, wsp(j1v),1 )
@@ -2672,13 +2669,6 @@
       mx = mbrkdwn + k1
       if ( ideg.ne.0 ) then
 *---     irreducible rational Pade approximation ...
-         !print *,'matrix:',wsp(ih:ih+16)
-         !test IF the matrix is the identity
-         !do i = 1,4
-         !  do j = 1,4
-         !      print *,i,j,wsp(ih+(i-1)+(j-1)*4)
-         !  end do
-         !end do 
          
          call ZGPADM( ideg, mx, sgn*t_step, wsp(ih),mh,
      .                wsp(ifree),lfree, iwsp, iexph, ns, iflag )

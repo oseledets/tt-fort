@@ -50,10 +50,13 @@ contains
   end function normest
   function znormest(n,t0, matvec, matvec_transp) result(est)
     implicit none
-    integer, intent(in) :: n,t0
+    integer, intent(in) :: n, t0
     integer :: t 
     external matvec, matvec_transp
-    complex(8) :: v(n), x(n,t0), xold(n,t0)
+    complex(8) :: v(n), x(n, t0), xold(n, t0)
+    complex(8) ::  ZERO, ONE
+    parameter( ZERO=(0.0d0,0.0d0), ONE=(1.0d0,0.0d0) )
+
     real(8) :: H(n)
     integer :: ind(n), indh(n), info
     double precision :: est
@@ -61,26 +64,29 @@ contains
     i = 1 
     kase = 0
     t = min(n,t0)
-    x(:,:) = 0d0
+
+    x(:,:) = ZERO
     do while ( (kase .ne. 0) .or. (i .eq. 1) ) 
-       call zlacn1(n,t,v,x,n,xold,n,H,ind,indh, est, kase, iseed, info)
-       !if ( (kase .eq. 0) .and. ((info .ne. 2) .and. (info .ne. 3))) then
-       !   print *,'normest failed with info=',info
-       !end if
-       if ( kase .eq.  1 ) then
-          do k = 1,t
-            !call matvec(x(:,k),xold(:,k))
-          end do 
-          call zcopy(n*t,xold,1,x,1)
-       else if ( kase .eq. 2 ) then
-          do k = 1,t
-            !call matvec_transp(x(:,k),xold(:,k))
-          end do 
-          call zcopy(n*t,xold,1,x,1)
-       else if ( kase .ne. 0 ) then
-          print *,'norm est failed with kase=',kase 
-       end if
-       i = i + 1
+        call zlacn1(n, t, v, x, n, xold, n, H,  &
+            ind, indh, est, kase, iseed, info)
+        !if ( (kase .eq. 0) .and. ((info .ne. 2) .and. (info .ne. 3))) then
+        !   print *,'normest failed with info=',info
+        !end if
+        if ( kase .eq.  1 ) then
+            do k = 1,t
+                call matvec(x(:, k), xold(:, k))
+            end do 
+            call zcopy(n * t, xold, 1, x, 1)
+        else if ( kase .eq. 2 ) then
+            do k = 1,t
+                !call matvec(x(:, k), xold(:, k))
+                call matvec_transp(x(:,k), xold(:,k))
+            end do 
+                call zcopy(n * t, xold, 1, x, 1)
+        else if ( kase .ne. 0 ) then
+            print *,'norm est failed with kase=',kase 
+        end if
+        i = i + 1
     end do 
   end function znormest
 end module estnorm
