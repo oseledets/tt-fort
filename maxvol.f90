@@ -75,19 +75,11 @@ contains
 !   allocate(tt(m,n)); call maxvola_d(a,p,tt); nrm=dnrm2(m*n,tt,1); tt=tt-z; err=dnrm2(m*n,tt,1); deallocate(tt)
 !   write(*,'(a,i4,3(a,e9.3))')'iter: ',iter,' err: ',err,' nrm: ',nrm,' relerr: ',err/nrm
 !--
-!..OMP parallel workshare shared(z) 
-!   ij=maxloc(abs(z))
-!..OMP END parallel workshare
-!   i=ij(1); j=ij(2)
-   
-!   i=idamax(m*n,z,1); j=(i-1)/m+1; i=i-(j-1)*m
 
-!$OMP parallel do shared(z,q,v)
    do jj=1,n
     q(jj)=idamax(m,z(1,jj),1)
     v(jj)=abs(z(q(jj),jj))
    end do
-!$OMP END parallel do
    j=maxloc(v,1); i=q(j)
    
    amax=dabs(z(i,j))
@@ -99,15 +91,9 @@ contains
 
 !!  call dger(m,n,zinv,u,1,v,1,z,m)
 
-!!..OMP PARALLEL WORKSHARE SHARED(z,u,v,zinv) 
-!!   forall(ii=1:m,jj=1:n) z(ii,jj)=z(ii,jj)+zinv*u(ii)*v(jj)
-!!..OMP END PARALLEL WORKSHARE
-
-!$OMP parallel do shared(z,zinv,u,v)
    do jj=1,n
     call daxpy(m,zinv*v(jj),u,1,z(1,jj),1)
    end do
-!$OMP END parallel do
    z(i,:)=0.d0; z(i,j)=1.d0   ! FORCE
   end do 
 100 continue
@@ -181,12 +167,10 @@ contains
   end if
   
   do iter=1,maxiter
-!$OMP parallel do shared(z,q,v)
    do jj=1,n
     q(jj)=izamax(m,z(1,jj),1)
     v(jj)=abs(z(q(jj),jj))
    end do
-!$OMP END parallel do
    j=maxloc(v,1); i=q(j)
    
    amax=abs(z(i,j))
@@ -196,11 +180,9 @@ contains
    u=z(:,j); v=z(ip,:)-z(i,:)
    zinv=(1.d0,0.d0)/z(i,j)
 
-!$OMP parallel do shared(z,zinv,u,v)
    do jj=1,n
     call zaxpy(m,zinv*v(jj),u,1,z(1,jj),1)
    end do
-!$OMP END parallel do
    z(i,:)=(0.d0,0.d0); z(i,j)=(1.d0,0.d0)   ! FORCE
   end do 
 100 continue
