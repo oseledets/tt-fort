@@ -1310,14 +1310,12 @@ double precision function dtt_norm(arg,tol) result (nrm)
    call svd(tmp,tol)
    nrm=dnrm2(size(tmp%u(l)%p),tmp%u(l)%p,1)
   else
-   !t1=timef()
    call ort(tmp)
-   !t2=timef()
-   !print *,'Plain orthogonalization:',t2-t1
    nrm=dnrm2(size(tmp%u(m)%p),tmp%u(m)%p,1)
   end if
   call dealloc(tmp)
  end function
+
  double precision function ztt_norm(arg,tol) result (nrm)
   implicit none
   type(ztt),intent(in) :: arg

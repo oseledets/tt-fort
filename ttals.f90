@@ -42,6 +42,7 @@ contains
     parameter( ZERO=(0.0d0,0.0d0), ONE=(1.0d0,0.0d0) )
     !phi2(rx2,ra2,ry2)
     !phi1(ry1,rx1,ra1) 
+    
     call zgemm('N', 'N', rx1*m, ra2*ry2, rx2, ONE, x, rx1*m, phi2, rx2, ZERO, res1, rx1*m)
     !    res1: rx1,m,ra2,ry2: b1,j1,a2,c2
     call ztransp(rx1, m*ra2*ry2, res1)
@@ -87,26 +88,24 @@ contains
     integer, intent(in) :: rx1, m, rx2, ry1, n, ry2, ra1, ra2
     complex(8), intent(in) :: phi1(*), A(*), phi2(*), x(*)
     complex(8), intent(inout) :: y(*)
-    complex(8) :: res1(rx1,m,ra2,ry2)
-    complex(8) :: res2(ra1,n,ry2,rx1)
-    complex(8) :: At(ra1,m,n,ra2)
+    complex(8) :: res1(ry2, rx1, ra1, n)
+    complex(8) :: res2(ry2, rx1, m, ra2)
     complex(8) ::  ZERO, ONE
     parameter( ZERO=(0.0d0,0.0d0), ONE=(1.0d0,0.0d0) )
-    call zperm1324(ra1, n, m, ra2, A, At) !The dtranspose, but it is cheap
-
-    call zgemm('N', 'N', rx1*m, ra2*ry2, rx2, ONE, x, rx1*m, phi2, rx2, ZERO, res1, rx1*m)
-    !    res1: rx1,m,ra2,ry2: b1,j1,a2,c2
-    call ztransp(rx1, m*ra2*ry2, res1, res2)
-    call zcopy(m*ra2*ry2*rx1, res2, 1, res1, 1)
-    !     j1, a2, c2, b1
-    call zgemm('N', 'N', ra1*n, ry2*rx1, m*ra2, ONE, A, ra1*n, res1, m*ra2, ZERO, res2, ra1*n)
-    !     res2: ra1,n,ry2,rx1 : a1, i1, c2, b1                                               
-    call ztransp(ra1*n*ry2, rx1, res2, res1)
-    !     b1,a1,i1,c2
-    !    phi1: c1, b1, a1 : ry1, rx1, ra1
-    call zgemm('N', 'N', ry1, n*ry2, rx1*ra1, ONE, phi1, ry1, res1, rx1*ra1, ZERO, y, ry1)
-    !     y: c1,i1,c2
-
+    !conjx(ry1, n, ry2) * phi1(ry1, rx1, ra1) * A(ra1, n, m, ra2) * phi2(rx2, ra2, ry2)
+    call zgemm('c','n', n * ry2, rx1 * ra1, ry1, ONE, x, &
+               ry1 * n, phi1, ry1, ZERO, res1, n * ry2)
+     !res1 is now n * ry2 * rx1 * ra1
+    call ztransp(n, ry2 * rx1 * ra1, res1) 
+     !res1 is now ry2 * rx1 * ra1 * n
+    call zgemm('n', 'n', ry2 * rx1, m * ra2, ra1 * n, ONE, res1, ry2 * rx1, &
+               A, ra1 * n, ZERO, res2, ry2 * rx1)
+     !res2 is now ry2 * rx1 * m * ra2
+    call ztransp(ry2, rx1 * m * ra2, res2) 
+     !res2 is now rx1 * m * ra2 * ry2
+    call zgemm('n', 't', rx1 * m, rx2, ra2 * ry2, ONE, res2, rx1 * m, &
+               phi2, rx2, ZERO, y, rx1 * m)
+    y(1:rx1 * m * rx2) = conjg(y(1:rx1 * m * rx2))
   end subroutine zbfun3_transp
 
 

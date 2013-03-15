@@ -48,12 +48,14 @@ contains
        i = i + 1
     end do 
   end function normest
-  function znormest(n,t0, matvec, matvec_transp) result(est)
+
+  function znormest(n, t0, matvec, matvec_transp) result(est)
     implicit none
     integer, intent(in) :: n,t0
     integer :: t 
     external matvec, matvec_transp
     complex(8) :: v(n), x(n,t0), xold(n,t0)
+    complex(8) :: ZERO
     real(8) :: H(n)
     integer :: ind(n), indh(n), info
     double precision :: est
@@ -69,12 +71,12 @@ contains
        !end if
        if ( kase .eq.  1 ) then
           do k = 1,t
-            !call matvec(x(:,k),xold(:,k))
+            call matvec(x(:,k),xold(:,k))
           end do 
-          call zcopy(n*t,xold,1,x,1)
+          call zcopy(n*t, xold, 1, x, 1)
        else if ( kase .eq. 2 ) then
           do k = 1,t
-            !call matvec_transp(x(:,k),xold(:,k))
+            call matvec_transp(x(:,k),xold(:,k))
           end do 
           call zcopy(n*t,xold,1,x,1)
        else if ( kase .ne. 0 ) then

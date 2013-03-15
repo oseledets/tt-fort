@@ -33,7 +33,9 @@
     print *,'ry=',ry(1:d+1)
     print *,'tau=',tau, 'rmax=',rmax,'kickrank=',kickrank,'nswp=',nswp,'verb=',verb
     
-    call ztt_ksl(d,n,m,ra,crA, crY, ry, tau, rmax, kickrank, nswp, verb)
+    do while ( 1 > 0 )
+        call ztt_ksl(d,n,m,ra,crA, crY, ry, tau, rmax, kickrank, nswp, verb)
+    end do
     !Now we can call the main block
     
     !open(unit=10,status='replace',file='test_ksl.dat',form='unformatted')
