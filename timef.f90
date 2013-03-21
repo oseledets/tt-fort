@@ -6,7 +6,7 @@ contains
  double precision function timef( )
  integer :: c,r,m
  double precision :: t(2)
-! timef=etime(t)
+ !timef=etime(t)
 ! call system_clock(count=c,count_rate=r,count_max=m)
 ! if(c.lt.cold)then
 !  time_per=time_per+1
@@ -14,9 +14,9 @@ contains
 ! end if 
 ! timef=dble(c+time_per*m)/r
 ! time_cold=c
- !timef=omp_get_wtime()
+ timef=omp_get_wtime()
 
- timef=0.d0
+ !timef=0.d0
  !time=mpi_wtime()
  end function
 end module 
