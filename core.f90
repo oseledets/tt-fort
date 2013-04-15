@@ -82,7 +82,42 @@ module core
        pos2 = pos2 + r2(i) * m(i) * k(i) * r2(i+1)
        pos = pos + rres(i) * n(i) * k(i) * rres(i+1)
     end do 
-
-    
  end subroutine dmat_mat
+
+ subroutine zmat_mat(d,n,m,k,cr1,cr1size,cr2,cr2size,r1,r2,rres)
+    integer, intent(in) :: d
+    integer, intent(in) :: cr1size, cr2size
+    integer, intent(in) :: n(d)
+    integer, intent(in) :: m(d)
+    integer, intent(in) :: k(d)
+    integer, intent(in) :: r1(d+1)
+    integer, intent(in) :: r2(d+1)
+    integer, intent(out) :: rres(d+1)
+    complex(8), intent(in) :: cr1(cr1size)
+    complex(8), intent(in) :: cr2(cr2size)
+    integer :: i,pos,pos1,pos2,mem
+    
+    rres(1:d+1) = r1(1:d+1) * r2(1:d+1)
+    mem = 0
+    do i = 1,d
+       mem = mem + n(i) * k(i) * rres(i) * rres(i+1) 
+    end do 
+    if ( allocated(zresult_core) ) then
+       if ( size(zresult_core) < mem ) then
+          deallocate(zresult_core)
+          allocate(zresult_core(mem))
+       end if
+    else
+        allocate(zresult_core(mem))
+    end if
+    pos1 = 1
+    pos2 = 1
+    pos = 1
+    do i = 1,d
+       call zmat_mat_loc(n(i),m(i),k(i),r1(i),r1(i+1),r2(i),r2(i+1),cr1(pos1),cr2(pos2),zresult_core(pos))
+       pos1 = pos1 + r1(i) * n(i) * m(i) * r1(i+1)
+       pos2 = pos2 + r2(i) * m(i) * k(i) * r2(i+1)
+       pos = pos + rres(i) * n(i) * k(i) * rres(i+1)
+    end do 
+ end subroutine zmat_mat
 end module core
