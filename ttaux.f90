@@ -16,6 +16,9 @@ module ttaux_lib
  interface rnd
   module procedure dtt_rnd, ztt_rnd, ttind_rnd
  end interface
+ interface random ! ttamen compatibility, dammit
+  module procedure dtt_rnd, ztt_rnd
+ end interface
  interface mirror
   module procedure dtt_mirror, ztt_mirror
  end interface

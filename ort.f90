@@ -1,4 +1,5 @@
 module ort_lib
+ use nan_lib
  interface ort1
   module procedure ort1_d
  end interface
@@ -29,7 +30,21 @@ contains
 !  double precision,external :: dnrm2
 !-      
   m=size(inp,1); n=size(inp,2); k=max(m,n)
-  if(m.lt.n)then;write(*,*)subnam,': less rows than columns: ',shape(inp);stop;endif
+  if(m.lt.n)then 
+   !write(*,*)subnam,': less rows than columns: ',shape(inp)
+   if(present(mat))then
+    forall(i=1:m,j=1:n)mat(i,j)=inp(i,j)
+    forall(i=m+1:n,j=1:n)mat(i,j)=0.d0
+   end if
+   if(present(out))then
+    forall(i=1:m,j=1:n)out(i,j)=0.d0
+    forall(i=1:m)out(i,i)=1.d0
+   else 
+    forall(i=1:m,j=1:n)inp(i,j)=0.d0
+    forall(i=1:m)inp(i,i)=1.d0
+   end if 
+   return
+  end if
 !-for check- 
 !  allocate(tmp(m,n), mnn(n,n))
 !  call dcopy(m*n,inp,1,tmp,1); nrm=dnrm2(m*n,inp,1)
@@ -37,10 +52,11 @@ contains
   lwork=64*k
   allocate(tau(k),work(lwork),stat=info)
   if(info.ne.0)then;write(*,*)subnam,': cannot allocate';stop;endif
-  if(present(out))then;y=>out;call dcopy(m*n,inp,1,out,1);else;y=>inp;end if 
+  if(present(out))then;y=>out;call dcopy(m*n,inp,1,out,1);else;y=>inp;endif 
 
   call dgeqrf(m,n,y,m,tau,work,lwork,info)
-  if(info.ne.0)then; write(*,*) subnam,': dgeqrf info: ',info; stop; end if
+  if(info.ne.0)then; write(*,*) subnam,': dgeqrf info: ',info; stop; endif
+  if(nan(y))then;write(*,*)subnam,': dgeqrf returns NaNs, are you using Intel MKL 2011?';stop;endif
   
   if(present(mat))then
    forall(j=1:n) 
@@ -67,13 +83,14 @@ contains
 
  subroutine ort0_z(inp,out,mat)
   implicit none
-  complex(8),intent(inout) :: inp(:,:)
-  complex(8),intent(out),optional :: out(size(inp,1),size(inp,2))
-  complex(8),intent(out),optional :: mat(size(inp,2),size(inp,2))
+  double complex,intent(inout) :: inp(:,:)
+  double complex,intent(out),optional :: out(size(inp,1),size(inp,2))
+  double complex,intent(out),optional :: mat(size(inp,2),size(inp,2))
   character(len=*),parameter  :: subnam='ort0_z'
+  double complex,parameter :: zero=(0.d0,0.d0),one=(1.d0,0.d0)
   integer :: lwork,info,m,n,k,i,j
-  complex(8), allocatable :: work(:),tau(:)
-  complex(8),dimension(:,:),pointer :: y
+  double complex, allocatable :: work(:),tau(:)
+  double complex,dimension(:,:),pointer :: y
   target :: inp,out
 !-for check
 !  double precision :: nrm,err
@@ -81,8 +98,21 @@ contains
 !  double precision,external :: dnrm2
 !-      
   m=size(inp,1); n=size(inp,2); k=max(m,n)
-  if(m.lt.n)then;write(*,*)subnam,': less rows than columns: ',shape(inp);stop;endif
- 
+  if(m.lt.n)then 
+   !write(*,*)subnam,': less rows than columns: ',shape(inp)
+   if(present(mat))then
+    forall(i=1:m,j=1:n)mat(i,j)=inp(i,j)
+    forall(i=m+1:n,j=1:n)mat(i,j)=zero
+   end if
+   if(present(out))then
+    forall(i=1:m,j=1:n)out(i,j)=zero
+    forall(i=1:m)out(i,i)=one
+   else 
+    forall(i=1:m,j=1:n)inp(i,j)=zero
+    forall(i=1:m)inp(i,i)=one
+   end if 
+   return
+  end if
 !-for check- 
 !  allocate(tmp(m,n), mnn(n,n))
 !  call dcopy(m*n,inp,1,tmp,1); nrm=dnrm2(m*n,inp,1)
@@ -94,6 +124,7 @@ contains
   
   call zgeqrf(m,n,y,m,tau,work,lwork,info)
   if(info.ne.0)then; write(*,*) subnam,': zgeqrf info: ',info; stop; end if
+  if(nan(y))then;write(*,*)subnam,': zgeqrf returns NaNs, are you using Intel MKL 2011?';stop;endif
 
   if(present(mat))then
    forall(j=1:n) 
@@ -266,15 +297,15 @@ contains
  end subroutine
  subroutine orto_z(u,v,out,mat)
   implicit none
-  complex(8),intent(in) :: u(:,:)
-  complex(8),intent(inout) :: v(:,:)
-  complex(8),intent(out),optional :: out(size(v,1),size(v,2))
-  complex(8),intent(out),optional :: mat(size(u,2)+size(v,2),size(v,2))
+  double complex,intent(in) :: u(:,:)
+  double complex,intent(inout) :: v(:,:)
+  double complex,intent(out),optional :: out(size(v,1),size(v,2))
+  double complex,intent(out),optional :: mat(size(u,2)+size(v,2),size(v,2))
   character(len=*),parameter :: subnam='orto_d'
-  complex(8),parameter :: zero=(0.d0,0.d0),one=(1.d0,0.d0)
+  double complex,parameter :: zero=(0.d0,0.d0),one=(1.d0,0.d0)
   integer :: ru,rv,nu,nv,n,j, r,pass
-  complex(8),allocatable :: x(:),gu(:),gv(:),btmp(:,:)
-  complex(8),pointer :: bb(:,:),yy(:,:)
+  double complex,allocatable :: x(:),gu(:),gv(:),btmp(:,:)
+  double complex,pointer :: bb(:,:),yy(:,:)
   double precision :: nrm1,nrm2
   logical :: reort
   double precision,external :: dznrm2

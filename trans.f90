@@ -2,7 +2,7 @@ module trans_lib
  implicit none
 !---------------------------------------------------------------
 !     per = 1 -> 1 2 3 (No transpose, simple copy)
-!     per = 2 -> 2 3 1 
+!     per = 2 -> 2 3 1
 !     per = 3 -> 3 1 2
 !     per = 4 -> 3 2 1
 !     per = 5 -> 1 3 2
@@ -26,7 +26,7 @@ contains
   if(size(b,1).ne.n .or. size(b,2).ne.m)then
    write(*,*)subnam,': size mismatch: a[',shape(a),'] b[',shape(b),']'
    stop
-  end if 
+  end if
   IF(m.gt.n)then
 !$OMP PARALLEL DO SHARED(a,b)
    do j=1,n
@@ -44,15 +44,15 @@ contains
  end subroutine
  subroutine z2_trans(a,b)
   implicit none
-  complex(8),intent(in) :: a(:,:)
-  complex(8),intent(out):: b(:,:)
+  double complex,intent(in) :: a(:,:)
+  double complex,intent(out):: b(:,:)
   character(len=*),parameter :: subnam='z2_trans'
   integer :: i,j, m,n
   m=size(a,1); n=size(a,2)
   if(size(b,1).ne.n .or. size(b,2).ne.m)then
    write(*,*)subnam,': size mismatch: a[',shape(a),'] b[',shape(b),']'
    stop
-  end if 
+  end if
   IF(m.gt.n)then
 !$OMP PARALLEL DO SHARED(a,b)
    do j=1,n
@@ -83,7 +83,7 @@ contains
    write(*,'(2a,i1,a,3i8,a,3i8,a)')subnam,'(',p,') size mismatch: a[',m,'] b[',n,']'
    return
   end if
-  
+
   select case(p)
    case(1)
 !$OMP PARALLEL WORKSHARE SHARED(a,b)
@@ -95,15 +95,15 @@ contains
      do i=1,m(1)
       b(:,k,i)=a(i,:,k)
      end do
-    end do 
+    end do
 !$OMP END PARALLEL DO
-   case(3)                           
+   case(3)
 !$OMP PARALLEL DO SHARED(a,b)
     do j=1,m(2)
      do i=1,m(1)
       b(:,i,j)=a(i,j,:)
      end do
-    end do 
+    end do
 !$OMP END PARALLEL DO
    case(4)
 !$OMP PARALLEL DO SHARED(a,b)
@@ -111,7 +111,7 @@ contains
      do i=1,m(1)
       b(:,j,i)=a(i,j,:)
      end do
-    end do 
+    end do
 !$OMP END PARALLEL DO
    case(5)
 !$OMP PARALLEL DO SHARED(a,b)
@@ -119,7 +119,7 @@ contains
      do j=1,m(2)
       b(:,k,j)=a(:,j,k)
      end do
-    end do 
+    end do
 !$OMP END PARALLEL DO
    case(6)
 !$OMP PARALLEL DO SHARED(a,b)
@@ -127,18 +127,18 @@ contains
      do j=1,m(2)
       b(j,:,k)=a(:,j,k)
      end do
-    end do 
+    end do
 !$OMP END PARALLEL DO
-   case default  
+   case default
     write(*,*)subnam,': illegal(!) p: ',p; stop
-  end select  
+  end select
   return
  end subroutine
  subroutine z3_trans(p,a,b)
   implicit none
   integer,intent(in) :: p
-  complex(8),intent(in)  :: a(:,:,:)
-  complex(8),intent(out) :: b(:,:,:)
+  double complex,intent(in)  :: a(:,:,:)
+  double complex,intent(out) :: b(:,:,:)
   character(len=*),parameter :: subnam='z3_trans'
   integer :: n(3),m(3),mm(3),i,j,k,q(3)
   if(p.lt.1 .or. p.gt.6)then;write(*,*)subnam,': illegal p: ',p;stop;endif
@@ -148,7 +148,7 @@ contains
    write(*,'(2a,i1,a,3i8,a,3i8,a)')subnam,'(',p,') size mismatch: a[',m,'] b[',n,']'
    return
   end if
-  
+
   select case(p)
    case(1)
 !$OMP PARALLEL WORKSHARE SHARED(a,b)
@@ -160,15 +160,15 @@ contains
      do i=1,m(1)
       b(:,k,i)=a(i,:,k)
      end do
-    end do 
+    end do
 !$OMP END PARALLEL DO
-   case(3)                           
+   case(3)
 !$OMP PARALLEL DO SHARED(a,b)
     do j=1,m(2)
      do i=1,m(1)
       b(:,i,j)=a(i,j,:)
      end do
-    end do 
+    end do
 !$OMP END PARALLEL DO
    case(4)
 !$OMP PARALLEL DO SHARED(a,b)
@@ -176,7 +176,7 @@ contains
      do i=1,m(1)
       b(:,j,i)=a(i,j,:)
      end do
-    end do 
+    end do
 !$OMP END PARALLEL DO
    case(5)
 !$OMP PARALLEL DO SHARED(a,b)
@@ -184,7 +184,7 @@ contains
      do j=1,m(2)
       b(:,k,j)=a(:,j,k)
      end do
-    end do 
+    end do
 !$OMP END PARALLEL DO
    case(6)
 !$OMP PARALLEL DO SHARED(a,b)
@@ -192,14 +192,14 @@ contains
      do j=1,m(2)
       b(j,:,k)=a(:,j,k)
      end do
-    end do 
+    end do
 !$OMP END PARALLEL DO
-   case default  
+   case default
     write(*,*)subnam,': illegal(!) p: ',p; stop
-  end select  
+  end select
   return
  end subroutine
- 
+
  subroutine trans2d(m,n,a,b)
   implicit none
   integer,intent(in) :: m,n
@@ -207,20 +207,24 @@ contains
   double precision,intent(out):: b(n,m)
   character(len=*),parameter :: subnam='trans2d'
   integer :: i,j
-  IF(m.gt.n)then
 !$OMP PARALLEL DO SHARED(a,b)
-   do j=1,n
-    b(j,:)=a(:,j)
-   end do
+  do i=1,m
+    call dcopy(n, a(i,1), m, b(1,i), 1)
+  end do
 !$OMP END PARALLEL DO
-  ELSE
+ end subroutine
+ subroutine trans2z(m,n,a,b)
+  implicit none
+  integer,intent(in) :: m,n
+  double complex,intent(in) :: a(m,n)
+  double complex,intent(out):: b(n,m)
+  character(len=*),parameter :: subnam='trans2z'
+  integer :: i,j
 !$OMP PARALLEL DO SHARED(a,b)
-   do i=1,m
-    b(:,i)=a(i,:)
-   end do
+  do i=1,m
+    call zcopy(n, a(i,1), m, b(1,i), 1)
+  end do
 !$OMP END PARALLEL DO
-  END IF
-  return
  end subroutine
 
  pure function prm3(p,a)
@@ -233,5 +237,5 @@ contains
       shape=(/ 3 ,6 /) )
   prm3(:)=a(prm(:,p))
   return
- end function 
+ end function
 end module

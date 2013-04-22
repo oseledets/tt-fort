@@ -31,11 +31,14 @@ contains
   call random_number(d)
  end subroutine
  subroutine z1rnd(z)
-  complex(8),intent(inout)  :: z(:)
+  implicit none
+  double complex,intent(inout)  :: z(:)
+  character(len=*),parameter :: subnam='z1rnd'
   double precision,allocatable :: d(:)
-  integer :: n
+  integer :: n,info
   n=size(z)
-  allocate(d(2*n))
+  allocate(d(2*n),stat=info)
+  if(info.ne.0)then;write(*,*)subnam,': cannot allocate';stop;endif
   call random_number(d)
   call dcopy(2*n,d,1,z,1)
   deallocate(d)
@@ -46,11 +49,14 @@ contains
   call random_number(d)
  end subroutine
  subroutine z2rnd(z)
-  complex(8),intent(inout)  :: z(:,:)
+  implicit none
+  double complex,intent(inout)  :: z(:,:)
+  character(len=*),parameter :: subnam='z2rnd'
   double precision,allocatable :: d(:)
-  integer :: n
+  integer :: n,info
   n=size(z)
-  allocate(d(2*n))
+  allocate(d(2*n),stat=info)
+  if(info.ne.0)then;write(*,*)subnam,': cannot allocate';stop;endif
   call random_number(d)
   call dcopy(2*n,d,1,z,1)
   deallocate(d)
@@ -61,11 +67,14 @@ contains
   call random_number(d)
  end subroutine
  subroutine z3rnd(z)
-  complex(8),intent(inout)  :: z(:,:,:)
+  implicit none
+  double complex,intent(inout)  :: z(:,:,:)
+  character(len=*),parameter :: subnam='z3rnd'
   double precision,allocatable :: d(:)
-  integer :: n
+  integer :: n,info
   n=size(z)
-  allocate(d(2*n))
+  allocate(d(2*n),stat=info)
+  if(info.ne.0)then;write(*,*)subnam,': cannot allocate';stop;endif
   call random_number(d)
   call dcopy(2*n,d,1,z,1)
   deallocate(d)

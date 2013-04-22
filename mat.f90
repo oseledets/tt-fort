@@ -7,6 +7,9 @@ module mat_lib
  interface eye
   module procedure eye_d1, eye_z1, eye_d2,eye_z2
  end interface
+ interface laplace
+  module procedure laplace_d2,laplace_z2
+ end interface
 
 contains
  subroutine matinv_d(a,ainv,alg,tol)
@@ -281,6 +284,29 @@ contains
   forall(i=1:n)a(i,i)=(1.d0,0.d0)
  end subroutine 
 
+ subroutine laplace_d2(a)
+  implicit none
+  double precision,intent(out) :: a(:,:)
+  integer :: m,n,i
+  m=size(a,1); n=size(a,2)
+  call dscal(m*n,0.d0,a,1)
+  forall(i=1:min(m,n))a(i,i)=2.d0
+  forall(i=1:min(m-1,n))a(i+1,i)=-1.d0
+  forall(i=1:min(m,n-1))a(i,i+1)=-1.d0
+  return
+ end subroutine 
+ subroutine laplace_z2(a)
+  implicit none
+  double complex,intent(out) :: a(:,:)
+  integer :: m,n,i
+  m=size(a,1); n=size(a,2)
+  call zdscal(m*n,0.d0,a,1)
+  forall(i=1:min(m,n))a(i,i)=(2.d0,0.d0)
+  forall(i=1:min(m-1,n))a(i+1,i)=-(1.d0,0.d0)
+  forall(i=1:min(m,n-1))a(i,i+1)=-(1.d0,0.d0)
+  return
+ end subroutine 
+ 
  subroutine d2submat(m,n,a,lda,b)
   implicit none
   integer,intent(in) :: m,n,lda
