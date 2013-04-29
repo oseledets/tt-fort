@@ -56,6 +56,10 @@ module tt_lib
  interface value
   module procedure dtt_value,dtt_value0,ztt_value,ztt_value0
  end interface
+ 
+ interface mem          ! memory to keep all cores
+  module procedure dtt_mem,ztt_mem
+ end interface
 
  !interface elem
  ! module procedure dtt_elem
@@ -1561,4 +1565,23 @@ double precision function dtt_norm(arg,tol) result (nrm)
   i=i+1
  end function
 
+! MEM
+ integer function dtt_mem(arg) result (sz)
+  implicit none
+  type(dtt),intent(in) :: arg
+  integer :: i
+  sz=0
+  do i=arg%l,arg%m
+   sz=sz+arg%r(i-1)*arg%n(i)*arg%r(i)
+  end do
+ end function
+ integer function ztt_mem(arg) result (sz)
+  implicit none
+  type(ztt),intent(in) :: arg
+  integer :: i
+  sz=0
+  do i=arg%l,arg%m
+   sz=sz+arg%r(i-1)*arg%n(i)*arg%r(i)
+  end do
+ end function
 end module
