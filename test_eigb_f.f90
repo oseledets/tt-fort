@@ -91,19 +91,19 @@ program test_eigb_f
  t2=timef()-t1
 
 
- allocate(theta_lam(4),theta_ex(1+d+d*(d-1)/2+d))
+ allocate(theta_lam(4),theta_ex(1+d*(d+3)/2+d*(d-1)*(d-2)/6))
  do i=1,4
    theta_lam(i) = 4*(sin(tpi*dble(i)/(4*(n(1)+1))))**2
  end do
  theta_ex(1)=d*theta_lam(1)
- theta_ex(1+1:1+d)=(d-1)*theta_lam(1) + theta_lam(2)
- theta_ex(2+d:1+d+d*(d-1)/2)=(d-2)*theta_lam(1) + 2*theta_lam(2)
- theta_ex(2+d+d*(d-1)/2:1+2*d+d*(d-1)/2)=(d-1)*theta_lam(1) + theta_lam(3)
-
+ forall(i=2:d+1) theta_ex(i)=(d-1)*theta_lam(1) + theta_lam(2)
+ forall(i=2+d:1+d*(d+1)/2) theta_ex(i)=(d-2)*theta_lam(1) + 2*theta_lam(2)
+ forall(i=2+d*(d+1)/2:1+d*(d+3)/2)theta_ex(i)=(d-1)*theta_lam(1) + 1*theta_lam(3)
+ forall(i=2+d*(d+3)/2:1+d*(d+3)/2+d*(d-1)*(d-2)/6)theta_ex(i)=(d-3)*theta_lam(1) + 3*theta_lam(2)
 
 
  write(*,*) 'Energy levels (compared to Laplace)'
- do i=1,B; write(*,'(i4,1x,e20.12,1x,e12.3)') i-1,theta(i),theta(i)-theta_ex(i); enddo
+ do i=1,B; write(*,'(i4,1x,e20.12,1x,e12.3)') i-1,theta(i),theta_ex(i)-theta(i); enddo
  print *, 'Wall Time = ', t2
  print *, 'Max Rank = ', maxval(rx(1:d+1))
 

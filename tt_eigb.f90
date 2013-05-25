@@ -230,8 +230,8 @@ call disp('Looking for '//tostring(B*1d0)//' eigenvalues with accuracy '//tostri
      !Initialization of the primme stuff;
      call primme_initialize_f77(primme)
      call primme_set_member_f77(primme, PRIMMEF77_numEvals, B)
-     !call primme_set_method_f77(primme,PRIMMEF77_LOBPCG_OrthoBasis, ierr)  !Select LOBPCG
-     call primme_set_method_f77(primme, PRIMMEF77_DYNAMIC, ierr)
+     call primme_set_method_f77(primme,PRIMMEF77_RQI, ierr)  !Select LOBPCG
+!      call primme_set_method_f77(primme, PRIMMEF77_DYNAMIC, ierr)
 
      call primme_set_member_f77(primme, PRIMMEF77_n, ry(i)*n(i)*ry(i+1))
 
