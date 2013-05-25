@@ -12,9 +12,12 @@ contains
     real(8), intent(in) :: phi1(*), A(*), phi2(*), x(*)
     real(8), intent(inout) :: y(*)
     integer, optional  :: C
-    double precision :: res1(rx1,m,ra2,ry2)
-    double precision :: res2(ra1,n,ry2,rx1)
+!    double precision :: res1(rx1,m,ra2,ry2)
+!    double precision :: res2(ra1,n,ry2,rx1)
+    real(8),allocatable :: res1(:), res2(:)
     double precision :: dnrm2
+
+    allocate(res1(rx1*m*ra2*ry2), res2(ra1*n*ry2*rx1))
     !phi2(rx2,ra2,ry2)
     !phi1(ry1,rx1,ra1) 
     call dgemm('N', 'N', rx1*m, ra2*ry2, rx2, 1d0, x, rx1*m, phi2, rx2, 0d0, res1, rx1*m)
@@ -28,7 +31,7 @@ contains
     !    phi1: c1, b1, a1 : ry1, rx1, ra1
     call dgemm('N', 'N', ry1, n*ry2, rx1*ra1, 1d0, phi1, ry1, res2, rx1*ra1, 0d0, y, ry1)
     !     y: c1,i1,c2
-
+    deallocate(res1,res2)
   end subroutine dbfun3
 
   subroutine zbfun3(rx1, m, rx2, ry1, n, ry2, ra1, ra2, phi1, A, phi2, x, y)
@@ -159,9 +162,12 @@ contains
     integer, intent(in) :: rx1, m, rx2, ry1, n, ry2, ra1, ra2
     real(8), intent(in) ::  A(*), phi2_old(*), x(*), y(*)
     real(8), intent(inout) :: phi2(*)
-    real(8) :: res1(rx1*m*ra2*ry2)
-    real(8) :: res2(ra1*n*ry2*rx1)
+!    real(8) :: res1(rx1*m*ra2*ry2)
+!    real(8) :: res2(ra1*n*ry2*rx1)
+    real(8),allocatable :: res1(:), res2(:)
     real(8) :: dnrm2
+
+    allocate(res1(rx1*m*ra2*ry2),res2(rx1*ra1*n*ry2))
     !   phi2: b2,a2,c2: rx2, ra2, ry2
     !  x: b1,j1,b2: rx1,m,rx2
     call dgemm('N', 'N', rx1*m, ra2*ry2, rx2, 1d0, x, rx1*m, phi2_old, rx2, 0d0, res1, rx1*m)
@@ -175,6 +181,7 @@ contains
     call dgemm('N', 'N', ry1, rx1*ra1, n*ry2, 1d0, y, ry1, res2, n*ry2, 0d0, phi2, ry1)
     ! phi2: ry1, rx1, ra1
     call dtransp(ry1, rx1*ra1, phi2)
+    deallocate(res1,res2)
   end subroutine dphi_right
 
   subroutine zphi_right(rx1, m, rx2, ry1, n, ry2, ra1, ra2, phi2_old, A, x, y, phi2)
@@ -215,8 +222,11 @@ contains
     integer, intent(in) :: rx1, m, rx2, ry1, n, ry2, ra1, ra2
     real(8), intent(in) ::  A(*), phi1_old(*), x(*), y(*)
     real(8), intent(inout) :: phi1(*)
-    real(8) :: res1(rx1,ra1,n,ry2)
-    real(8) :: res2(ry2,rx1,m,ra2)
+!    real(8) :: res1(rx1,ra1,n,ry2)
+!    real(8) :: res2(ry2,rx1,m,ra2)
+    real(8),allocatable :: res1(:), res2(:)
+
+    allocate(res1(rx1*ra1*n*ry2), res2(ry2*rx1*m*ra2))
     !   phi1: c1, b1, a1 : ry1, rx1, ra1
     !  y: c1,i1,c2: ry1,n,ry2
     call dgemm('T', 'N', rx1*ra1, n*ry2, ry1, 1d0, phi1_old, ry1, y, ry1, 0d0, res1, rx1*ra1)
@@ -230,6 +240,7 @@ contains
     call dgemm('T', 'N', ra2*ry2, rx2, rx1*m, 1d0, res2, rx1*m, x, rx1*m, 0d0, phi1, ra2*ry2)
     ! phi1: ra2, ry2, rx2
     call dtransp(ra2, ry2*rx2, phi1)
+    deallocate(res1,res2)
   end subroutine dphi_left
 
   subroutine zphi_left(rx1, m, rx2, ry1, n, ry2, ra1, ra2, phi1_old, A, x, y, phi1)

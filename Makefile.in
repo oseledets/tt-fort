@@ -105,7 +105,7 @@ ifeq ($(CPU),mpg-intel-matlab)
       MLLIB2 = /opt/local/intel/composer_xe_2011_sp1.8.273/compiler/lib/intel64/libifcoremt_pic.a
 endif
 ifeq ($(CPU),mpg-intel)
-      FOPT    =  -O2 -fPIC -vec-report=0
+      FOPT    =  -O2 -vec-report=0 # -fPIC
       FC   = ifort
       LDR   = ifort -static-intel
       CC    = icc
