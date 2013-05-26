@@ -1,5 +1,6 @@
-20
-20
-1000
-1.0d-5
-Laplace_5.sdv
+25	B
+25	Bmax
+500	rmax
+2500	max_full_size
+1.0d-5	tol
+Laplace_5.sdv	H

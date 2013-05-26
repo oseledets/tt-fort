@@ -11,7 +11,7 @@ program test_eigb_f
  double precision,parameter :: tpi=6.28318530717958647692528676655900577d0
 
  type(dtt) :: H,x
- integer :: i, r1,j,r2, d, rmax, B, sz, info, Bmax
+ integer :: i, r1,j,r2, d, rmax, B, sz, info, Bmax, max_full_size
  integer, allocatable :: n(:), ra(:), rx(:)
  double precision :: tol,t1,t2
  double precision, allocatable :: crX(:), crA(:), theta(:), theta_ex(:), theta_lam(:)
@@ -32,6 +32,7 @@ program test_eigb_f
   read (10,*) B
   read (10,*) Bmax
   read (10,*) rmax
+  read (10,*) max_full_size
   read (10,*) tol
   read (10,*) fnam
 !  B = 2
@@ -87,7 +88,7 @@ program test_eigb_f
  allocate(theta(B))
 
  t1=timef()
- call tt_eigb(d,n,n,ra,crA, crX, rx, tol, rmax, theta, B)
+ call tt_eigb(d,n,n,ra,crA, crX, rx, tol, rmax, theta, B, max_full_size=max_full_size)
  t2=timef()-t1
 
 

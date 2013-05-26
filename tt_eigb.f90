@@ -57,6 +57,7 @@ end module
 module tt_block_eig
 use ttals
 use matrix_util
+use trans_lib
 implicit none
 real(8), allocatable :: result_core(:)
 
@@ -88,32 +89,51 @@ function compute_residue(mv, M, B, X) result(res)
   res = dnrm2(M*B, Y, 1)
 end function compute_residue
 
+!!! Generate full local matrix
+  subroutine d2d_fullmat(rx1, m, rx2, ra1, ra2, phi1, A, phi2, B)
+    integer, intent(in) :: rx1, m, rx2, ra1, ra2
+    double precision, intent(in) :: phi1(*), A(*), phi2(*)
+    double precision, intent(inout) :: B(*)
+    double precision, allocatable :: res1(:), res2(:), phi2t(:)
+
+    allocate(res1(rx1*m*rx1*m*max(ra2, rx2*rx2)), res2(rx1*m*rx1*m*max(ra2, rx2*rx2)), phi2t(ra2*rx2*rx2))
+
+    ! phi1: ry1,rx1,ra1
+    call dgemm('N', 'N', rx1*rx1, m*m*ra2, ra1, 1d0, phi1, rx1*rx1, A, ra1, 0d0, res1, rx1*rx1)
+    ! res1: ry1,rx1,n,m,ra2
+    call dperm1324(rx1, rx1, m, m*ra2, res1, res2)
+    ! phi2: rx2,ra2,ry2
+    call trans2d(rx2, ra2*rx2, phi2, phi2t)
+    call dgemm('N', 'N', rx1*m*rx1*m, rx2*rx2, ra2, 1d0, res2, rx1*m*rx1*m, phi2t, ra2, 0d0, res1, rx1*m*rx1*m);
+    call dperm1324(rx1*m, rx1*m, rx2, rx2, res1, B)
+    deallocate(res1, res2, phi2t)
+  end subroutine
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !! AMR Block eigensolver
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
 !! What we have: we have a starting vector + a matrix (no vector X!)
-subroutine tt_eigb(d,n,m,ra,crA, crY0, ry, eps, rmax, lambda, B, kickrank, nswp, verb)
+subroutine tt_eigb(d,n,m,ra,crA, crY0, ry, eps, rmax, lambda, B, kickrank, nswp, max_full_size, verb)
 use matrix_util
 use ttals
 use mv_bfun3
 integer,intent(in) :: d,n(d),m(d),ra(d+1), rmax
 integer,intent(inout) :: ry(d+1)
-integer, intent(in), optional :: kickrank, nswp, verb
+integer, intent(in), optional :: kickrank, nswp, verb, max_full_size
 ! verb: 0: off; 1: matlab; 2: console
-integer :: kickrank0, nswp0, verb0
+integer :: kickrank0, nswp0, verb0, max_full_size0
 integer :: B
 real(8), intent(in) :: crA(*),eps, crY0(*)
 real(8) eps2
 type(pointd) :: crnew(d+1)
 type(pointd) :: phinew(d+1)
-real(8),allocatable, target :: curcr(:)
-real(8),allocatable, target :: work(:)
+real(8),allocatable, target :: curcr(:), locmat(:), work(:)
 double precision erloc
 double precision :: sv(B*rmax)
 double precision, intent(out) :: lambda(B)
-double precision, allocatable :: rnorms(:), W(:,:), X(:,:), Bmat(:,:), U(:,:)
+double precision, allocatable :: rnorms(:), U(:,:)
 double precision fv, fvold !Functional
 integer(kind=primme_kind) ::  primme, ierr, num_matvecs
 include 'primme_f77.h'
@@ -166,16 +186,24 @@ call disp('Looking for '//tostring(B*1d0)//' eigenvalues with accuracy '//tostri
     verb0 = verb
   end if
 
+  max_full_size0 = 2000
+  if (present(max_full_size)) then
+    max_full_size0 = max_full_size
+  end if
+
   allocate(pa(d+1))
 
   call compute_ps(d,ra,n(1:d)*m(1:d),pa)
 
 
+! Work arrays for MPS blocks
   sz = rmax*maxval(n(1:d))*rmax*B
-  lwork = rmax*max(rmax,max(B,maxval(n(1:d)))*256)
-
-  allocate(curcr(sz))
-  allocate(work(lwork))
+  lwork = max(rmax*max(rmax,max(B,maxval(n(1:d)))), max_full_size0)*256
+  allocate(curcr(sz), work(lwork), stat=info)
+  if (info .ne. 0) then
+    print *, 'cannot allocate'
+    stop
+  end if
 
   mm = 1
   do i=1,d
@@ -226,60 +254,79 @@ call disp('Looking for '//tostring(B*1d0)//' eigenvalues with accuracy '//tostri
      call init_bfun_sizes(ry(i),n(i),ry(i+1),ry(i),n(i),ry(i+1),ra(i),ra(i+1),ry(i)*n(i)*ry(i+1),ry(i)*n(i)*ry(i+1))
      call init_bfun_main(phinew(i)%p,crA(pa(i):pa(i+1)-1),phinew(i+1)%p)
 
+     if (ry(i)*n(i)*ry(i+1)<max_full_size0) then
+       allocate(locmat(ry(i)*n(i)*ry(i+1)*ry(i)*n(i)*ry(i+1)))
+       call d2d_fullmat(ry(i), n(i), ry(i+1), ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), phinew(i+1)%p, locmat)
 
-     !Initialization of the primme stuff;
-     call primme_initialize_f77(primme)
-     call primme_set_member_f77(primme, PRIMMEF77_numEvals, B)
-     call primme_set_method_f77(primme,PRIMMEF77_RQI, ierr)  !Select LOBPCG
-!      call primme_set_method_f77(primme, PRIMMEF77_DYNAMIC, ierr)
+       ! Full EIG
+       call dsyev('V', 'U', ry(i)*n(i)*ry(i+1), locmat, ry(i)*n(i)*ry(i+1), curcr, work, lwork, info)
+        if ( info .ne. 0 ) then
+            print *,'tt_eigb: dsyev failed', info
+            return
+        end if
 
-     call primme_set_member_f77(primme, PRIMMEF77_n, ry(i)*n(i)*ry(i+1))
+        call dcopy(B, curcr, 1, lambda, 1)
+        call dcopy(ry(i)*n(i)*ry(i+1)*B, locmat, 1, curcr,1)
 
-     call primme_set_member_f77(primme, PRIMMEF77_matrixMatvec, primme_matvec)
-     call primme_set_member_f77(primme, PRIMMEF77_printLevel,1)
-     !if ( dir < 0 ) then
-     !   call primme_set_member_f77(primme, PRIMMEF77_maxMatvecs, 500)
-     !end if
+        res = 0d0
+        num_matvecs = 0
+       deallocate(locmat)
+     else
 
-     !Uncomment if dynamic
-     !call primme_set_member_f77(primme, PRIMMEF77_eps, min(min_res, res_old/(1000)))
-     !call primme_display_params_f77(primme)
+        !Initialization of the primme stuff;
+        call primme_initialize_f77(primme)
+        call primme_set_member_f77(primme, PRIMMEF77_numEvals, B)
+!         call primme_set_method_f77(primme,PRIMMEF77_LOBPCG_OrthoBasis, ierr)  !Select LOBPCG
+         call primme_set_method_f77(primme, PRIMMEF77_DYNAMIC, ierr)
 
-     !call primme_set_member_f77(primme, PRIMMEF77_initSize, B)
-     !call primme_set_member_f77(primme, PRIMMEF77_maxBlockSize, ry(i)*n(i)*ry(i+1))
-     call primme_set_member_f77(primme, PRIMMEF77_maxMatvecs, max_matvecs)
-     !Calculate initial residue
+        call primme_set_member_f77(primme, PRIMMEF77_n, ry(i)*n(i)*ry(i+1))
 
-     call primme_set_member_f77(primme, PRIMMEF77_minRestartSize,min(10,ry(i)*n(i)*ry(i+1)-1))
-     call primme_set_member_f77(primme, PRIMMEF77_maxBasisSize, 100)
+        call primme_set_member_f77(primme, PRIMMEF77_matrixMatvec, primme_matvec)
+        call primme_set_member_f77(primme, PRIMMEF77_printLevel,1)
+        !if ( dir < 0 ) then
+        !   call primme_set_member_f77(primme, PRIMMEF77_maxMatvecs, 500)
+        !end if
 
-     call primme_set_member_f77(primme, PRIMMEF77_eps, eps2/10)
-     call primme_set_member_f77(primme, PRIMMEF77_initSize, B)
+        !Uncomment if dynamic
+        !call primme_set_member_f77(primme, PRIMMEF77_eps, min(min_res, res_old/(1000)))
+        !call primme_display_params_f77(primme)
 
-     ! if ( (swp .eq. 4) .and. (i .eq. 35) ) then
-     !call primme_set_member_f77(primme, PRIMMEF77_printLevel,4)
+        !call primme_set_member_f77(primme, PRIMMEF77_initSize, B)
+        !call primme_set_member_f77(primme, PRIMMEF77_maxBlockSize, ry(i)*n(i)*ry(i+1))
+        call primme_set_member_f77(primme, PRIMMEF77_maxMatvecs, max_matvecs)
+        !Calculate initial residue
 
-     ! end if
-     !Solver part
+        call primme_set_member_f77(primme, PRIMMEF77_minRestartSize,min(10,ry(i)*n(i)*ry(i+1)-1))
+        call primme_set_member_f77(primme, PRIMMEF77_maxBasisSize, 100)
 
-     !return
+        call primme_set_member_f77(primme, PRIMMEF77_eps, eps2/10)
+        call primme_set_member_f77(primme, PRIMMEF77_initSize, B)
 
-     call dcopy(ry(i)*n(i)*ry(i+1)*B,crnew(i)%p,1,curcr,1)
-     call dprimme_f77(lambda, curcr, rnorms, primme, ierr)
+        ! if ( (swp .eq. 4) .and. (i .eq. 35) ) then
+        !call primme_set_member_f77(primme, PRIMMEF77_printLevel,4)
 
-     call primmetop_get_member_f77(primme, PRIMMEF77_stats_numMatvecs, num_matvecs)
+        ! end if
+        !Solver part
+
+        !return
+
+        call dcopy(ry(i)*n(i)*ry(i+1)*B,crnew(i)%p,1,curcr,1)
+        call dprimme_f77(lambda, curcr, rnorms, primme, ierr)
+
+        call primmetop_get_member_f77(primme, PRIMMEF77_stats_numMatvecs, num_matvecs)
+        call primme_Free_f77(primme)
+        !Compute the local residue
+        if ( ierr < 0 .and. (ierr .ne. -3) ) then
+            print *,'tt_eigb, Primme failed with ierr=',ierr
+            return
+          end if
+
+        res = dnrm2(B,rnorms,1)
+
+     end if
+
+
      fv = sum(lambda(1:B))
-     call primme_Free_f77(primme)
-     !Compute the local residue
-     if ( ierr < 0 .and. (ierr .ne. -3) ) then
-         print *,'tt_eigb, Primme failed with ierr=',ierr
-         return
-      end if
-
-     res = dnrm2(B,rnorms,1)
-
-
-
 
      !print *,'Functional value:', fv, 'Error:', abs(fv-fvold)/fv
 
@@ -307,17 +354,21 @@ call disp('Looking for '//tostring(B*1d0)//' eigenvalues with accuracy '//tostri
            print *,'tt_eigb: dgesvd failed'
            return
         end if
+
         do k = 1,rnew
            call dscal(B*ry(i),sv(k), U(1,k), 1)
         end do
         nn = my_chop3(rnew,sv,eps2)
+        nn = min(nn, rmax)
         call drow_cut(B*ry(i), n(i)*ry(i+1), nn, curcr)
         rnew = nn
         call dcopy(rnew*n(i)*ry(i+1),curcr,1,crnew(i)%p,1)
 
+
         !call dcopy(rnew*n(i)*ry(i+1),curcr,1,cr(1,i),1)
         !And the transformation matrix is stored in U with is B*ry(i) * rnew
         call dtransp(B,ry(i)*rnew, U)
+
         !U is ry(i)*rnew*B
         call dgemm('n','n',ry(i-1)*n(i-1),rnew*B,ry(i),1d0,crnew(i-1)%p,ry(i-1)*n(i-1),U,ry(i),0d0,curcr,ry(i-1)*n(i-1))
         deallocate(U)
@@ -341,6 +392,7 @@ call disp('Looking for '//tostring(B*1d0)//' eigenvalues with accuracy '//tostri
         end if
         call dphi_right(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), &
         ra(i), ra(i+1), phinew(i+1)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phinew(i)%p)
+
      end if
      if ( (dir > 0) .and. (i < d) ) then
         !curcr is ry(i)*n(i)*ry(i+1)*B
@@ -348,7 +400,7 @@ call disp('Looking for '//tostring(B*1d0)//' eigenvalues with accuracy '//tostri
         allocate(U(rnew, ry(i+1)*B))
         call dgesvd('O', 'S',ry(i)*n(i),ry(i+1)*B,curcr, ry(i)*n(i), sv, curcr, ry(i)*n(i), U, rnew, work, lwork, info)
         nn = my_chop3(rnew,sv,eps2)
-        nn = min(nn, rmax2)
+        nn = min(nn, rmax)
         call dcopy(ry(i)*n(i)*nn,curcr,1,crnew(i)%p,1)
         !Cut rows
         call drow_cut(rnew, ry(i+1)*B,  nn, U)
