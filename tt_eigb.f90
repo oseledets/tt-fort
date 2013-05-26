@@ -251,204 +251,203 @@ call disp('Looking for '//tostring(B*1d0)//' eigenvalues with accuracy '//tostri
   ermax = 0d0
   lambda(1:B) = 0d0
   do while (swp .le. nswp0)
-     call init_bfun_sizes(ry(i),n(i),ry(i+1),ry(i),n(i),ry(i+1),ra(i),ra(i+1),ry(i)*n(i)*ry(i+1),ry(i)*n(i)*ry(i+1))
-     call init_bfun_main(phinew(i)%p,crA(pa(i):pa(i+1)-1),phinew(i+1)%p)
+      call init_bfun_sizes(ry(i),n(i),ry(i+1),ry(i),n(i),ry(i+1),ra(i),ra(i+1),ry(i)*n(i)*ry(i+1),ry(i)*n(i)*ry(i+1))
+      call init_bfun_main(phinew(i)%p,crA(pa(i):pa(i+1)-1),phinew(i+1)%p)
 
-     if (ry(i)*n(i)*ry(i+1)<max_full_size0) then
-       allocate(locmat(ry(i)*n(i)*ry(i+1)*ry(i)*n(i)*ry(i+1)))
-       call d2d_fullmat(ry(i), n(i), ry(i+1), ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), phinew(i+1)%p, locmat)
+      if (ry(i)*n(i)*ry(i+1)<max_full_size0) then
+          allocate(locmat(ry(i)*n(i)*ry(i+1)*ry(i)*n(i)*ry(i+1)))
+          call d2d_fullmat(ry(i), n(i), ry(i+1), ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), phinew(i+1)%p, locmat)
 
-       ! Full EIG
-       call dsyev('V', 'U', ry(i)*n(i)*ry(i+1), locmat, ry(i)*n(i)*ry(i+1), curcr, work, lwork, info)
-        if ( info .ne. 0 ) then
-            print *,'tt_eigb: dsyev failed', info
-            return
-        end if
-
-        call dcopy(B, curcr, 1, lambda, 1)
-        call dcopy(ry(i)*n(i)*ry(i+1)*B, locmat, 1, curcr,1)
-
-        res = 0d0
-        num_matvecs = 0
-       deallocate(locmat)
-     else
-
-        !Initialization of the primme stuff;
-        call primme_initialize_f77(primme)
-        call primme_set_member_f77(primme, PRIMMEF77_numEvals, B)
-!         call primme_set_method_f77(primme,PRIMMEF77_LOBPCG_OrthoBasis, ierr)  !Select LOBPCG
-         call primme_set_method_f77(primme, PRIMMEF77_DYNAMIC, ierr)
-
-        call primme_set_member_f77(primme, PRIMMEF77_n, ry(i)*n(i)*ry(i+1))
-
-        call primme_set_member_f77(primme, PRIMMEF77_matrixMatvec, primme_matvec)
-        call primme_set_member_f77(primme, PRIMMEF77_printLevel,1)
-        !if ( dir < 0 ) then
-        !   call primme_set_member_f77(primme, PRIMMEF77_maxMatvecs, 500)
-        !end if
-
-        !Uncomment if dynamic
-        !call primme_set_member_f77(primme, PRIMMEF77_eps, min(min_res, res_old/(1000)))
-        !call primme_display_params_f77(primme)
-
-        !call primme_set_member_f77(primme, PRIMMEF77_initSize, B)
-        !call primme_set_member_f77(primme, PRIMMEF77_maxBlockSize, ry(i)*n(i)*ry(i+1))
-        call primme_set_member_f77(primme, PRIMMEF77_maxMatvecs, max_matvecs)
-        !Calculate initial residue
-
-        call primme_set_member_f77(primme, PRIMMEF77_minRestartSize,min(10,ry(i)*n(i)*ry(i+1)-1))
-        call primme_set_member_f77(primme, PRIMMEF77_maxBasisSize, 100)
-
-        call primme_set_member_f77(primme, PRIMMEF77_eps, eps2/10)
-        call primme_set_member_f77(primme, PRIMMEF77_initSize, B)
-
-        ! if ( (swp .eq. 4) .and. (i .eq. 35) ) then
-        !call primme_set_member_f77(primme, PRIMMEF77_printLevel,4)
-
-        ! end if
-        !Solver part
-
-        !return
-
-        call dcopy(ry(i)*n(i)*ry(i+1)*B,crnew(i)%p,1,curcr,1)
-        call dprimme_f77(lambda, curcr, rnorms, primme, ierr)
-
-        call primmetop_get_member_f77(primme, PRIMMEF77_stats_numMatvecs, num_matvecs)
-        call primme_Free_f77(primme)
-        !Compute the local residue
-        if ( ierr < 0 .and. (ierr .ne. -3) ) then
-            print *,'tt_eigb, Primme failed with ierr=',ierr
-            return
+          ! Full EIG
+          call dsyev('V', 'U', ry(i)*n(i)*ry(i+1), locmat, ry(i)*n(i)*ry(i+1), curcr, work, lwork, info)
+          if ( info .ne. 0 ) then
+              print *,'tt_eigb: dsyev failed', info
+              return
           end if
 
-        res = dnrm2(B,rnorms,1)
+          call dcopy(B, curcr, 1, lambda, 1)
+          call dcopy(ry(i)*n(i)*ry(i+1)*B, locmat, 1, curcr,1)
 
-     end if
+          res = 0d0
+          num_matvecs = 0
+          deallocate(locmat)
+      else
 
+          !Initialization of the primme stuff;
+          call primme_initialize_f77(primme)
+          call primme_set_member_f77(primme, PRIMMEF77_numEvals, B)
+          !        call primme_set_method_f77(primme,PRIMMEF77_LOBPCG_OrthoBasis, ierr)  !Select LOBPCG
+          call primme_set_method_f77(primme, PRIMMEF77_DYNAMIC, ierr)
 
-     fv = sum(lambda(1:B))
+          call primme_set_member_f77(primme, PRIMMEF77_n, ry(i)*n(i)*ry(i+1))
 
-     !print *,'Functional value:', fv, 'Error:', abs(fv-fvold)/fv
+          call primme_set_member_f77(primme, PRIMMEF77_matrixMatvec, primme_matvec)
+          call primme_set_member_f77(primme, PRIMMEF77_printLevel, 2)
+          !if ( dir < 0 ) then
+          !   call primme_set_member_f77(primme, PRIMMEF77_maxMatvecs, 500)
+          !end if
 
-     erloc = (fvold - fv)/abs(fv)
-     ermax = max(ermax, erloc)
-     call disp('swp: '//tostring(1d0*swp)//' i: ['//tostring(1d0*i)//'/'//&
-              tostring(1d0*d)//'] loc_size: '//tostring(1d0*ry(i)*n(i)*ry(i+1))//&
-              ' matvecs: '//tostring(1d0*num_matvecs)//' res: ' //tostring(res)//&
-              ' ermax: '//tostring(ermax)//' dfv:'//tostring(fvold-fv))
+          !Uncomment if dynamic
+          !call primme_set_member_f77(primme, PRIMMEF77_eps, min(min_res, res_old/(1000)))
+          !call primme_display_params_f77(primme)
 
-     !print *,' fv: ', fv
-     total_mv = total_mv + num_matvecs
-     fvold = fv
+          !call primme_set_member_f77(primme, PRIMMEF77_initSize, B)
+          !call primme_set_member_f77(primme, PRIMMEF77_maxBlockSize, ry(i)*n(i)*ry(i+1))
+          call primme_set_member_f77(primme, PRIMMEF77_maxMatvecs, max_matvecs)
+          !Calculate initial residue
 
-     if ( (dir < 0) .and.  (i > 1) ) then
+          call primme_set_member_f77(primme, PRIMMEF77_minRestartSize,min(10,ry(i)*n(i)*ry(i+1)-1))
+          call primme_set_member_f77(primme, PRIMMEF77_maxBasisSize, 100)
 
-        !the curcr is ry(i)*n(i)*ry(i+1)*B,
-        call dtransp(ry(i)*n(i)*ry(i+1),B,curcr)
-        !curcr [B x ry(i)] x [n(i) x ry(i+1)]
-        rnew = min(B*ry(i),n(i)*ry(i+1))
-        allocate(U(B*ry(i),rnew))
+          call primme_set_member_f77(primme, PRIMMEF77_eps, eps2/10)
+          call primme_set_member_f77(primme, PRIMMEF77_initSize, B)
 
-        call dgesvd('S','O',B*ry(i),n(i)*ry(i+1),curcr,B*ry(i),sv,U,B*ry(i), curcr, rnew , work, lwork, info)
-        if ( info .ne. 0 ) then
-           print *,'tt_eigb: dgesvd failed'
-           return
-        end if
+          ! if ( (swp .eq. 4) .and. (i .eq. 35) ) then
+          !call primme_set_member_f77(primme, PRIMMEF77_printLevel,4)
 
-        do k = 1,rnew
-           call dscal(B*ry(i),sv(k), U(1,k), 1)
-        end do
-        nn = my_chop3(rnew,sv,eps2)
-        nn = min(nn, rmax)
-        call drow_cut(B*ry(i), n(i)*ry(i+1), nn, curcr)
-        rnew = nn
-        call dcopy(rnew*n(i)*ry(i+1),curcr,1,crnew(i)%p,1)
+          ! end if
+          !Solver part
 
+          !return
 
-        !call dcopy(rnew*n(i)*ry(i+1),curcr,1,cr(1,i),1)
-        !And the transformation matrix is stored in U with is B*ry(i) * rnew
-        call dtransp(B,ry(i)*rnew, U)
+          call dcopy(ry(i)*n(i)*ry(i+1)*B,crnew(i)%p,1,curcr,1)
+          call dprimme_f77(lambda, curcr, rnorms, primme, ierr)
 
-        !U is ry(i)*rnew*B
-        call dgemm('n','n',ry(i-1)*n(i-1),rnew*B,ry(i),1d0,crnew(i-1)%p,ry(i-1)*n(i-1),U,ry(i),0d0,curcr,ry(i-1)*n(i-1))
-        deallocate(U)
-        !curcr ry(i-1)*n(i-1)*rnew*B
-        if ( ry(i-1)*n(i-1)*rnew < B ) then
-           print *,'tt_eigb: Something stupid happened, have to think!'
-           return
-        end if
+          call primmetop_get_member_f77(primme, PRIMMEF77_stats_numMatvecs, num_matvecs)
+          call primme_Free_f77(primme)
+          !Compute the local residue
+          if ( ierr < 0 .and. (ierr .ne. -3) ) then
+              print *,'tt_eigb, Primme failed with ierr=',ierr
+              return
+          end if
 
-        if ( size(crnew(i-1)%p) < ry(i-1)*n(i-1)*rnew*B ) then
-           deallocate(crnew(i-1)%p)
-           allocate(crnew(i-1)%p(ry(i-1)*n(i-1)*rnew*B*2))
-        end if
-        !call dqr(ry(i-1)*n(i-1)*rnew,B,curcr,R,work,lwork,tau) !Here we keep orthogonality
-        call dcopy(ry(i-1)*n(i-1)*rnew*B,curcr,1,crnew(i-1)%p,1)
-        ry(i) = rnew
-        !And recompute phi
-        if ( size(phinew(i)%p) < ry(i)*ry(i)*ra(i) ) then
-           deallocate(phinew(i)%p)
-           allocate(phinew(i)%p(ry(i)*ry(i)*ra(i)*2))
-        end if
-        call dphi_right(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), &
-        ra(i), ra(i+1), phinew(i+1)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phinew(i)%p)
+          res = dnrm2(B,rnorms,1)
 
-     end if
-     if ( (dir > 0) .and. (i < d) ) then
-        !curcr is ry(i)*n(i)*ry(i+1)*B
-        rnew = min(ry(i)*n(i),ry(i+1)*B)
-        allocate(U(rnew, ry(i+1)*B))
-        call dgesvd('O', 'S',ry(i)*n(i),ry(i+1)*B,curcr, ry(i)*n(i), sv, curcr, ry(i)*n(i), U, rnew, work, lwork, info)
-        nn = my_chop3(rnew,sv,eps2)
-        nn = min(nn, rmax)
-        call dcopy(ry(i)*n(i)*nn,curcr,1,crnew(i)%p,1)
-        !Cut rows
-        call drow_cut(rnew, ry(i+1)*B,  nn, U)
-        do k = 1,nn
-           call dscal(ry(i+1)*B,sv(k), U(k,1), nn)
-        end do
-
-        rnew = nn
-        !U is (rnew x ry(i+1) x B) x (ry(i+1) * n(i+1) * ry(i+2)) -> rnew x n(i+1) x ry(i+2) x B
-        ! (rnew x ry(i+1)) * B  -> B * rnew * ry(i+1)
-        call dtransp(rnew*ry(i+1),B,U)
-
-        call dgemm('n','n',B*rnew, n(i+1)*ry(i+2), ry(i+1), 1d0, U, B*rnew, crnew(i+1)%p, ry(i+1), 0d0, curcr, B*rnew)
-
-        deallocate(U)
-        call dtransp(B, rnew*n(i+1)*ry(i+2), curcr)
-        ry(i+1) = rnew
-        if ( size(crnew(i+1)%p) < ry(i+1)*n(i+1)*ry(i+2)*B) then
-           deallocate(crnew(i+1)%p)
-           allocate(crnew(i+1)%p(ry(i+1)*n(i+1)*ry(i+2)*B*2))
-        end if
-        call dcopy(ry(i+1)*n(i+1)*ry(i+2)*B, curcr, 1, crnew(i+1)%p, 1)
-        !call dqr(ry(i+1)*n(i+1)*ry(i+2),B,crnew(i+1)%p,R,work,lwork,tau) !Here we keep orthogonality
-
-        if ( size(phinew(i+1)%p) < ry(i+1)*ry(i+1)*ra(i+1) ) then
-           deallocate(phinew(i+1)%p)
-           allocate(phinew(i+1)%p(ry(i+1)*ry(i+1)*ra(i+1)*2))
-        end if
-        call dphi_left(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), &
-        ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phinew(i+1)%p)
-     end if
+      end if
 
 
-    if ((dir>0) .and. (i==d - 1)) then
-       dir = -1
-       i = d
-       call disp('swp: '//tostring(1d0*swp)//' er = '//tostring(ermax)//' rmax:'//tostring(1d0*maxval(ry(1:d))))
-       swp = swp + 1
-       if (ermax<eps) then
-          exit
-       end if
-       ermax = 0d0
-    else if ((dir < 0) .and. (i == 2 )) then
-       dir = 1
-       i = 1
-    else
-       i = i + dir
-    end if
+      fv = sum(lambda(1:B))
+
+      !print *,'Functional value:', fv, 'Error:', abs(fv-fvold)/fv
+
+      erloc = (fvold - fv)/abs(fv)
+      ermax = max(ermax, erloc)
+      call disp('swp: '//tostring(1d0*swp)//' i: ['//tostring(1d0*i)//'/'//&
+          tostring(1d0*d)//'] loc_size: '//tostring(1d0*ry(i)*n(i)*ry(i+1))//&
+          ' matvecs: '//tostring(1d0*num_matvecs)//' res: ' //tostring(res)//&
+          ' ermax: '//tostring(ermax)//' dfv:'//tostring(fvold-fv))
+
+      !print *,' fv: ', fv
+      total_mv = total_mv + num_matvecs
+      fvold = fv
+
+      if ( (dir < 0) .and.  (i > 1) ) then
+          !the curcr is ry(i)*n(i)*ry(i+1)*B,
+          call dtransp(ry(i)*n(i)*ry(i+1),B,curcr)
+          !curcr [B x ry(i)] x [n(i) x ry(i+1)]
+          rnew = min(B*ry(i),n(i)*ry(i+1))
+          allocate(U(B*ry(i),rnew))
+
+          call dgesvd('S','O',B*ry(i),n(i)*ry(i+1),curcr,B*ry(i),sv,U,B*ry(i), curcr, rnew , work, lwork, info)
+          if ( info .ne. 0 ) then
+              print *,'tt_eigb: dgesvd failed'
+              return
+          end if
+
+          do k = 1,rnew
+          call dscal(B*ry(i),sv(k), U(1,k), 1)
+          end do
+          nn = my_chop3(rnew,sv,eps2)
+          nn = min(nn, rmax)
+          call drow_cut(B*ry(i), n(i)*ry(i+1), nn, curcr)
+          rnew = nn
+          call dcopy(rnew*n(i)*ry(i+1),curcr,1,crnew(i)%p,1)
+
+
+          !call dcopy(rnew*n(i)*ry(i+1),curcr,1,cr(1,i),1)
+          !And the transformation matrix is stored in U with is B*ry(i) * rnew
+          call dtransp(B,ry(i)*rnew, U)
+
+          !U is ry(i)*rnew*B
+          call dgemm('n','n',ry(i-1)*n(i-1),rnew*B,ry(i),1d0,crnew(i-1)%p,ry(i-1)*n(i-1),U,ry(i),0d0,curcr,ry(i-1)*n(i-1))
+          deallocate(U)
+          !curcr ry(i-1)*n(i-1)*rnew*B
+          if ( ry(i-1)*n(i-1)*rnew < B ) then
+              print *,'tt_eigb: Something stupid happened, have to think!'
+              return
+          end if
+
+          if ( size(crnew(i-1)%p) < ry(i-1)*n(i-1)*rnew*B ) then
+              deallocate(crnew(i-1)%p)
+              allocate(crnew(i-1)%p(ry(i-1)*n(i-1)*rnew*B*2))
+          end if
+          !call dqr(ry(i-1)*n(i-1)*rnew,B,curcr,R,work,lwork,tau) !Here we keep orthogonality
+          call dcopy(ry(i-1)*n(i-1)*rnew*B,curcr,1,crnew(i-1)%p,1)
+          ry(i) = rnew
+          !And recompute phi
+          if ( size(phinew(i)%p) < ry(i)*ry(i)*ra(i) ) then
+              deallocate(phinew(i)%p)
+              allocate(phinew(i)%p(ry(i)*ry(i)*ra(i)*2))
+          end if
+          call dphi_right(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), &
+              ra(i), ra(i+1), phinew(i+1)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phinew(i)%p)
+
+      end if
+      if ( (dir > 0) .and. (i < d) ) then
+          !curcr is ry(i)*n(i)*ry(i+1)*B
+          rnew = min(ry(i)*n(i),ry(i+1)*B)
+          allocate(U(rnew, ry(i+1)*B))
+          call dgesvd('O', 'S',ry(i)*n(i),ry(i+1)*B,curcr, ry(i)*n(i), sv, curcr, ry(i)*n(i), U, rnew, work, lwork, info)
+          nn = my_chop3(rnew,sv,eps2)
+          nn = min(nn, rmax)
+          call dcopy(ry(i)*n(i)*nn,curcr,1,crnew(i)%p,1)
+          !Cut rows
+          call drow_cut(rnew, ry(i+1)*B,  nn, U)
+          do k = 1,nn
+          call dscal(ry(i+1)*B,sv(k), U(k,1), nn)
+          end do
+
+          rnew = nn
+          !U is (rnew x ry(i+1) x B) x (ry(i+1) * n(i+1) * ry(i+2)) -> rnew x n(i+1) x ry(i+2) x B
+          ! (rnew x ry(i+1)) * B  -> B * rnew * ry(i+1)
+          call dtransp(rnew*ry(i+1),B,U)
+
+          call dgemm('n','n',B*rnew, n(i+1)*ry(i+2), ry(i+1), 1d0, U, B*rnew, crnew(i+1)%p, ry(i+1), 0d0, curcr, B*rnew)
+
+          deallocate(U)
+          call dtransp(B, rnew*n(i+1)*ry(i+2), curcr)
+          ry(i+1) = rnew
+          if ( size(crnew(i+1)%p) < ry(i+1)*n(i+1)*ry(i+2)*B) then
+              deallocate(crnew(i+1)%p)
+              allocate(crnew(i+1)%p(ry(i+1)*n(i+1)*ry(i+2)*B*2))
+          end if
+          call dcopy(ry(i+1)*n(i+1)*ry(i+2)*B, curcr, 1, crnew(i+1)%p, 1)
+          !call dqr(ry(i+1)*n(i+1)*ry(i+2),B,crnew(i+1)%p,R,work,lwork,tau) !Here we keep orthogonality
+
+          if ( size(phinew(i+1)%p) < ry(i+1)*ry(i+1)*ra(i+1) ) then
+              deallocate(phinew(i+1)%p)
+              allocate(phinew(i+1)%p(ry(i+1)*ry(i+1)*ra(i+1)*2))
+          end if
+          call dphi_left(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), &
+              ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phinew(i+1)%p)
+      end if
+
+
+      if ((dir>0) .and. (i==d - 1)) then
+          dir = -1
+          i = d
+          call disp('swp: '//tostring(1d0*swp)//' er = '//tostring(ermax)//' rmax:'//tostring(1d0*maxval(ry(1:d))))
+          swp = swp + 1
+          if (ermax<eps) then
+              exit
+          end if
+          ermax = 0d0
+      else if ((dir < 0) .and. (i == 2 )) then
+          dir = 1
+          i = 1
+      else
+          i = i + dir
+      end if
  end do
   100 continue
   ry(d+1) = B
