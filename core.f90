@@ -43,7 +43,7 @@ module core
      !core1(a1,i1,j1,a2) -> core1(a2,a1,i1,j1) * core2(j1,k1,b2,b1) -> res_core(a2,a1,i1,k1,b2,b1) -> 
      call ztransp(r1*n*m,r2,core1,tmp_core1)
      call ztransp(p1,m*k*p2,core2,tmp_core2)
-     call zgemm('n','n',r2*r1*n,k*p2*p1,m,1d0,tmp_core1,r2*r1*n,tmp_core2,m,0d0,res_core,r2*r1*n)
+     call zgemm('n','n',r2*r1*n,k*p2*p1,m,(1d0, 0d0),tmp_core1,r2*r1*n,tmp_core2,m,(0d0, 0d0),res_core,r2*r1*n)
      call zperm321(r2,r1*n*k*p2,p1,res_core)
  end subroutine zmat_mat_loc
 
