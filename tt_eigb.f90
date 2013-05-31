@@ -123,14 +123,14 @@ integer,intent(in) :: d,n(d),m(d),ra(d+1), rmax
 integer,intent(inout) :: ry(d+1)
 integer, intent(in), optional :: kickrank, nswp, verb, max_full_size
 ! verb: 0: off; 1: matlab; 2: console
-integer :: kickrank0, nswp0, verb0, max_full_size0
+integer :: kickrank0, nswp0, verb0, max_full_size0, max_basis_size
 integer :: B
 real(8), intent(in) :: crA(*),eps, crY0(*)
 real(8) eps2
 type(pointd) :: crnew(d+1)
 type(pointd) :: phinew(d+1)
 real(8),allocatable, target :: curcr(:), locmat(:), work(:)
-double precision erloc
+double precision erloc, resid_damp
 double precision :: sv(B*rmax)
 double precision, intent(out) :: lambda(B)
 double precision, allocatable :: rnorms(:), U(:,:)
@@ -163,6 +163,8 @@ min_res = 1d-1
 rmax2 = rmax
 !Inner parameters
 max_matvecs = 500
+max_basis_size = 100
+resid_damp = 10d0
 
 call disp('Solving a block eigenvalue problem')
 if ( B .ne. ry(d+1) ) then
@@ -282,7 +284,7 @@ call disp('Looking for '//tostring(B*1d0)//' eigenvalues with accuracy '//tostri
           call primme_set_member_f77(primme, PRIMMEF77_n, ry(i)*n(i)*ry(i+1))
 
           call primme_set_member_f77(primme, PRIMMEF77_matrixMatvec, primme_matvec)
-          call primme_set_member_f77(primme, PRIMMEF77_printLevel, 2)
+          call primme_set_member_f77(primme, PRIMMEF77_printLevel, 1)
           !if ( dir < 0 ) then
           !   call primme_set_member_f77(primme, PRIMMEF77_maxMatvecs, 500)
           !end if
@@ -296,10 +298,10 @@ call disp('Looking for '//tostring(B*1d0)//' eigenvalues with accuracy '//tostri
           call primme_set_member_f77(primme, PRIMMEF77_maxMatvecs, max_matvecs)
           !Calculate initial residue
 
-          call primme_set_member_f77(primme, PRIMMEF77_minRestartSize,min(10,ry(i)*n(i)*ry(i+1)-1))
-          call primme_set_member_f77(primme, PRIMMEF77_maxBasisSize, 100)
+          call primme_set_member_f77(primme, PRIMMEF77_minRestartSize,min(B+1,ry(i)*n(i)*ry(i+1)-1))
+          call primme_set_member_f77(primme, PRIMMEF77_maxBasisSize, max_basis_size)
 
-          call primme_set_member_f77(primme, PRIMMEF77_eps, eps2/10)
+          call primme_set_member_f77(primme, PRIMMEF77_eps, eps2/resid_damp)
           call primme_set_member_f77(primme, PRIMMEF77_initSize, B)
 
           ! if ( (swp .eq. 4) .and. (i .eq. 35) ) then

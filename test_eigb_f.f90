@@ -40,6 +40,8 @@ program test_eigb_f
 !  tol = 1.0d-5
   close(10)
 
+  call OMP_SET_NUM_THREADS(2)
+
 !  read(*,*) j, np
  call dtt_read(H,fnam,info)
  if(info.ne.0)then;write(*,*) 'read fails: ',info;stop;endif
@@ -88,7 +90,7 @@ program test_eigb_f
  allocate(theta(B))
 
  t1=timef()
- call tt_eigb(d,n,n,ra,crA, crX, rx, tol, rmax, theta, B, max_full_size=max_full_size)
+ call tt_eigb(d,n,n,ra,crA, crX, rx, tol, rmax, theta, B, max_full_size=max_full_size,nswp=4)
  t2=timef()-t1
 
 
@@ -113,7 +115,7 @@ program test_eigb_f
  write(10,'(I0)') B
  write(10,'(ES8.1)') tol
  write(10,'(ES12.5)') t2
- write(10,'(I0)') i
+ write(10,'(I0)') maxval(rx(1:d+1))
  do i=1,B
   write(10,*) theta(i)
  end do
