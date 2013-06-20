@@ -24,6 +24,8 @@
  *
  ******************************************************************************/
 
+#include "int_redefine.h"
+
 #ifndef COMMON_NUMERICAL_H
 #define COMMON_NUMERICAL_H
 

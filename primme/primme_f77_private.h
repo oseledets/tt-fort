@@ -1,5 +1,7 @@
+#include "int_redefine.h"
+
 //-------------------------------------------------------
-//     Defining easy to remember labels for setting the 
+//     Defining easy to remember labels for setting the
 //     method in primme_set_method from Fortran
 //-------------------------------------------------------
 #define PRIMMEF77_DYNAMIC  0
@@ -18,7 +20,7 @@
 #define PRIMMEF77_LOBPCG_OrthoBasis  13
 #define PRIMMEF77_LOBPCG_OrthoBasis_Window  14
 //-------------------------------------------------------
-//     Defining easy to remember labels for setting the 
+//     Defining easy to remember labels for setting the
 //     members of the primme structure from Fortran
 //-------------------------------------------------------
 #define PRIMMEF77_n  0
@@ -74,7 +76,7 @@
 #define PRIMMEF77_massMatrixMatvec  50
 
 //-------------------------------------------------------
-//     Defining easy to remember labels for setting the 
+//     Defining easy to remember labels for setting the
 //     enum members for targeting, restarting and innertest
 //-------------------------------------------------------
 #define PRIMMEF77_smallest  0
@@ -99,9 +101,9 @@ extern "C" {
 #endif
 
 #ifdef F77UNDERSCORE
-void dprimme_f77_(double *evals, double *evecs, double *rnorms, 
+void dprimme_f77_(double *evals, double *evecs, double *rnorms,
 		  primme_params **primme, int *ierr);
-void zprimme_f77_(double *evals, Complex_Z *evecs, double *rnorms, 
+void zprimme_f77_(double *evals, Complex_Z *evecs, double *rnorms,
 		  primme_params **primme, int *ierr);
 void primme_initialize_f77_(primme_params **primme);
 void primme_free_f77_(primme_params **primme);
@@ -113,12 +115,12 @@ void primme_set_member_f77_(primme_params **primme, int *label, void *ptr);
 void primme_get_prec_shift_f77_(primme_params *primme, int *i, double *shift);
 void primme_get_member_f77_(primme_params *primme, int *label, void *ptr);
 void primmetop_get_member_f77_(primme_params **primme, int *label, void *ptr);
-void primmetop_get_prec_shift_f77_(primme_params **primme, int *i, 
+void primmetop_get_prec_shift_f77_(primme_params **primme, int *i,
 				   double *shift);
 #else
-void dprimme_f77(double *evals, double *evecs, double *rnorms, 
+void dprimme_f77(double *evals, double *evecs, double *rnorms,
 		 primme_params **primme, int *ierr);
-void zprimme_f77(double *evals, Complex_Z *evecs, double *rnorms, 
+void zprimme_f77(double *evals, Complex_Z *evecs, double *rnorms,
 		  primme_params **primme, int *ierr);
 void primme_initialize_f77(primme_params **primme);
 void primme_free_f77(primme_params **primme);
@@ -130,7 +132,7 @@ void primme_set_member_f77(primme_params **primme, int *label, void *ptr);
 void primme_get_prec_shift_f77(primme_params *primme, int *i, double *shift);
 void primme_get_member_f77(primme_params *primme, int *label, void *ptr);
 void primmetop_get_member_f77(primme_params **primme, int *label, void *ptr);
-void primmetop_get_prec_shift_f77(primme_params **primme, int *i, 
+void primmetop_get_prec_shift_f77(primme_params **primme, int *i,
 				  double *shift);
 #endif
 

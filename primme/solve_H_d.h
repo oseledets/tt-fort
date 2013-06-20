@@ -27,14 +27,16 @@
  * Date             : %G%
  ******************************************************************************/
 
+#include "int_redefine.h"
+
 #ifndef SOLVE_H_H
 #define SOLVE_H_H
 
-int solve_H_dprimme(double *H, double *hVecs, double *hVals, 
+int solve_H_dprimme(double *H, double *hVecs, double *hVals,
    int basisSize, int maxBasisSize, double *largestEval, int numLocked,
    int lrwork, double *rwork, int *perm, primme_params *primme);
 
-void permute_evecs_dprimme(double *evecs, int *perm, double *rwork, 
+void permute_evecs_dprimme(double *evecs, int *perm, double *rwork,
    int nev, int nLocal);
 
 

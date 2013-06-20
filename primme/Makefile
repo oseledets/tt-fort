@@ -8,8 +8,8 @@ OBJS    = $(DEPS:,=.o).o
 FC = ifort
 CC = icc
 
-FOPT = -O3
-COPT = -O3
+FOPT = -O3 -i8 -fPIC
+COPT = -O3 -fPIC
 
 primme.a: $(OBJS)
 	ar rc primme.a $(OBJS)

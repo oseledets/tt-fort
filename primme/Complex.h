@@ -1,5 +1,5 @@
 /* Slight modification of the SuperLU header file
- * to avoid conflicts with f2c and g2c libraries 
+ * to avoid conflicts with f2c and g2c libraries
  * A. Stathopoulos, Sept 15, 2006                     */
 /*
  * -- Distributed SuperLU routine (version 1.0) --
@@ -8,8 +8,10 @@
  *
  */
 
-typedef struct { 
-	double r, i; 
+#include "int_redefine.h"
+
+typedef struct {
+	double r, i;
 } Complex_Z;
 
 /* Macro definitions */

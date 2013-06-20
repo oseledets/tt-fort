@@ -27,16 +27,18 @@
  * Date             : %G%
  ******************************************************************************/
 
+#include "int_redefine.h"
+
 #ifndef CORRECTION_PRIVATE_H
 #define CORRECTION_PRIVATE_H
 
 #define INNER_SOLVE_FAILURE -1
 
-static double computeRobustShift(int blockIndex, double resNorm, 
-   double *prevRitzVals, int numPrevRitzVals, double *sortedRitzVals, 
+static double computeRobustShift(int blockIndex, double resNorm,
+   double *prevRitzVals, int numPrevRitzVals, double *sortedRitzVals,
    double *approxOlsenShift, int numSorted, int *ilev, primme_params *primme);
 
-static void mergeSort(double *lockedEvals, int numLocked, double *ritzVals, 
+static void mergeSort(double *lockedEvals, int numLocked, double *ritzVals,
    int *flag, int basisSize, double *sortedEvals, int *ilev, int blockSize,
    primme_params *primme);
 

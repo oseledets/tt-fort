@@ -27,10 +27,12 @@
  * Date             : %G%
  ******************************************************************************/
 
+#include "int_redefine.h"
+
 #ifndef FACTORIZE_H
 #define FACTORIZE_H
 
-int UDUDecompose_zprimme(Complex_Z *M, Complex_Z *UDU, int *ipivot, int dimM, 
+int UDUDecompose_zprimme(Complex_Z *M, Complex_Z *UDU, int *ipivot, int dimM,
    Complex_Z *rwork, int rworkSize, primme_params *primme);
 
 int UDUSolve_zprimme(Complex_Z *UDU, int *ipivot, int dim, Complex_Z *rhs,

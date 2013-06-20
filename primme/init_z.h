@@ -27,12 +27,14 @@
  * Date             : %G%
  ******************************************************************************/
 
+ #include "int_redefine.h"
+
 #ifndef INIT_H
 #define INIT_H
 
-int init_basis_zprimme(Complex_Z *V, Complex_Z *W, Complex_Z *evecs, 
-   Complex_Z *evecsHat, Complex_Z *M, Complex_Z *UDU, int *ipivot, 
-   double machEps, Complex_Z *rwork, int rworkSize, int *basisSize, 
+int init_basis_zprimme(Complex_Z *V, Complex_Z *W, Complex_Z *evecs,
+   Complex_Z *evecsHat, Complex_Z *M, Complex_Z *UDU, int *ipivot,
+   double machEps, Complex_Z *rwork, int rworkSize, int *basisSize,
    int *nextGuess, int *numGuesses, double *timeForOP, primme_params *primme);
 
 #endif

@@ -17,13 +17,16 @@
  *   License along with this library; if not, write to the Free Software
  *   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
+
+#include "int_redefine.h"
+
 #ifndef CONVERGENCE_H
 #define CONVERGENCE_H
 
 int check_convergence_zprimme(Complex_Z *V, Complex_Z *W, Complex_Z *hVecs,
-   double *hVals, int *flags, int basisSize, int *iev, int *ievMax, 
-   double *blockNorms, int *blockSize, int numConverged, int numLocked, 
-   Complex_Z *evecs, double tol, double maxConvTol, double aNormEstimate, 
+   double *hVals, int *flags, int basisSize, int *iev, int *ievMax,
+   double *blockNorms, int *blockSize, int numConverged, int numLocked,
+   Complex_Z *evecs, double tol, double maxConvTol, double aNormEstimate,
    Complex_Z *rwork, primme_params *primme);
 
 #endif

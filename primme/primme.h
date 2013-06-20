@@ -19,9 +19,9 @@
  *   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * File: primme.h
- * 
+ *
  * Purpose - To be included in user applications that wish to call primme.
- * 
+ *
  ******************************************************************************/
 
 #ifndef PRIMME_H
@@ -31,6 +31,8 @@
 #include <sys/types.h>
 #include <limits.h>
 #include "Complex.h"
+
+#include "int_redefine.h"
 
 #define PRIMME_MAX_NAME_LENGTH 128
 
@@ -102,9 +104,9 @@ typedef struct primme_stats {
    int numRestarts;
    int numMatvecs;
    int numPreconds;
-   double elapsedTime; 
+   double elapsedTime;
 } primme_stats;
-   
+
 typedef struct JD_projectors {
    int LeftQ;
    int LeftX;
@@ -128,17 +130,17 @@ typedef struct restarting_params {
    primme_restartscheme scheme;
    int maxPrevRetain;
 } restarting_params;
-   
+
 
 //-----------------------------------------------------------------------------
 typedef struct primme_params {
 
-   // The user must input at least the following two arguments 
+   // The user must input at least the following two arguments
    int n;
    void (*matrixMatvec)
       ( void *x,  void *y, int *blockSize, struct primme_params *primme);
 
-   // Preconditioner applied on block of vectors (if available) 
+   // Preconditioner applied on block of vectors (if available)
    void (*applyPreconditioner)
       ( void *x,  void *y, int *blockSize, struct primme_params *primme);
 
@@ -146,7 +148,7 @@ typedef struct primme_params {
    void (*massMatrixMatvec)
       ( void *x,  void *y, int *blockSize, struct primme_params *primme);
 
-   // input for the following is only required for parallel programs 
+   // input for the following is only required for parallel programs
    int numProcs;
    int procID;
    int nLocal;
@@ -155,8 +157,8 @@ typedef struct primme_params {
       (void *sendBuf, void *recvBuf, int *count, struct primme_params *primme );
 
    // Though primme_initialize will assign defaults, most users will set these
-   int numEvals;          
-   primme_target target; 
+   int numEvals;
+   primme_target target;
    int numTargetShifts;              // For targeting interior epairs,
    double *targetShifts;             // at least one shift must also be set
 
@@ -180,7 +182,7 @@ typedef struct primme_params {
 
    int printLevel;
    FILE *outputFile;
-   
+
    void *matrix;
    void *preconditioner;
    double *ShiftsForPreconditioner;
@@ -189,7 +191,7 @@ typedef struct primme_params {
    struct correction_params correctionParams;
    struct primme_stats stats;
    struct stackTraceNode *stackTrace;
-   
+
 } primme_params;
 //-----------------------------------------------------------------------------
 
@@ -213,9 +215,9 @@ typedef enum {
 
 
 
-int dprimme(double *evals, double *evecs, double *resNorms, 
+int dprimme(double *evals, double *evecs, double *resNorms,
             primme_params *primme);
-int zprimme(double *evals, Complex_Z *evecs, double *resNorms, 
+int zprimme(double *evals, Complex_Z *evecs, double *resNorms,
             primme_params *primme);
 void primme_initialize(primme_params *primme);
 int  primme_set_method(primme_preset_method method, primme_params *params);
@@ -225,8 +227,8 @@ void *primme_calloc(size_t nelem, size_t elsize, const char *target);
 void primme_Free(primme_params *primme);
 void primme_seq_globalSumDouble(void *sendBuf, void *recvBuf, int *count,
 					           primme_params *params);
-void primme_PushErrorMessage(const primme_function callingFunction, 
-     const primme_function failedFunction, const int errorCode, 
+void primme_PushErrorMessage(const primme_function callingFunction,
+     const primme_function failedFunction, const int errorCode,
      const char *fileName, const int lineNumber, primme_params *primme);
 void primme_PrintStackTrace(const primme_params primme);
 void primme_DeleteStackTrace(primme_params *primme);

@@ -27,16 +27,18 @@
  * Date             : %G%
  ******************************************************************************/
 
+#include "int_redefine.h"
+
 #ifndef RESTART_H
 #define RESTART_H
 
 void reset_flags_dprimme(int *flag, int first, int last);
 
-int restart_dprimme(double *V, double *W, double *H, double *hVecs, 
-   double *hVals, int *flags, int *iev, double *evecs, double *evecsHat, 
-   double *M, double *UDU, int *ipivot, int basisSize, int numConverged, 
-   int *numConvergedStored, int numLocked, int numGuesses, 
-   double *previousHVecs, int numPrevRetained, double machEps, 
+int restart_dprimme(double *V, double *W, double *H, double *hVecs,
+   double *hVals, int *flags, int *iev, double *evecs, double *evecsHat,
+   double *M, double *UDU, int *ipivot, int basisSize, int numConverged,
+   int *numConvergedStored, int numLocked, int numGuesses,
+   double *previousHVecs, int numPrevRetained, double machEps,
    double *rwork, int rworkSize, primme_params *primme);
 
 #endif

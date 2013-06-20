@@ -20,7 +20,7 @@
  *
  * File: ortho.h
  *
- * Purpose - Header file containing prototypes for in-core and 
+ * Purpose - Header file containing prototypes for in-core and
  *           out-of-core orthogonalization routines.  This header
  *           is to be included in user/developer source files that
  *           need to call these routines.
@@ -30,15 +30,17 @@
  * Date             : %G%
  **********************************************************************/
 
+#include "int_redefine.h"
+
 #ifndef ORTHO_H
 #define ORTHO_H
 
-int ortho_zprimme(Complex_Z *basis, int ldBasis, int b1, int b2, 
-   Complex_Z *locked, int ldLocked, int numLocked, int nLocal, int *iseed, 
+int ortho_zprimme(Complex_Z *basis, int ldBasis, int b1, int b2,
+   Complex_Z *locked, int ldLocked, int numLocked, int nLocal, int *iseed,
    double machEps, Complex_Z *rwork, int rworkSize, primme_params *primme);
 
-int ortho_retained_vectors_zprimme (Complex_Z *currentVectors, 
-  int length, int numVectors, Complex_Z *previousVectors, int numPrevious, 
+int ortho_retained_vectors_zprimme (Complex_Z *currentVectors,
+  int length, int numVectors, Complex_Z *previousVectors, int numPrevious,
   double machEps, Complex_Z *rwork);
 
 #endif

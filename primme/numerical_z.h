@@ -27,29 +27,31 @@
  * Date             : %G%
  ******************************************************************************/
 
+#include "int_redefine.h"
+
 #include "common_numerical.h"
 #ifndef NUMERICAL_H
 #define NUMERICAL_H
 
-int Num_zhpev_zprimme(int iopt, Complex_Z *ap, double *w, Complex_Z *z, int ldz, 
+int Num_zhpev_zprimme(int iopt, Complex_Z *ap, double *w, Complex_Z *z, int ldz,
    int n, Complex_Z *aux, double *rwork, int naux);
-void Num_zheev_zprimme(char *jobz, char *uplo, int n, Complex_Z *a, int lda, 
+void Num_zheev_zprimme(char *jobz, char *uplo, int n, Complex_Z *a, int lda,
    double *w, Complex_Z *work, int ldwork, double *rwork, int *info);
 void Num_zhetrf_zprimme(char *uplo, int n, Complex_Z *a, int lda, int *ipivot,
    Complex_Z *work, int ldwork, int *info);
-void Num_zhetrs_zprimme(char *uplo, int n, int nrhs, Complex_Z *a, int lda, 
+void Num_zhetrs_zprimme(char *uplo, int n, int nrhs, Complex_Z *a, int lda,
    int *ipivot, Complex_Z *b, int ldb, int *info);
 
 
 void Num_zcopy_zprimme(int n, Complex_Z *x, int incx, Complex_Z *y, int incy);
 Complex_Z Num_dot_zprimme(int n, Complex_Z *x, int incx, Complex_Z *y, int incy);
-void Num_gemm_zprimme(char *transa, char *transb, int m, int n, int k, 
-   Complex_Z alpha, Complex_Z *a, int lda, Complex_Z *b, int ldb, 
+void Num_gemm_zprimme(char *transa, char *transb, int m, int n, int k,
+   Complex_Z alpha, Complex_Z *a, int lda, Complex_Z *b, int ldb,
    Complex_Z beta, Complex_Z *c, int ldc);
-void Num_symm_zprimme(char *side, char *uplo, int m, int n, Complex_Z alpha, 
-   Complex_Z *a, int lda, Complex_Z *b, int ldb, Complex_Z beta, 
+void Num_symm_zprimme(char *side, char *uplo, int m, int n, Complex_Z alpha,
+   Complex_Z *a, int lda, Complex_Z *b, int ldb, Complex_Z beta,
    Complex_Z *c, int ldc);
-void Num_axpy_zprimme(int n, Complex_Z alpha, Complex_Z *x, int incx, 
+void Num_axpy_zprimme(int n, Complex_Z alpha, Complex_Z *x, int incx,
    Complex_Z *y, int incy);
 void Num_gemv_zprimme(char *transa, int m, int n, Complex_Z alpha, Complex_Z *a,
    int lda, Complex_Z *x, int incx, Complex_Z beta, Complex_Z *y, int incy);

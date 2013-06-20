@@ -20,7 +20,7 @@
  *
  * File: numerical_private.h
  *
- * Purpose - Contains definitions and prototypes for exclusive use with 
+ * Purpose - Contains definitions and prototypes for exclusive use with
  *           numerical.c.  There are various definitions for use with Sun,
  *           IBM, and Cray.
  *
@@ -28,6 +28,8 @@
  * SID              : %I%
  * Date             : %G%
  ******************************************************************************/
+
+#include "int_redefine.h"
 
 #ifndef NUMERICAL_H
 #define NUMERICAL_H
@@ -136,12 +138,12 @@ extern "C" {
 
 void DCOPY(int *n, double *x, int *incx, double *y, int *incy);
 void DSWAP(int *n, double *x, int *incx, double *y, int *incy);
-void DGEMM(char *transa, char *transb, int *m, int *n, int *k, double *alpha, 
+void DGEMM(char *transa, char *transb, int *m, int *n, int *k, double *alpha,
    double *a, int *lda, double *b, int *ldb, double *beta, double *c, int *ldc);
 void DSYMM(char *side, char *uplo, int *m, int *n, double *alpha, double *a,
    int *lda, double *b, int *ldb, double *beta, double *c, int *ldc);
 void DAXPY(int *n, double *alpha, double *x, int *incx, double *y, int *incy);
-void DGEMV(char *transa, int *m, int *n, double *alpha, double *a, int *lda, 
+void DGEMV(char *transa, int *m, int *n, double *alpha, double *a, int *lda,
    double *x, int *incx, double *beta, double *y, int *incy);
 double DDOT(int *n, double *x, int *incx, double *y, int *incy);
 double DLAMCH(char *cmach);
@@ -176,13 +178,13 @@ int zhpev(int iopt, void *ap, double *w, void *z, int ldz, int n, void *aux, int
 
 void DCOPY(int *n, double *x, int *incx, double *y, int *incy);
 void DSWAP(int *n, double *x, int *incx, double *y, int *incy);
-void DGEMM(_fcd transa_fcd, _fcd transb_fcd, int *m, int *n, int *k, 
-   double *alpha, double *a, int *lda, double *b, int *ldb, double *beta, 
+void DGEMM(_fcd transa_fcd, _fcd transb_fcd, int *m, int *n, int *k,
+   double *alpha, double *a, int *lda, double *b, int *ldb, double *beta,
    double *c, int *ldc);
-void DSYMM(_fcd side_fcd, _fcd uplo_fcd, int *m, int *n, double *alpha, 
+void DSYMM(_fcd side_fcd, _fcd uplo_fcd, int *m, int *n, double *alpha,
    double *a, int *lda, double *b, int *ldb, double *beta, double *c, int *ldc);
 void DAXPY(int *n, double *alpha, double *x, int *incx, double *y, int *incy);
-void DGEMV(_fcd transa_fcd, int *m, int *n, double *alpha, double *a, int *lda, 
+void DGEMV(_fcd transa_fcd, int *m, int *n, double *alpha, double *a, int *lda,
    double *x, int *incx, double *beta, double *y, int *incy);
 double DDOT(int *n, double *x, int *incx, double *y, int *incy);
 double DLAMCH(_fcd cmach_fcd);

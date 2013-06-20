@@ -27,6 +27,7 @@
  * Date             : %G%
  ******************************************************************************/
 
+#include "int_redefine.h"
 
 #ifndef RESTART_PRIVATE_H
 #define RESTART_PRIVATE_H
@@ -37,32 +38,32 @@
 #define UDUDECOMPOSE_FAILURE     -4
 #define PSEUDOLOCK_FAILURE       -5
 
-static void restart_X(double *X, double *hVecs, int nLocal, 
+static void restart_X(double *X, double *hVecs, int nLocal,
    int basisSize, int restartSize, double *rwork, int rworkSize);
 
-static int restart_H(double *H, double *hVecs, double *hVals, 
-   int restartSize, int basisSize, double *previousHVecs, 
-   int numPrevRetained, int indexOfPreviousVecs, int rworkSize, 
+static int restart_H(double *H, double *hVecs, double *hVals,
+   int restartSize, int basisSize, double *previousHVecs,
+   int numPrevRetained, int indexOfPreviousVecs, int rworkSize,
    double *rwork, primme_params *primme);
 
-static int dtr(int numLocked, double *hVecs, double *hVals, int *flags, 
+static int dtr(int numLocked, double *hVecs, double *hVals, int *flags,
  int basisSize, int numFree, int *iev, double *rwork, primme_params *primme);
 
-static int pack_converged_coefficients(int *restartSize, int basisSize, 
-   int *numPrevRetained, int numLocked, int numGuesses, double *hVecs, 
+static int pack_converged_coefficients(int *restartSize, int basisSize,
+   int *numPrevRetained, int numLocked, int numGuesses, double *hVecs,
    double *hVals, int *flag, primme_params *primme);
 
-static int combine_retained_vectors(double *hVals, int *flags, double *hVecs, 
-   int basisSize, int *restartSize, int numPacked, double *previousHVecs, 
+static int combine_retained_vectors(double *hVals, int *flags, double *hVecs,
+   int basisSize, int *restartSize, int numPacked, double *previousHVecs,
    int *numPrevRetained, double machEps, double *rwork, primme_params *primme);
 
-static void compute_submatrix(double *previousHVecs, int numPrevRetained, 
-   double *H, int basisSize, int maxBasisSize, double *subMatrix, 
+static void compute_submatrix(double *previousHVecs, int numPrevRetained,
+   double *H, int basisSize, int maxBasisSize, double *subMatrix,
    double *rwork);
 
-static int insert_submatrix(double *H, double *hVals, double *hVecs, 
-   int restartSize, double *subMatrix, int numPrevRetained, 
-   int indexOfPreviousVecs, int rworkSize, double *rwork, 
+static int insert_submatrix(double *H, double *hVals, double *hVecs,
+   int restartSize, double *subMatrix, int numPrevRetained,
+   int indexOfPreviousVecs, int rworkSize, double *rwork,
    primme_params *primme);
 
 static void apply_preconditioner_block(double *v, double *result,

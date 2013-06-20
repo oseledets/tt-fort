@@ -27,6 +27,8 @@
  * Date             : %G%
  ******************************************************************************/
 
+#include "int_redefine.h"
+
 #ifndef INIT_PRIVATE_H
 #define INIT_PRIVATE_H
 
@@ -35,8 +37,8 @@
 #define INIT_KRYLOV_FAILURE       -3
 #define UDUDECOMPOSE_FAILURE      -4
 
-static int init_block_krylov(double *V, double *W, int dv1, int dv2, 
-   double *locked, int numLocked, double machEps, double *rwork, 
+static int init_block_krylov(double *V, double *W, int dv1, int dv2,
+   double *locked, int numLocked, double machEps, double *rwork,
    int rworkSize, primme_params *primme);
 
 #endif

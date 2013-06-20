@@ -20,22 +20,24 @@
  *
  * File: inner_solve.h
  *
- * Purpose - Contains prototypes for calling the inner solve. 
+ * Purpose - Contains prototypes for calling the inner solve.
  *
  * Module name      : %M%
  * SID              : %I%
  * Date             : %G%
  ******************************************************************************/
 
+#include "int_redefine.h"
+
 #ifndef INNER_SOLVE_H
 #define INNER_SOLVE_H
 
 int inner_solve_dprimme(double *x, double *r, double *rnorm, double *evecs,
-   double *evecsHat, double *UDU, int *ipivot, double *xKinvx, 
+   double *evecsHat, double *UDU, int *ipivot, double *xKinvx,
    double *Lprojector, double *RprojectorQ, double *RprojectorX,
    int sizeLprojector, int sizeRprojectorQ, int sizeRprojectorX,
-   double *sol, double eval, double shift, double eresTol, 
-   double aNormEstimate, double machEps, double *rwork, int rworkSize, 
+   double *sol, double eval, double shift, double eresTol,
+   double aNormEstimate, double machEps, double *rwork, int rworkSize,
    primme_params *primme);
 
 #endif

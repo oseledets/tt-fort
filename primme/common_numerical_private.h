@@ -20,11 +20,13 @@
  *
  * File: common_numerical_private.h
  *
- * Purpose - Contains definitions and prototypes for exclusive use with 
- *           common_numerical.c. There are various definitions for use 
+ * Purpose - Contains definitions and prototypes for exclusive use with
+ *           common_numerical.c. There are various definitions for use
  *           with Sun, IBM, and Cray.
  *
  ******************************************************************************/
+
+#include "int_redefine.h"
 
 #if !defined(NUM_SUN) && !defined(NUM_IBM) && !defined(NUM_CRAY)
 #define NUM_SUN

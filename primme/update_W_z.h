@@ -28,6 +28,8 @@
  * Date             : %G%
  ******************************************************************************/
 
+#include "int_redefine.h"
+
 #ifndef UPDATE_W_H
 #define UPDATE_W_H
 

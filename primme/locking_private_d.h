@@ -27,15 +27,17 @@
  * Date             : %G%
  ******************************************************************************/
 
+#include "int_redefine.h"
+
 #ifndef LOCKING_PRIVATE_H
 #define LOCKING_PRIVATE_H
 
-#define ORTHO_FAILURE             -1 
+#define ORTHO_FAILURE             -1
 #define INIT_BLOCK_KRYLOV_FAILURE -2
 #define SOLVE_H_FAILURE           -3
 #define UDUDECOMPOSE_FAILURE      -4
 
-static int swap_flagVecs_toEnd(int basisSize, int flagValue, double *V, 
+static int swap_flagVecs_toEnd(int basisSize, int flagValue, double *V,
    double *W, double *H, double *hVals, int *flag, primme_params *primme);
 
 static void insertionSort(double newVal, double *evals, double newNorm,

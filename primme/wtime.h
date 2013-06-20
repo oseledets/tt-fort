@@ -17,6 +17,9 @@
  *   License along with this library; if not, write to the Free Software
  *   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
+
+#include "int_redefine.h"
+
 double primme_wTimer(int zeroTimer);
 extern double primme_get_wtime();
 void primme_get_time(double *, double *);

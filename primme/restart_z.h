@@ -27,16 +27,18 @@
  * Date             : %G%
  ******************************************************************************/
 
+#include "int_redefine.h"
+
 #ifndef RESTART_H
 #define RESTART_H
 
 void reset_flags_zprimme(int *flag, int first, int last);
 
-int restart_zprimme(Complex_Z *V, Complex_Z *W, Complex_Z *H, Complex_Z *hVecs, 
-   double *hVals, int *flags, int *iev, Complex_Z *evecs, Complex_Z *evecsHat, 
-   Complex_Z *M, Complex_Z *UDU, int *ipivot, int basisSize, int numConverged, 
-   int *numConvergedStored, int numLocked, int numGuesses, 
-   Complex_Z *previousHVecs, int numPrevRetained, double machEps, 
+int restart_zprimme(Complex_Z *V, Complex_Z *W, Complex_Z *H, Complex_Z *hVecs,
+   double *hVals, int *flags, int *iev, Complex_Z *evecs, Complex_Z *evecsHat,
+   Complex_Z *M, Complex_Z *UDU, int *ipivot, int basisSize, int numConverged,
+   int *numConvergedStored, int numLocked, int numGuesses,
+   Complex_Z *previousHVecs, int numPrevRetained, double machEps,
    Complex_Z *rwork, int rworkSize, primme_params *primme);
 
 #endif

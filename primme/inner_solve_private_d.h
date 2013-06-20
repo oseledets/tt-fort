@@ -27,6 +27,8 @@
  * Date             : %G%
  ******************************************************************************/
 
+#include "int_redefine.h"
+
 #ifndef INNER_SOLVE_PRIVATE_H
 #define INNER_SOLVE_PRIVATE_H
 
@@ -34,20 +36,20 @@
 #define APPLYSKEWPROJECTOR_FAILURE           -2
 #define UDUSOLVE_FAILURE                     -3
 
-static int apply_projected_preconditioner(double *v, double *Q, 
-   double *RprojectorQ, double *x, double *RprojectorX, 
-   int sizeRprojectorQ, int sizeRprojectorX, double *xKinvx, 
-   double *UDU, int *ipivot, double *result, double *rwork, 
+static int apply_projected_preconditioner(double *v, double *Q,
+   double *RprojectorQ, double *x, double *RprojectorX,
+   int sizeRprojectorQ, int sizeRprojectorX, double *xKinvx,
+   double *UDU, int *ipivot, double *result, double *rwork,
    primme_params *primme);
 
-static int apply_skew_projector(double *Q, double *Qhat, double *UDU, 
-   int *ipivot, int numCols, double *v, double *rwork, 
+static int apply_skew_projector(double *Q, double *Qhat, double *UDU,
+   int *ipivot, int numCols, double *v, double *rwork,
    primme_params *primme);
 
-static void apply_projected_matrix(double *v, double shift, double *Q, 
+static void apply_projected_matrix(double *v, double shift, double *Q,
    int dimQ, double *result, double *rwork, primme_params *primme);
 
-static void apply_projector(double *Q, int numCols, double *v, 
+static void apply_projector(double *Q, int numCols, double *v,
    double *rwork, primme_params *primme);
 
 static double dist_dot(double *x, int incx,

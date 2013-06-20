@@ -27,6 +27,8 @@
  * Date             : %G%
  ******************************************************************************/
 
+#include "int_redefine.h"
+
 #ifndef MAIN_ITER_PRIVATE_H
 #define MAIN_ITER_PRIVATE_H
 
@@ -40,14 +42,14 @@
 #define RESTART_FAILURE           -6
 #define LOCK_VECTORS_FAILURE      -7
 
-static void adjust_blockSize(int *iev, int *flag, int *blockSize, 
-   int maxBlockSize, int *ievMax, int basisSize, int maxBasisSize, 
+static void adjust_blockSize(int *iev, int *flag, int *blockSize,
+   int maxBlockSize, int *ievMax, int basisSize, int maxBasisSize,
    int numLocked, int matrixDimension);
 
-static int retain_previous_coefficients(Complex_Z *hVecs, Complex_Z *previousHVecs, 
+static int retain_previous_coefficients(Complex_Z *hVecs, Complex_Z *previousHVecs,
    int basisSize, int *iev, int blockSize, primme_params *primme);
 
-static int verify_norms(Complex_Z *V, Complex_Z *W, Complex_Z *hVecs, double *hVals, 
+static int verify_norms(Complex_Z *V, Complex_Z *W, Complex_Z *hVecs, double *hVals,
    int basisSize, double *resNorms, int *flag, double tol, double aNormEstimate,
    void *rwork, int *numConverged, primme_params *primme);
 
@@ -75,7 +77,7 @@ typedef struct {
    double ratio_MV_outer; // TotalMV/outerIts (average of last two updates)
 
    /* To maintain a convergence rate of all residual reductions seen we need: */
-   int    nextReset;      // When to reset the following averaging sums 
+   int    nextReset;      // When to reset the following averaging sums
    double gdk_sum_logResReductions; // Sum of all log(residual reductions) in GD
    double jdq_sum_logResReductions; // Sum of all log(residual reductions) in JD
    double gdk_sum_MV;     // Total number of MV resulting in these GD reductions
@@ -87,8 +89,8 @@ typedef struct {
    int numIt_0;           // Remembers starting outer its/MVs since switched
    int numMV_0;		  //   to current method, or since an epair converged
    double timer_0;        // Remembers starting time since switched to a method
-   			  //   or since an epair converged with that method 
-   double time_in_inner;  // Accumulative time spent in inner iterations 
+   			  //   or since an epair converged with that method
+   double time_in_inner;  // Accumulative time spent in inner iterations
    			  //   since last switch or since an epair converged
    double resid_0;        // First residual norm of the convergence of a method
    			  //   since last switch or since an epair converged
@@ -104,7 +106,7 @@ static void initializeModel(primme_CostModel *model, primme_params *primme);
 static void switch_from_JDQMR(primme_CostModel *model, primme_params *primme);
 static void switch_from_GDpk (primme_CostModel *model, primme_params *primme);
 static int update_statistics(primme_CostModel *model, primme_params *primme,
-   double current_time, int recentConv, int calledAtRestart, int numConverged, 
+   double current_time, int recentConv, int calledAtRestart, int numConverged,
    double currentResNorm, double aNormEst);
 static double ratio_JDQMR_GDpk(primme_CostModel *CostModel, int numLocked,
    double estimate_slowdown, double estimate_ratio_outer_MV);

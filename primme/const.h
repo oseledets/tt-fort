@@ -27,6 +27,8 @@
  * Date             : %G%
  ******************************************************************************/
 
+#include "int_redefine.h"
+
 #ifndef CONST_H
 #define CONST_H
 

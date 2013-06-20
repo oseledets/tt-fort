@@ -27,6 +27,8 @@
  * Date             : %G%
  ******************************************************************************/
 
+#include "int_redefine.h"
+
 #ifndef SOLVE_H_PRIVATE_H
 #define SOLVE_H_PRIVATE_H
 

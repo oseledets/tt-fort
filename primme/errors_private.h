@@ -27,6 +27,8 @@
  * Date             : %G%
  ******************************************************************************/
 
+#include "int_redefine.h"
+
 #ifndef ERRORS_PRIVATE_H
 #define ERRORS_PRIVATE_H
 

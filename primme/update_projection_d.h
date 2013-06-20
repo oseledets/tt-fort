@@ -28,11 +28,13 @@
  * Date             : %G%
  ******************************************************************************/
 
+#include "int_redefine.h"
+
 #ifndef UPDATE_PROJECTION_H
 #define UPDATE_PROJECTION_H
 
-void update_projection_dprimme(double *X, double *Y, double *Z, 
-   int numCols, int maxCols, int blockSize, double *rwork, 
+void update_projection_dprimme(double *X, double *Y, double *Z,
+   int numCols, int maxCols, int blockSize, double *rwork,
    primme_params *primme);
 
 #endif

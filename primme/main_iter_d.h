@@ -27,12 +27,13 @@
  * Date             : %G%
  ******************************************************************************/
 
+#include "int_redefine.h"
 
 #ifndef MAIN_ITER_H
 #define MAIN_ITER_H
 
 int main_iter_dprimme(double *evals, int *perm, double *evecs,
-   double *resNorms, double machEps, int *intWork, void *realWork, 
+   double *resNorms, double machEps, int *intWork, void *realWork,
    primme_params *primme);
 
 #endif /* MAIN_ITER_H */

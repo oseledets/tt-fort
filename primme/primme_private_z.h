@@ -27,6 +27,7 @@
  * Date             : %G%
  ******************************************************************************/
 
+#include "int_redefine.h"
 
 #ifndef DPRIMME_PRIVATE_H
 #define DPRIMME_PRIVATE_H
