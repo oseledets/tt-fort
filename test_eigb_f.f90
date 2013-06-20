@@ -111,6 +111,7 @@ program test_eigb_f
  print *, 'Max Rank = ', maxval(rx(1:d+1))
 
  open(10,file='test_eigb.out')
+ write(10,'(I0)') n(1)
  write(10,'(I0)') d
  write(10,'(I0)') B
  write(10,'(ES8.1)') tol

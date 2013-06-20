@@ -199,7 +199,7 @@ call disp('Looking for '//tostring(B*1d0)//' eigenvalues with accuracy '//tostri
 
 
 ! Work arrays for MPS blocks
-  sz = rmax*maxval(n(1:d))*rmax*B
+  sz = rmax*maxval(n(1:d))*rmax*max(B+1, max_basis_size)
   lwork = max(rmax*max(rmax,max(B,maxval(n(1:d)))), max_full_size0)*256
   allocate(curcr(sz), work(lwork), stat=info)
   if (info .ne. 0) then
