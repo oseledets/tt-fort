@@ -2,16 +2,12 @@
 .SUFFIXES: .c .f .f90 .F90 .o
 
 include Makefile.deps
+include Makefile.in
 
 OBJS    = $(DEPS:,=.o).o
 
-FC = ifort
-CC = icc
 
-FOPT = -O3 -i8 -fPIC
-COPT = -O3 -fPIC
-
-primme.a: $(OBJS)
+primme.a: setints $(OBJS)
 	ar rc primme.a $(OBJS)
 
 
@@ -25,6 +21,9 @@ primme.a: $(OBJS)
 		$(FC) $(FOPT) -c $<
 .c.o:
 		$(CC) $(COPT) -c $<
+
+setints:
+	echo "$(INTDEF)#define int long" > int_redefine.h
 
 
 clean:
