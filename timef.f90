@@ -14,8 +14,8 @@ contains
 ! end if 
 ! timef=dble(c+time_per*m)/r
 ! time_cold=c
- timef=omp_get_wtime()
-
+! timef=omp_get_wtime()
+timef = cpu_time()
  !timef=0.d0
  !time=mpi_wtime()
  end function
