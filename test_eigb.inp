@@ -1,6 +1,6 @@
-25	B
-25	Bmax
-50	rmax
-2500	max_full_size
-1.0d-5	tol
-Laplace_5.sdv	H
+5	B
+5	Bmax
+150	rmax
+200	max_full_size
+1.0d-3	tol
+Heisen_20.sdv	H

@@ -12,13 +12,21 @@ MODS    = *.mod
 OBJF	= $(OBJS)
 OBJC	=
 
+all: mytt.a primme.a
 
 mytt.a : $(OBJS)
 	ar rc mytt.a $(OBJS)
 
+primme.a:
+	cp Makefile.cpu primme/ && $(MAKE) -C primme
 
-eigb: mytt.a
-	ifort -O2 test_eigb_f.f90 mytt.a primme/primme.a  -mkl -liomp5
+
+########### This is a test for different compilers, so I didn't put it into "all"
+test_eigb_i: mytt.a primme.a
+	ifort -O2 test_eigb.f90 mytt.a primme/primme.a -o test_eigb  $(LIB)
+
+test_eigb_g: mytt.a primme.a
+	gfortran -O2 test_eigb.f90 mytt.a primme/primme.a -o test_eigb  $(LIB)
 
 
 .f.o:
@@ -32,4 +40,5 @@ eigb: mytt.a
 
 
 clean:
-		rm -f $(OBJF) $(OBJC) $(MODS) mytt.a
+		rm -f $(OBJF) $(OBJC) $(MODS) mytt.a primme/*.o primme/*.mod primme/primme.a
+

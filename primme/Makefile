@@ -2,7 +2,7 @@
 .SUFFIXES: .c .f .f90 .F90 .o
 
 include Makefile.deps
-include Makefile.in
+include ../Makefile.in
 
 OBJS    = $(DEPS:,=.o).o
 
