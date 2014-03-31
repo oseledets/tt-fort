@@ -266,13 +266,14 @@ contains
 
 
 ! SVD
- subroutine dtt_svd(arg,tol)
+ subroutine dtt_svd(arg,tol,rmax)
   implicit none
   type(dtt),intent(inout),target :: arg
   double precision,intent(in) :: tol
   character(len=*),parameter :: subnam='dtt_svd'
   integer :: l,m,k,i,j,lwork,info,nn,rr,mn,mm,kk
   integer,pointer :: r(:),n(:)
+  integer, optional :: rmax
   double precision,allocatable :: work(:),s(:),mat(:),u(:)
   double precision :: err,nrm
   double precision,external :: dnrm2
@@ -293,6 +294,9 @@ contains
    call dgesvd('s','s',mm,nn,arg%u(k)%p,mm,s,mat,mm,u,mn,work,lwork,info)
    if(info.ne.0)then; write(*,*)subnam,': dgesvd info: ',info; stop; end if
    rr=chop(s(1:mn),tol)
+   if (present(rmax)) then 
+      rr = min(rr, rmax)
+   end if
    forall(i=1:mm,j=1:rr)mat((j-1)*mm+i)=s(j)*mat((j-1)*mm+i)
    call d2submat(rr,nn,u,mn,arg%u(k)%p)
 
@@ -309,13 +313,15 @@ contains
 
   deallocate(work,s,mat,u)
  end subroutine
- subroutine ztt_svd(arg,tol)
+ 
+ subroutine ztt_svd(arg, tol, rmax)
   implicit none
   type(ztt),intent(inout),target :: arg
   double precision,intent(in) :: tol
   character(len=*),parameter :: subnam='ztt_svd'
   integer :: l,m,k,i,j,lwork,info,nn,rr,mn,mm,kk
   integer,pointer :: r(:),n(:)
+  integer, intent(in), optional :: rmax
   double precision,allocatable :: s(:),rwork(:)
   complex(8),allocatable :: work(:),mat(:),u(:)
   double precision :: err,nrm
@@ -337,6 +343,9 @@ contains
    call zgesvd('s','s',mm,nn,arg%u(k)%p,mm,s,mat,mm,u,mn,work,lwork,rwork,info)
    if(info.ne.0)then; write(*,*)subnam,': dgesvd info: ',info; stop; end if
    rr=chop(s(1:mn),tol)
+   if (present(rmax)) then
+      rr = min(rr, rmax)
+   end if
    forall(i=1:mm,j=1:rr)mat((j-1)*mm+i)=s(j)*mat((j-1)*mm+i)
    call z2submat(rr,nn,u,mn,arg%u(k)%p)
 
@@ -354,7 +363,7 @@ contains
   deallocate(work,rwork,s,mat,u)
  end subroutine
 
- subroutine dtt_svd0(n,a,tt,tol)
+ subroutine dtt_svd0(n,a,tt,tol,rmax)
   implicit none
   integer,intent(in) :: n(:)
   double precision,intent(in) :: a(*)
@@ -363,6 +372,7 @@ contains
   character(len=*),parameter :: subnam='dtt_svd0'
   double precision,dimension(:),allocatable :: s,b,u,work
   integer :: l,m,k,nn,mm,mn,info,i,lwork
+  integer, intent(in), optional :: rmax
   integer,pointer :: r(:)
   double precision,external :: dnrm2
 
@@ -383,7 +393,14 @@ contains
    call dgesvd('o','s',mm,nn,b,mm,s,b,1,u,mn,work,lwork,info)
    if(info.ne.0)then;write(*,*)subnam,': info: ',info;stop;endif
    !r(k-1)=chop(s(1:mn),tol/dsqrt(dble(m-l+1)))
-   if(s(1).ne.0.d0)then;r(k-1)=chop(s(1:mn)/s(1),tol);else;r(k-1)=0;endif
+   if(s(1).ne.0.d0)then 
+       r(k-1)=chop(s(1:mn)/s(1),tol)
+   else
+       r(k-1)=0
+   endif
+   if (present(rmax)) then
+       r(k-1) = min(r(k-1), rmax)
+   end if
    do i=1,r(k-1); call dscal(mm,s(i),b(1+(i-1)*mm),1);enddo
    if(associated(tt%u(k)%p))deallocate(tt%u(k)%p)
    allocate(tt%u(k)%p(r(k-1),tt%n(k),r(k)))
@@ -394,7 +411,7 @@ contains
   call dcopy(r(l-1)*tt%n(l)*r(l),b,1,tt%u(l)%p,1)
   deallocate(work,b,u,s)
  end subroutine
- subroutine ztt_svd0(n,a,tt,tol)
+ subroutine ztt_svd0(n,a,tt,tol,rmax)
   implicit none
   integer,intent(in) :: n(:)
   complex(8),intent(in) :: a(*)
@@ -404,6 +421,7 @@ contains
   double precision,dimension(:),allocatable :: s,rwork
   complex(8),dimension(:),allocatable :: b,u,work
   integer :: l,m,k,nn,mm,mn,info,i,lwork
+  integer, intent(in), optional :: rmax
   integer,pointer :: r(:)
   double precision,external :: dznrm2
 
@@ -421,7 +439,14 @@ contains
    mm=r(l-1)*product(tt%n(l:k-1)); nn=tt%n(k)*r(k); mn=min(mm,nn)
    call zgesvd('o','s',mm,nn,b,mm,s,b,1,u,mn,work,lwork,rwork,info)
    if(info.ne.0)then;write(*,*)subnam,': info: ',info;stop;endif
-   if(s(1).ne.0.d0)then;r(k-1)=chop(s(1:mn)/s(1),tol);else;r(k-1)=0;endif
+   if(s(1).ne.0.d0)then 
+       r(k-1)=chop(s(1:mn)/s(1),tol)
+   else
+       r(k-1)=0
+   endif
+   if (present(rmax)) then
+       r(k-1) = min(r(k-1), rmax)
+   end if
    do i=1,r(k-1); call zdscal(mm,s(i),b(1+(i-1)*mm),1);enddo
    if(associated(tt%u(k)%p))deallocate(tt%u(k)%p)
    allocate(tt%u(k)%p(r(k-1),tt%n(k),r(k)))
