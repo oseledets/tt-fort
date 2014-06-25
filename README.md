@@ -20,6 +20,13 @@ Compilation
   CPU = your_preset
 
 where your_preset is one from Makefile.in (e.g. CPU = i4-intel).
+You may start from the example file Makefile.cpu.default provided.
+!!!
+Note that the standalone programs (e.g. test_eigb below) require 
+four-bytes integers (i4-gnu or i4-intel), while the MATLAB MEX
+libraries require 8-bytes integers, i8-gnu or i8-intel.
+!!!
+
 
 2) Run make
 It will compile the static libraries mytt.a and primme/primme.a
