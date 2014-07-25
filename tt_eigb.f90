@@ -109,9 +109,6 @@ end function compute_residue
     deallocate(res1, res2, phi2t)
   end subroutine
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!! AMR Block eigensolver
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
 !! What we have: we have a starting vector + a matrix (no vector X!)
@@ -330,16 +327,15 @@ call disp('Looking for '//tostring(B*1d0)//' eigenvalues with accuracy '//tostri
 
       fv = sum(lambda(1:B))
 
-      !print *,'Functional value:', fv, 'Error:', abs(fv-fvold)/fv
 
       erloc = (fvold - fv)/abs(fv)
       ermax = max(ermax, erloc)
+      if (verb0 > 0) then
       call disp('swp: '//tostring(1d0*swp)//' i: ['//tostring(1d0*i)//'/'//&
           tostring(1d0*d)//'] loc_size: '//tostring(1d0*ry(i)*n(i)*ry(i+1))//&
           ' matvecs: '//tostring(1d0*num_matvecs)//' res: ' //tostring(res)//&
           ' ermax: '//tostring(ermax)//' dfv:'//tostring(fvold-fv))
-
-      !print *,' fv: ', fv
+      end if
       total_mv = total_mv + num_matvecs
       fvold = fv
 
