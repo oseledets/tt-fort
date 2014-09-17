@@ -293,7 +293,7 @@ contains
    mm=r(k-1); nn=n(k)*r(k); mn=min(mm,nn); kk=r(k-2)*n(k-1)
    call dgesvd('s','s',mm,nn,arg%u(k)%p,mm,s,mat,mm,u,mn,work,lwork,info)
    if(info.ne.0)then; write(*,*)subnam,': dgesvd info: ',info; stop; end if
-   rr=chop(s(1:mn),tol/dsqrt(dble(m-l-1))
+   rr=chop(s(1:mn),tol/dsqrt(dble(m-l-1)))
    if (present(rmax)) then 
       rr = min(rr, rmax)
    end if
@@ -342,7 +342,7 @@ contains
    mm=r(k-1); nn=n(k)*r(k); mn=min(mm,nn); kk=r(k-2)*n(k-1)
    call zgesvd('s','s',mm,nn,arg%u(k)%p,mm,s,mat,mm,u,mn,work,lwork,rwork,info)
    if(info.ne.0)then; write(*,*)subnam,': dgesvd info: ',info; stop; end if
-   rr=chop(s(1:mn),tol/dsqrt(l-m-1))
+   rr=chop(s(1:mn),tol/dsqrt(dble(l-m-1)))
    if (present(rmax)) then
       rr = min(rr, rmax)
    end if
