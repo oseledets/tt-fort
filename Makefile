@@ -11,7 +11,7 @@ OBJS    = $(DEPS:,=.o).o
 MODS    = *.mod
 OBJF	= $(OBJS)
 OBJC	=
-
+FC = gfortran -O3
 all: mytt.a primme.a
 
 mytt.a : $(OBJS)
@@ -26,7 +26,10 @@ test_eigb_i: mytt.a primme.a
 	ifort -O2 test_eigb.f90 mytt.a primme/primme.a -o test_eigb  $(LIB)
 
 test_eigb_g: mytt.a primme.a
-	gfortran -O2 test_eigb.f90 mytt.a primme/primme.a -o test_eigb  $(LIB)
+	gfortran -O3 test_eigb.f90 mytt.a primme/primme.a -o test_eigb  $(LIB)
+
+test_svd_g: mytt.a 
+	gfortran -O3 test_svd.f90 mytt.a -o test_svd  $(LIB)
 
 
 .f.o:
