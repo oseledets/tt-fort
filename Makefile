@@ -11,7 +11,6 @@ OBJS    = $(DEPS:,=.o).o
 MODS    = *.mod
 OBJF	= $(OBJS)
 OBJC	=
-FC = gfortran -O3
 all: mytt.a primme.a
 
 mytt.a : $(OBJS)
