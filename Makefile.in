@@ -1,5 +1,5 @@
 include Makefile.cpu
-# A preset for LAPACK with 8-byte integers and PIC (e.g. in MATLAB), GNU compiler
+# A preset for LAPACK with 8-byte integers and PIC (e.g. in MATLAB x64), GNU compiler
 ifeq ($(CPU),i8-gnu)
       FOPT    = -fdefault-integer-8 -ffree-line-length-none -O3 -fPIC
       FC   = gfortran
@@ -9,18 +9,7 @@ ifeq ($(CPU),i8-gnu)
       LIB   = -llapack -lblas -lgomp
       INTDEF = ""
 endif
-# A preset for LAPACK with 4-byte integers (e.g. standalone or python), GNU compiler
-ifeq ($(CPU),i4-gnu)
-      FOPT    = -ffree-line-length-none -O3
-      FC   = gfortran
-      LDR   = gfortran
-      CC    = gcc
-      COPT = -O3
-      LIB   = -llapack -lblas -lgomp
-      INTDEF = "// "
-endif
-
-# A preset for MKL with 8-byte integers and PIC (e.g. in MATLAB), Intel compiler
+# A preset for MKL with 8-byte integers and PIC (e.g. in MATLAB x64), Intel compiler
 ifeq ($(CPU),i8-intel)
       FOPT    = -i8  -O3 -fPIC
       FC   = ifort
@@ -30,8 +19,40 @@ ifeq ($(CPU),i8-intel)
       LIB   = -mkl -liomp5
       INTDEF = ""
 endif
-# A preset for MKL with 4-byte integers (e.g. standalone or python), Intel compiler
+# A preset for LAPACK with 4-byte integers and PIC (e.g. in MATLAB x32), GNU compiler
+ifeq ($(CPU),i4-gnu)
+      FOPT    = -ffree-line-length-none -O3 -fPIC
+      FC   = gfortran
+      LDR   = gfortran
+      CC    = gcc
+      COPT = -O3 -fPIC
+      LIB   = -llapack -lblas -lgomp
+      INTDEF = "// "
+endif
+# A preset for MKL with 4-byte integers and PIC (e.g. in MATLAB x32), Intel compiler
 ifeq ($(CPU),i4-intel)
+      FOPT    = -O3 -fPIC
+      FC   = ifort
+      LDR   = ifort
+      CC    = icc
+      COPT = -O3 -fPIC
+      LIB   = -mkl -liomp5
+      INTDEF = "// "
+endif
+
+
+# A preset for LAPACK with 4-byte integers (e.g. standalone or python), GNU compiler
+ifeq ($(CPU),i4-gnu-nopic)
+      FOPT    = -ffree-line-length-none -O3
+      FC   = gfortran
+      LDR   = gfortran
+      CC    = gcc
+      COPT = -O3
+      LIB   = -llapack -lblas -lgomp
+      INTDEF = "// "
+endif
+# A preset for MKL with 4-byte integers (e.g. standalone or python), Intel compiler
+ifeq ($(CPU),i4-intel-nopic)
       FOPT    = -O3
       FC   = ifort
       LDR   = ifort
@@ -41,3 +62,23 @@ ifeq ($(CPU),i4-intel)
       INTDEF = "// "
 endif
 
+# A preset for LAPACK with 8-byte integers (e.g. standalone or python, but ILP64), GNU compiler
+ifeq ($(CPU),i8-gnu-nopic)
+      FOPT    = -fdefault-integer-8 -ffree-line-length-none -O3
+      FC   = gfortran
+      LDR   = gfortran
+      CC    = gcc
+      COPT = -O3
+      LIB   = -llapack -lblas -lgomp
+      INTDEF = "// "
+endif
+# A preset for MKL with 8-byte integers (e.g. standalone or python, but ILP64), Intel compiler
+ifeq ($(CPU),i8-intel-nopic)
+      FOPT    = -i8 -O3
+      FC   = ifort
+      LDR   = ifort
+      CC    = icc
+      COPT = -O3
+      LIB   = -mkl -liomp5
+      INTDEF = "// "
+endif

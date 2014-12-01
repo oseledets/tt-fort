@@ -22,9 +22,10 @@ Compilation
 where your_preset is one from Makefile.in (e.g. CPU = i4-intel).
 You may start from the example file Makefile.cpu.default provided.
 !!!
+For x64 systems!
 Note that the standalone programs (e.g. test_eigb below) require 
-four-bytes integers (i4-gnu or i4-intel), while the MATLAB MEX
-libraries require 8-bytes integers, i8-gnu or i8-intel.
+four-bytes integers without fPIC (i4-gnu-nopic or i4-intel-nopic), while the MATLAB MEX
+libraries require 8-bytes integers with fPIC, i8-gnu or i8-intel.
 !!!
 
 
