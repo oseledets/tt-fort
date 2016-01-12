@@ -166,30 +166,12 @@ contains
    !t1=timef()
    call dgeqrf(mm,nn, u,mm,tau,work,lwork,info)
    if(info.ne.0)then; write(*,*) subnam,': dgeqrf info: ',info; stop; end if
-   !t2=timef()
-   !print *,'dgeqrf step:', t2-t1
-   !t1=timef()
    do j=1,nn
     forall(i=1:min(j,mm))    mat(i+(j-1)*mn)=u(i+(j-1)*mm)
     forall(i=min(j,mm)+1:mn) mat(i+(j-1)*mn)=0.d0
    end do
-   !t2=timef()
-   !print *, 'Strange copy step:',t2-t1
-   !t1=timef()
-   !print *,'mm=',mm,'mn=',mn
    call dorgqr(mm,mn,mn,u,mm,tau,work,lwork,info)
    if(info.ne.0)then; write(*,*) subnam,': dorgqr info: ',info; stop; end if
-!    t2=timef()
-    !print *,'dorgqr step:',t2-t1, 'Matrix size:',mm,mn
-
-!    print *,'time for a single qr: ',t2-t1,'Matrix size:',mm,mn
-!
-!   nrm=dnrm2(mm*nn,arg%u(k)%p,1)
-!   call dgemm('n','n',mm,nn,mn,1.d0,u,mm,mat,mn,-1.d0,arg%u(k)%p,mm)
-!   err=dnrm2(mm*nn,arg%u(k)%p,1)
-!   if(err.gt.1.d-10*nrm)then; write(*,*)subnam,': qr error: m,n: ',mm,nn;stop;endif
-!
-   !t1=timef()
    call dcopy(mm*mn, u,1,arg%u(k)%p,1)
    call dgemm('n','n',mn,kk,nn,1.d0,mat,mn,arg%u(k+1)%p,nn,0.d0,u,mn)
    if(r(k).ne.mn)then
@@ -200,8 +182,6 @@ contains
     call dcopy(mm*mn, mat,1,arg%u(k)%p,1)
    end if
    call dcopy(mn*kk, u,1,arg%u(k+1)%p,1)
-   !t2=timef()
-   !print *,'Time for the rest:',t2-t1
   end do
   deallocate(work,tau,mat,u)
 
@@ -281,7 +261,6 @@ contains
   l=arg%l; m=arg%m
   if(m.le.l)return
   r=>arg%r; n=>arg%n
-
   nn=maxval(n(l:m)); rr=maxval(r(l-1:m))
   lwork=128*nn*rr
   allocate(work(lwork),s(nn*rr), mat(rr*nn*rr),u(rr*nn*rr), stat=info)
@@ -293,7 +272,7 @@ contains
    mm=r(k-1); nn=n(k)*r(k); mn=min(mm,nn); kk=r(k-2)*n(k-1)
    call dgesvd('s','s',mm,nn,arg%u(k)%p,mm,s,mat,mm,u,mn,work,lwork,info)
    if(info.ne.0)then; write(*,*)subnam,': dgesvd info: ',info; stop; end if
-   rr=chop(s(1:mn),tol/dsqrt(dble(m-l-1)))
+   rr=chop(s(1:mn),tol/dsqrt(dble(m-l)))
    if (present(rmax)) then 
       rr = min(rr, rmax)
    end if
@@ -394,7 +373,7 @@ contains
    if(info.ne.0)then;write(*,*)subnam,': info: ',info;stop;endif
    !r(k-1)=chop(s(1:mn),tol/dsqrt(dble(m-l+1)))
    if(s(1).ne.0.d0)then 
-       r(k-1)=chop(s(1:mn), tol/dsqrt(dble(m-l-1)))
+       r(k-1)=chop(s(1:mn), tol/dsqrt(dble(m-l)))
    else
        r(k-1)=0
    endif
@@ -440,7 +419,7 @@ contains
    call zgesvd('o','s',mm,nn,b,mm,s,b,1,u,mn,work,lwork,rwork,info)
    if(info.ne.0)then;write(*,*)subnam,': info: ',info;stop;endif
    if(s(1).ne.0.d0)then 
-       r(k-1)=chop(s(1:mn), tol/dsqrt(dble(m-l-1)))
+       r(k-1)=chop(s(1:mn), tol/dsqrt(dble(m-l)))
    else
        r(k-1)=0
    endif
