@@ -8,16 +8,16 @@ module svd_lib
 contains
  subroutine d_svd(a,u,v,s,tol,rmax,err,info)
   implicit none
-  double precision,intent(in) :: a(:,:)
-  double precision,pointer :: u(:,:),v(:,:),s(:)
-  double precision,intent(in),optional :: tol
+  real(8),intent(in) :: a(:,:)
+  real(8),pointer :: u(:,:),v(:,:),s(:)
+  real(8),intent(in),optional :: tol
   integer,intent(in),optional :: rmax
-  double precision,intent(out),optional :: err
+  real(8),intent(out),optional :: err
   integer,intent(out),optional :: info
   character(len=*),parameter :: subnam='d_svd'
-  double precision,allocatable :: b(:,:),work(:),ss(:),uu(:,:),vv(:,:)
+  real(8),allocatable :: b(:,:),work(:),ss(:),uu(:,:),vv(:,:)
   integer :: m,n,mn,lwork,ierr,r,i,j
-  double precision,external :: dnrm2
+  real(8),external :: dnrm2
   m=size(a,1); n=size(a,2); mn=min(m,n); lwork=256*max(m,n)
   allocate(uu(m,mn),vv(mn,n),ss(mn),b(m,n),work(lwork),stat=ierr)
   if(ierr.ne.0)then;write(*,*)subnam,': cannot allocate';stop;endif
@@ -48,16 +48,16 @@ contains
   implicit none
   double complex,intent(in) :: a(:,:)
   double complex,pointer :: u(:,:),v(:,:)
-  double precision,pointer :: s(:)
-  double precision,intent(in),optional :: tol
+  real(8),pointer :: s(:)
+  real(8),intent(in),optional :: tol
   integer,intent(in),optional :: rmax
-  double precision,intent(out),optional :: err
+  real(8),intent(out),optional :: err
   integer,intent(out),optional :: info
   character(len=*),parameter :: subnam='z_svd'
   double complex,allocatable :: b(:,:),work(:),uu(:,:),vv(:,:)
-  double precision,allocatable :: ss(:),rwork(:)
+  real(8),allocatable :: ss(:),rwork(:)
   integer :: m,n,mn,lwork,ierr,r,i,j
-  double precision,external :: dnrm2
+  real(8),external :: dnrm2
   m=size(a,1); n=size(a,2); mn=min(m,n); lwork=256*max(m,n)
   allocate(uu(m,mn),vv(mn,n),ss(mn),b(m,n),work(lwork),rwork(lwork),stat=ierr)
   if(ierr.ne.0)then;write(*,*)subnam,': cannot allocate';stop;endif
@@ -85,12 +85,12 @@ contains
 
  integer function chop(s,tol,rmax,err) result (r)
   implicit none
-  double precision,intent(in) :: s(:)
-  double precision,intent(in),optional :: tol
+  real(8),intent(in) :: s(:)
+  real(8),intent(in),optional :: tol
   integer,intent(in),optional :: rmax
-  double precision,intent(out),optional :: err
-  double precision :: nrm,er,er2,bound
-  double precision,external :: dnrm2
+  real(8),intent(out),optional :: err
+  real(8) :: nrm,er,er2,bound
+  real(8),external :: dnrm2
   r=size(s); er2=0.d0
   if(present(rmax))then
    if(rmax.lt.r)then
@@ -100,7 +100,7 @@ contains
   end if 
   if(present(tol))then
    nrm=dnrm2(size(s),s,1)
-   bound=tol*tol*nrm*nrm 
+   bound=tol*tol*nrm*nrm
    er=er2+s(r)*s(r)
    do while(er.lt.bound)
     er2=er; r=r-1; er=er+s(r)*s(r)
