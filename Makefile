@@ -3,7 +3,8 @@
 
 #FOPT    = -m64 -fopenmp #-fdefault-integer-8 #-xSSE4.2
 DEPS    =  nan, timef, say, rnd, ptype, sort, trans, ort, mat, check, lr, maxvol, svd, \
-	       matrix_util, tt, ttaux, ttop, ttio,  tts, python_conv, putstrmodule, dispmodule, tt_linalg, tt_adapt_als, gmres_3d, ttals, tt_eigb
+	   matrix_util, tt, ttaux, ttop, ttio,  tts, python_conv, putstrmodule, dispmodule, tt_linalg, \
+           tt_adapt_als, gmres_3d, ttals, tt_eigb, default, ttlocsolve, ttnodeop, ttamen
 
 include Makefile.in
 
