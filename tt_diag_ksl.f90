@@ -237,11 +237,83 @@ contains
   end subroutine 
 
 
+  subroutine dphi_diag_left(ry1, n, ry2, ra1, ra2, phi, A, x, res)
+      use ttals
+      implicit none
+      integer :: ry1, n, ry2, ra1, ra2
+      real(8) :: A(ra1, n, ra2), x(ry1, n, ry2), phi(*), res(ry2, ry2, ra2)
+      real(8) :: tmp(ry2, ry2, ra2), Aslice(ra1, ra2), Xslice(ry1, ry2)
+      integer :: k
+      res(:, :, :) = 0d0    
+      do k = 1, n
+          Aslice = A(:, k, :)
+          Xslice = x(:, k, :)
+          call dphi_left(ry1, 1, ry2, ry1, 1, ry2, ra1,&
+              ra2, phi, Aslice, Xslice, Xslice, &
+              tmp)
+          res(:, :, :) = res(:, :, :) + tmp(:, :, :)
+      end do
+  end subroutine dphi_diag_left
+  
+  subroutine zphi_diag_left(ry1, n, ry2, ra1, ra2, phi, A, x, res)
+      use ttals
+      implicit none
+      integer :: ry1, n, ry2, ra1, ra2
+      complex(8) :: A(ra1, n, ra2), x(ry1, n, ry2), phi(*), res(ry2, ry2, ra2)
+      complex(8) :: tmp(ry2, ry2, ra2), Aslice(ra1, ra2), Xslice(ry1, ry2)
+      integer :: k
+      res(:, :, :) = (0d0, 0d0)    
+      do k = 1, n
+          Aslice = A(:, k, :)
+          Xslice = x(:, k, :)
+          call zphi_left(ry1, 1, ry2, ry1, 1, ry2, ra1,&
+              ra2, phi, Aslice, Xslice, Xslice, &
+              tmp)
+          res(:, :, :) = res(:, :, :) + tmp(:, :, :)
+      end do
+  end subroutine zphi_diag_left
+  
+  subroutine dphi_diag_right(ry1, n, ry2, ra1, ra2, phi, A, x, res)
+      use ttals
+      implicit none
+      integer :: ry1, n, ry2, ra1, ra2
+      real(8) :: A(ra1, n, ra2), x(ry1, n, ry2), phi(*), res(ry2, ry2, ra2)
+      real(8) :: tmp(ry2, ry2, ra2), Aslice(ra1, ra2), Xslice(ry1, ry2)
+      integer :: k
+      res(:, :, :) = 0d0    
+      do k = 1, n
+          Aslice = A(:, k, :)
+          Xslice = x(:, k, :)
+          call dphi_right(ry1, 1, ry2, ry1, 1, ry2, ra1,&
+              ra2, phi, Aslice, Xslice, Xslice, &
+              tmp)
+          res(:, :, :) = res(:, :, :) + tmp(:, :, :)
+      end do
+  end subroutine dphi_diag_right
+  
+  subroutine zphi_diag_right(ry1, n, ry2, ra1, ra2, phi, A, x, res)
+      use ttals
+      implicit none
+      integer :: ry1, n, ry2, ra1, ra2
+      complex(8) :: A(ra1, n, ra2), x(ry1, n, ry2), phi(*), res(ry2, ry2, ra2)
+      complex(8) :: tmp(ry2, ry2, ra2), Aslice(ra1, ra2), Xslice(ry1, ry2)
+      integer :: k
+      res(:, :, :) = (0d0, 0d0)    
+      do k = 1, n
+          Aslice = A(:, k, :)
+          Xslice = x(:, k, :)
+          call zphi_right(ry1, 1, ry2, ry1, 1, ry2, ra1,&
+              ra2, phi, Aslice, Xslice, Xslice, &
+              tmp)
+          res(:, :, :) = res(:, :, :) + tmp(:, :, :)
+      end do
+  end subroutine zphi_diag_right
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !! KLS-scheme
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !! What we have: we have a starting vector + a matrix (no vector X!) 
-  subroutine dtt_diag_ksl(d, n, m, ra, crA, crY0, ry, tau, rmax, kickrank, nswp, verb)
+  subroutine dtt_diag_ksl(d, n, ra, crA, crY0, ry, tau, rmax, kickrank, nswp, verb)
     use dispmodule
     use matrix_util ! dqr
     use ttals   ! als stuff
@@ -250,7 +322,7 @@ contains
     use sfun_diag_ksl !We have to do this
     use explib !Krylov exponential
     implicit none
-    integer,intent(in) :: d,n(d),m(d),ra(d+1), rmax
+    integer,intent(in) :: d, n(d), ra(d+1), rmax
     integer,intent(inout) :: ry(d+1)
     integer, intent(in), optional :: kickrank, nswp, verb
     ! verb: 0: off; 1: matlab; 2: console
@@ -289,11 +361,11 @@ contains
        verb0 = verb
     end if
     allocate(pa(d+1))
-    call compute_ps(d,ra,n(1:d)*m(1:d),pa)
+    call compute_ps(d, ra, n(1:d), pa)
     lwork = rmax*maxval(n(1:d))*rmax
     nn = maxval(ra(1:d+1))*rmax*rmax
     allocate(curcr(lwork))
-    nn = maxval(ra(1:d+1))*rmax*max(maxval(n(1:d)),maxval(m(1:d)))*rmax
+    nn = maxval(ra(1:d+1))*rmax*maxval(n(1:d))*rmax
     allocate(work(nn))
     allocate(R(lwork))
     allocate(full_core(nn))
@@ -314,17 +386,15 @@ contains
     i = 1
     do while (i < d)
        rnew = min(ry(i)*n(i), ry(i+1))
-       call dqr(ry(i)*n(i), ry(i+1), crnew(i) % p, R)
+       call dqr(ry(i)*n(i), ry(i+1), crnew(i)%p, R)
        if ( i < d ) then
           call dgemm('N', 'N', rnew, n(i+1)*ry(i+2), ry(i+1), 1d0, R, rnew, crnew(i+1)%p, ry(i+1), 0d0, curcr, rnew)
           call dcopy(rnew*n(i+1)*ry(i+2), curcr, 1, crnew(i+1)%p,1)
-          ry(i+1) = rnew;
+          ry(i+1) = rnew
           !     Phir
           !phinew(i+1) is ry(i)*n(i)*ry(i+1)
-          allocate(phinew(i+1)%p(ry(i+1)*ry(i+1)*ra(i+1)*2))
-          call dphi_left(ry(i), m(i), ry(i+1), ry(i), n(i), ry(i+1), ra(i),&
-               ra(i+1), phinew(i)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, &
-               phinew(i+1)%p)
+          allocate(phinew(i+1)%p(ry(i+1)*ry(i+1)*ra(i+1)))
+          call dphi_diag_left(ry(i), n(i), ry(i+1), ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), crnew(i)%p, phinew(i+1)%p)
        end if
        i = i+dir
     end do
@@ -348,15 +418,13 @@ contains
           if ( i < d ) then
              !In this case, we have to put S(i+1) backwards in time (heh)
              call dqr(n(i)*ry(i), ry(i+1), curcr, R) 
-             call dphi_left(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), & 
-             ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), curcr, curcr, phitmp)
+             call dphi_diag_left(ry(i), n(i), ry(i+1), ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), curcr, phitmp)
              call dinit_sfun(ry(i+1), ry(i+1), ra(i+1), ry(i+1), ry(i+1), phitmp, phinew(i+1)%p)
              anorm = normest(ry(i+1)*ry(i+1), 4, dsfun_matvec, dsfun_matvec_transp)
              call exp_mv(ry(i+1)*ry(i+1), 5, -tau/2, R, Stmp, eps, anorm, dsfun_matvec)
              call dgemm('n','n',ry(i)*n(i),ry(i+1),ry(i+1),1d0,curcr, ry(i)*n(i), Stmp, ry(i+1), 0d0, crnew(i)%p, ry(i)*n(i))
              call dcopy(ry(i)*n(i)*ry(i+1),crnew(i)%p,1,curcr,1)
           end if
-
           if ( i > 1 ) then
              call dtransp(ry(i),n(i)*ry(i+1), curcr)
              call dqr(n(i)*ry(i+1), ry(i), curcr, R)
@@ -369,8 +437,9 @@ contains
                 deallocate(phinew(i)%p)
                 allocate(phinew(i)%p(ry(i)*ry(i)*ra(i)*2))
              end if
-             call dphi_right(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), ra(i), &
-             ra(i+1), phinew(i+1)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phinew(i)%p)
+             call dphi_diag_right(ry(i), n(i), ry(i+1), ra(i), ra(i+1), phinew(i+1)%p, crA(pa(i)), crnew(i)%p, phinew(i)%p)
+             !call dphi_right(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), ra(i), &
+             !ra(i+1), phinew(i+1)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phinew(i)%p)
           end if
        end if
        if ( dir > 0 ) then
@@ -383,8 +452,7 @@ contains
           if ( i < d ) then
              call dqr(ry(i)*n(i),ry(i+1),crnew(i)%p,R)
              !The size of the updated s would be ry(i+1) -> 
-             call dphi_left(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), ra(i), &
-             ra(i+1), phinew(i)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phitmp)
+             call dphi_diag_left(ry(i), n(i), ry(i+1), ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), curcr, phitmp)
              call dinit_sfun(ry(i+1), ry(i+1), ra(i+1), ry(i+1), ry(i+1), phitmp, phinew(i+1)%p)
              anorm = normest(ry(i+1)*ry(i+1),4,dsfun_matvec,dsfun_matvec_transp)
              call exp_mv(ry(i+1)*ry(i+1), 5, -tau/2, R, Stmp, eps, anorm, dsfun_matvec)
@@ -407,8 +475,7 @@ contains
                 deallocate(phinew(i+1)%p)
                 allocate(phinew(i+1)%p(ry(i+1)*ry(i+1)*ra(i+1)*2))
              end if
-             call dphi_left(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), ra(i), &
-             ra(i+1), phinew(i)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phinew(i+1)%p)
+             call dphi_diag_left(ry(i), n(i), ry(i+1), ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), crnew(i)%p, phinew(i+1)%p)
           end if
        end if
        if ((dir>0) .and. (i==d )) then
@@ -457,7 +524,7 @@ contains
     deallocate(pa)
   end subroutine dtt_diag_ksl
 
-  subroutine ztt_diag_ksl(d, n, m, ra, crA, crY0, ry, tau, rmax, kickrank, nswp, verb, typ0, order0)
+  subroutine ztt_diag_ksl(d, n, ra, crA, crY0, ry, tau, rmax, kickrank, nswp, verb, typ0, order0)
     use dispmodule
     use matrix_util ! dqr
     use ttals   ! als stuff
@@ -467,7 +534,7 @@ contains
     use explib !Krylov exponential
     use rnd_lib
     implicit none
-    integer,intent(in) :: d,n(d),m(d),ra(d+1), rmax
+    integer,intent(in) :: d, n(d), ra(d+1), rmax
     integer,intent(inout) :: ry(d+1)
     integer, intent(in), optional :: kickrank, nswp, verb, typ0
     ! verb: 0: off; 1: matlab; 2: console
@@ -522,12 +589,12 @@ contains
        verb0 = verb
     end if
     allocate(pa(d+1))
-    call compute_ps(d,ra,n(1:d)*m(1:d),pa)
+    call compute_ps(d, ra, n(1:d), pa)
     lwork = rmax*maxval(n(1:d))*rmax
     nn = maxval(ra(1:d+1))*rmax*rmax
     allocate(curcr(lwork))
     allocate(slice(rmax*rmax), new_slice(rmax*rmax))
-    nn = maxval(ra(1:d+1))*rmax*max(maxval(n(1:d)),maxval(m(1:d)))*rmax
+    nn = maxval(ra(1:d+1))*rmax*maxval(n(1:d))*rmax
     allocate(work(nn))
     allocate(R(lwork))
     allocate(full_core(nn))
@@ -559,10 +626,8 @@ contains
           ry(i+1) = rnew;
           !     Phir
           !phinew(i+1) is ry(i)*n(i)*ry(i+1)
-          allocate(phinew(i+1)%p(ry(i+1)*ry(i+1)*ra(i+1)*2))
-          call zphi_left(ry(i), m(i), ry(i+1), ry(i), n(i), ry(i+1), &
-                        ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, &
-               phinew(i+1)%p)
+          allocate(phinew(i+1)%p(ry(i+1)*ry(i+1)*ra(i+1)))
+          call zphi_diag_left(ry(i), n(i), ry(i+1), ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), crnew(i)%p, phinew(i+1)%p)
        end if
        i = i + dir
     end do
@@ -606,8 +671,7 @@ contains
                call zcopy(rnew * n(i) * ry(i+1), curcr, 1, crnew(i)%p, 1)
                call ztransp(rnew, ry(i), R)
                !This should be also rewritten to the diagonal A
-               call zphi_right(rnew, n(i), ry(i+1), rnew, n(i), ry(i+1), &
-               ra(i), ra(i+1), phinew(i+1)%p, crA(pa(i)), curcr, curcr, phitmp)
+               call zphi_diag_right(rnew, n(i), ry(i+1), ra(i), ra(i+1), phinew(i+1)%p, crA(pa(i)), curcr, phitmp)
                !phitmp is now ry(i) x ra(i) x ry(i) 
                call zinit_sfun(ry(i), ry(i), ra(i), rnew, rnew, phinew(i)%p, phitmp)
                !anorm = znormest(ry(i+1)*ry(i+1), 4, zsfun_matvec, zsfun_matvec_transp)
@@ -641,8 +705,7 @@ contains
                call zqr(ry(i)*n(i), ry(i+1), curcr, R) 
                rnew = min(ry(i)*n(i), ry(i+1))
                call zcopy(ry(i)*n(i)*rnew, curcr, 1, crnew(i)%p, 1)
-               call zphi_left(ry(i), n(i), rnew, ry(i), n(i), rnew, &
-               ra(i), ra(i+1), phinew(i) % p, crA(pa(i)), curcr, curcr, phitmp)
+               call zphi_diag_left(ry(i), n(i), rnew, ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), curcr, phitmp)
                call zinit_sfun(rnew, rnew, ra(i+1), ry(i+1), ry(i+1), phitmp, phinew(i+1)%p)
                !anorm = znormest(ry(i+1)*ry(i+1), 4, zsfun_matvec, zsfun_matvec_transp)
                anorm = 1d0

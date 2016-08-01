@@ -4,10 +4,10 @@ use matrix_util
 use dispmodule
 !Here we need to have all parameters required for the matrix-by-vector product (to call bfun3)
  integer, private  ::  rx1T,mT,rx2T,ry1T,nT,ry2T,ra1T,ra2T
- double precision, pointer :: phi1T(:), phi2T(:),res1T(:), res2T(:), AT(:)
+ real(8), pointer :: phi1T(:), phi2T(:),res1T(:), res2T(:), AT(:)
  integer,private ::  xsizeT, ysizeT
  type, public ::  pointd
-    double precision, dimension(:), pointer :: p=>null()
+    real(8), dimension(:), pointer :: p=>null()
  end type pointd
  integer, parameter :: primme_kind = 8
 
@@ -17,8 +17,8 @@ contains
      implicit none
      integer(kind=primme_kind) :: primme
      integer, intent(in) :: k
-     double precision, intent(in) :: x(*)
-     double precision :: y(*)
+     real(8), intent(in) :: x(*)
+     real(8) :: y(*)
      integer, optional :: debug
      integer :: i
      do i = 1,k
@@ -47,7 +47,7 @@ contains
  end subroutine init_bfun_sizes
 
  subroutine init_bfun_main(phi1,A,phi2)
-   double precision, target :: phi1(:), phi2(:), A(:)
+   real(8), target :: phi1(:), phi2(:), A(:)
    phi1T => phi1
    phi2T => phi2
    AT => A
@@ -78,9 +78,9 @@ end subroutine deallocate_result
 function compute_residue(mv, M, B, X) result(res)
   use dispmodule
   integer, intent(in) :: M,B
-  double precision X(M,B)
-  double precision  :: Y(M,B), PHI(B,B)
-  double precision res, dnrm2
+  real(8) X(M,B)
+  real(8)  :: Y(M,B), PHI(B,B)
+  real(8) res, dnrm2
   external mv
 
   call mv(X, Y, B, 0)
@@ -92,9 +92,9 @@ end function compute_residue
 !!! Generate full local matrix
   subroutine d2d_fullmat(rx1, m, rx2, ra1, ra2, phi1, A, phi2, B)
     integer, intent(in) :: rx1, m, rx2, ra1, ra2
-    double precision, intent(in) :: phi1(*), A(*), phi2(*)
-    double precision, intent(inout) :: B(*)
-    double precision, allocatable :: res1(:), res2(:), phi2t(:)
+    real(8), intent(in) :: phi1(*), A(*), phi2(*)
+    real(8), intent(inout) :: B(*)
+    real(8), allocatable :: res1(:), res2(:), phi2t(:)
 
     allocate(res1(rx1*m*rx1*m*max(ra2, rx2*rx2)), res2(rx1*m*rx1*m*max(ra2, rx2*rx2)), phi2t(ra2*rx2*rx2))
 
@@ -127,18 +127,18 @@ real(8) eps2
 type(pointd) :: crnew(d+1)
 type(pointd) :: phinew(d+1)
 real(8),allocatable, target :: curcr(:), locmat(:), work(:)
-double precision erloc, resid_damp
-double precision :: sv(B*rmax)
-double precision, intent(out) :: lambda(B)
-double precision, allocatable :: rnorms(:), U(:,:)
-double precision fv, fvold !Functional
+real(8) erloc, resid_damp
+real(8) :: sv(B*rmax)
+real(8), intent(out) :: lambda(B)
+real(8), allocatable :: rnorms(:), U(:,:)
+real(8) fv, fvold !Functional
 integer(kind=primme_kind) ::  primme, ierr, num_matvecs
 include 'primme_f77.h'
 integer,allocatable :: pa(:)
 integer :: i,j,k, swp, dir, lwork, mm, nn, rnew, max_matvecs, rmax2, sz
 integer info
 integer total_mv
-double precision :: err, ermax, res, res_old, min_res
+real(8) :: err, ermax, res, res_old, min_res
 character dum(100)
 
 
