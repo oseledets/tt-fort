@@ -12,10 +12,10 @@ contains
     real(8), intent(in) :: phi1(*), A(*), phi2(*), x(*)
     real(8), intent(inout) :: y(*)
     integer, optional  :: C
-!    double precision :: res1(rx1,m,ra2,ry2)
-!    double precision :: res2(ra1,n,ry2,rx1)
+!    real(8) :: res1(rx1,m,ra2,ry2)
+!    real(8) :: res2(ra1,n,ry2,rx1)
     real(8),allocatable :: res1(:), res2(:)
-    double precision :: dnrm2
+    real(8) :: dnrm2
 
     allocate(res1(rx1*m*ra2*ry2), res2(ra1*n*ry2*rx1))
     !phi2(rx2,ra2,ry2)
@@ -66,9 +66,9 @@ contains
     integer, intent(in) :: rx1, m, rx2, ry1, n, ry2, ra1, ra2
     real(8), intent(in) :: phi1(*), A(*), phi2(*), x(*)
     real(8), intent(inout) :: y(*)
-    double precision :: res1(rx1,m,ra2,ry2)
-    double precision :: res2(ra1,n,ry2,rx1)
-    double precision At(ra1,m,n,ra2)
+    real(8) :: res1(rx1,m,ra2,ry2)
+    real(8) :: res2(ra1,n,ry2,rx1)
+    real(8) At(ra1,m,n,ra2)
     call dperm1324(ra1, n, m, ra2, A, At) !The dtranspose, but it is cheap
 
     call dgemm('N', 'N', rx1*m, ra2*ry2, rx2, 1d0, x, rx1*m, phi2, rx2, 0d0, res1, rx1*m)
