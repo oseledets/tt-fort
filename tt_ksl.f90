@@ -588,14 +588,17 @@ contains
 
            !anorm = znormest(ry(i)*n(i)*ry(i+1),4, zmatvec, zmatvec_transp)
            anorm = 1d0
+           print *, 'tt-KSL, tau0:', tau0
+           print *, 'tt-KSL, crnew(i)%p:', crnew(i)%p(1:2)
            call zexp_mv(ry(i) * n(i) * ry(i+1), order, tau0, &
                        crnew(i)%p, curcr, eps, anorm, zmatvec)
+           print *, 'tt-KSL, curcr after mv:', curcr(1), abs(curcr(1))    
            if ( i > 1 ) then
                call ztransp(ry(i), n(i)*ry(i+1), curcr)
                rnew = min(n(i)*ry(i+1), ry(i))
                call zqr(n(i)*ry(i+1), ry(i), curcr, R) 
-               call ztransp(n(i) * ry(i+1), rnew, curcr)
-               call zcopy(rnew * n(i) * ry(i+1), curcr, 1, crnew(i)%p, 1)
+               call ztransp(n(i)*ry(i+1), rnew, curcr)
+               call zcopy(rnew*n(i)*ry(i+1), curcr, 1, crnew(i)%p, 1)
                call ztransp(rnew, ry(i), R)
 
                call zphi_right(rnew, n(i), ry(i+1), rnew, n(i), ry(i+1), &
@@ -603,21 +606,25 @@ contains
                !phitmp is now ry(i) x ra(i) x ry(i) 
 
                call zinit_sfun(ry(i), ry(i), ra(i), rnew, rnew, phinew(i)%p, phitmp)
+               print *, 'tt-KSL: phitmp', phitmp(1)
                !anorm = znormest(ry(i+1)*ry(i+1), 4, zsfun_matvec, zsfun_matvec_transp)
                anorm = 1d0
                call zexp_mv(ry(i)*rnew, order, -tau0, R, Stmp, eps, anorm, zsfun_matvec)
+               print *, 'tt-KSL, Stmp:', Stmp(1)
                call zgemm('n', 'n', ry(i-1) * n(i-1), rnew, ry(i), ONE, crnew(i-1)%p,&
                ry(i-1) * n(i-1), Stmp, ry(i), ZERO, curcr, ry(i-1) * n(i-1))
                ry(i) = rnew
                call zcopy(ry(i-1)*n(i-1)*ry(i), curcr, 1, crnew(i-1)%p, 1)
-               call zcopy(ry(i)*ra(i)*ry(i),phitmp,1,phinew(i)%p,1) !Update phi  
+               call zcopy(ry(i)*ra(i)*ry(i),phitmp,1,phinew(i)%p,1) !Update phi 
+               print *, 'tt-KSL, phinew(i):', phinew(i)%p(1)
+               print *, 'tt-KSL, crnew(i-1):', crnew(i-1)%p(1)
            else !i == 1 
                call zcopy(ry(i)*n(i)*ry(i+1),curcr,1,crnew(i)%p,1) 
            end if
        else   ! dir > 0
            call init_bfun_sizes(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), ra(i), &
-           ra(i+1),ry(i) * n(i) * ry(i+1), ry(i) * n(i) * ry(i+1))
-           call zinit_bfun_main(phinew(i) % p,crA(pa(i):pa(i+1)-1),phinew(i+1) % p)
+           ra(i+1), ry(i)*n(i)*ry(i+1), ry(i)*n(i)*ry(i+1))
+           call zinit_bfun_main(phinew(i)%p, crA(pa(i):pa(i+1)-1), phinew(i+1)%p)
 
            !anorm = znormest(ry(i) * n(i) * ry(i+1),4, zmatvec, zmatvec_transp)
            !print *,'estimated norm:', anorm

@@ -295,8 +295,8 @@ contains
       use ttals
       implicit none
       integer :: ry1, n, ry2, ra1, ra2
-      complex(8) :: A(ra1, n, ra2), x(ry1, n, ry2), phi(*), res(ry2, ry2, ra2)
-      complex(8) :: tmp(ry2, ry2, ra2), Aslice(ra1, ra2), Xslice(ry1, ry2)
+      complex(8) :: A(ra1, n, ra2), x(ry1, n, ry2), phi(*), res(ry1, ry1, ra1)
+      complex(8) :: tmp(ry1, ry1, ra1), Aslice(ra1, ra2), Xslice(ry1, ry2)
       integer :: k
       res(:, :, :) = (0d0, 0d0)    
       do k = 1, n
@@ -545,7 +545,7 @@ contains
     type(zpointd) :: crnew(d+1)
     type(zpointd) :: phinew(d+1)
     complex(8), allocatable, target :: curcr(:)
-    complex(8), allocatable, target :: slice(:), new_slice(:)
+    complex(8), allocatable, target :: slice(:), new_slice(:), matrix_slice(:)
     complex(8), allocatable, target :: work(:)
     complex(8), allocatable :: R(:)
     complex(8), allocatable :: full_core(:)
@@ -593,7 +593,7 @@ contains
     lwork = rmax*maxval(n(1:d))*rmax
     nn = maxval(ra(1:d+1))*rmax*rmax
     allocate(curcr(lwork))
-    allocate(slice(rmax*rmax), new_slice(rmax*rmax))
+    allocate(slice(rmax*rmax), new_slice(rmax*rmax), matrix_slice(maxval(ra)**2))
     nn = maxval(ra(1:d+1))*rmax*maxval(n(1:d))*rmax
     allocate(work(nn))
     allocate(R(lwork))
@@ -612,7 +612,7 @@ contains
     !return
     allocate(phinew(1)%p(1))
     allocate(phinew(d+1)%p(1))
-    phinew(1) % p(1) = ONE
+    phinew(1)%p(1) = ONE
     phinew(d+1)%p(1) = ONE
     !   QR, psi
     dir = 1
@@ -649,39 +649,54 @@ contains
        !True iteration when started from the left:
        !move (US), move S, next core
        !and backwards move S, move (US), prev. core
-       !    print *,'dir=', dir, 'i=', i, 'tau0=', tau0, 'typ=', typ
+        print *, 'Phi_mat:', phinew(1)%p(1), phinew(2)%p(1), phinew(3)%p(1)
        if ( dir < 0 ) then
            call init_bfun_sizes(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), &
                ra(i), ra(i+1), ry(i)*n(i)*ry(i+1), ry(i)*n(i)*ry(i+1))
+               !print *, 'Before:', c(1:ry(i)*ry(i+1)), abs(slice(1:ry(i)*ry(i+1)))
            do k = 1, n(i) !Take block diagonal part and solve it separatedbly
-               call zextract_slice(ra(i), n(i), ra(i+1), crA(pa(i):pa(i+1)-1), k, slice)
-               call zinit_bfun_main(phinew(i)%p, slice, phinew(i+1)%p) !Additional setup for the zmatvec subroutine 
+               call zextract_slice(ra(i), n(i), ra(i+1), crA(pa(i):pa(i+1)-1), k, matrix_slice)
+               call zinit_bfun_main(phinew(i)%p, matrix_slice, phinew(i+1)%p) !Additional setup for the zmatvec subroutine 
                !anorm = znormest(ry(i)*n(i)*ry(i+1),4, zmatvec, zmatvec_transp)
                anorm = 1d0 !This is the point we need to fix later with the norm estimate 
                call zextract_slice(ry(i), n(i), ry(i+1), crnew(i)%p, k, slice)
-               call zexp_mv(ry(i)*ry(i+1), order, tau0, &
-                           slice, new_slice, eps, anorm, zmatvec)
+               print *, 'diag-KSL, tau0:', tau0
+               print *, 'diag-KSL, slice:', slice(1)
+               call zexp_mv(ry(i)*ry(i+1), order, tau0, slice, new_slice, eps, anorm, zmatvec)
+               print *, 'diag-KSL: slice-after:', new_slice(1)
+               !print *, i, dir, phinew(i)%p(1), phinew(i+1)%p(1)
                call zset_slice(ry(i), n(i), ry(i+1), curcr, k, new_slice)
            end do
+           print *, 'diag-KSL, curcr after mv:', curcr(1), abs(curcr(1)) 
+           !print *, 'After:', new_slice(1:ry(i)*ry(i+1)), abs(new_slice(1:ry(i)*ry(i+1)))
            if ( i > 1 ) then
+               print *,'1'
                call ztransp(ry(i), n(i)*ry(i+1), curcr)
                rnew = min(n(i)*ry(i+1), ry(i))
                call zqr(n(i)*ry(i+1), ry(i), curcr, R) 
+               print *,'2'
                call ztransp(n(i) * ry(i+1), rnew, curcr)
                call zcopy(rnew * n(i) * ry(i+1), curcr, 1, crnew(i)%p, 1)
                call ztransp(rnew, ry(i), R)
                !This should be also rewritten to the diagonal A
+               print *,'3'
                call zphi_diag_right(rnew, n(i), ry(i+1), ra(i), ra(i+1), phinew(i+1)%p, crA(pa(i)), curcr, phitmp)
+               print *,'4'
                !phitmp is now ry(i) x ra(i) x ry(i) 
+               !print *, 'phinew:', phinew(i)%p(1)
                call zinit_sfun(ry(i), ry(i), ra(i), rnew, rnew, phinew(i)%p, phitmp)
                !anorm = znormest(ry(i+1)*ry(i+1), 4, zsfun_matvec, zsfun_matvec_transp)
                anorm = 1d0
+               print *, 'diag-KSL, Rmat:', R(1)
                call zexp_mv(ry(i)*rnew, order, -tau0, R, Stmp, eps, anorm, zsfun_matvec)
+               print *, 'diag-KSL, Stmp:', Stmp(1)
                call zgemm('n', 'n', ry(i-1) * n(i-1), rnew, ry(i), ONE, crnew(i-1)%p,&
-               ry(i-1) * n(i-1), Stmp, ry(i), ZERO, curcr, ry(i-1) * n(i-1))
+               ry(i-1)*n(i-1), Stmp, ry(i), ZERO, curcr, ry(i-1)*n(i-1))
                ry(i) = rnew
                call zcopy(ry(i-1)*n(i-1)*ry(i), curcr, 1, crnew(i-1)%p, 1)
                call zcopy(ry(i)*ra(i)*ry(i),phitmp,1,phinew(i)%p,1) !Update phi  
+               print *, 'diag-KSL, phinew(i):', phinew(i)%p(1)
+               print *, 'diag-KSL, crnew(i-1):', crnew(i-1)%p(1)
            else !i == 1 
                call zcopy(ry(i)*n(i)*ry(i+1),curcr,1,crnew(i)%p,1) 
            end if
@@ -689,11 +704,10 @@ contains
            call init_bfun_sizes(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), ra(i), &
            ra(i+1), ry(i)*n(i)*ry(i+1), ry(i)*n(i)*ry(i+1))
            do k = 1, n(i)
-               call zextract_slice(ra(i), n(i), ra(i+1), crA(pa(i):pa(i+1)-1), k, slice)
-               call zinit_bfun_main(phinew(i)%p, slice, phinew(i+1)%p) !Additional setup for the zmatvec subroutine 
+               call zextract_slice(ra(i), n(i), ra(i+1), crA(pa(i):pa(i+1)-1), k, matrix_slice)
+               call zinit_bfun_main(phinew(i)%p, matrix_slice, phinew(i+1)%p) !Additional setup for the zmatvec subroutine 
                call zextract_slice(ry(i), n(i), ry(i+1), crnew(i)%p, k, slice)
-               call zexp_mv(ry(i)*ry(i+1), order, tau0, &
-                           slice, new_slice, eps, anorm, zmatvec)
+               call zexp_mv(ry(i)*ry(i+1), order, tau0, slice, new_slice, eps, anorm, zmatvec)
                call zset_slice(ry(i), n(i), ry(i+1), curcr, k, new_slice)
            end do
                !anorm = znormest(ry(i) * n(i) * ry(i+1),4, zmatvec, zmatvec_transp)
@@ -766,6 +780,7 @@ contains
     deallocate(curcr)
     deallocate(slice)
     deallocate(new_slice)
+    deallocate(matrix_slice)
     deallocate(full_core)
     deallocate(pa)
   end subroutine ztt_diag_ksl

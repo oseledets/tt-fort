@@ -164,7 +164,7 @@ contains
     real(8), intent(inout) :: phi2(*)
 !    real(8) :: res1(rx1*m*ra2*ry2)
 !    real(8) :: res2(ra1*n*ry2*rx1)
-    real(8),allocatable :: res1(:), res2(:)
+    real(8), allocatable :: res1(:), res2(:)
     real(8) :: dnrm2
 
     allocate(res1(rx1*m*ra2*ry2),res2(rx1*ra1*n*ry2))
@@ -181,7 +181,7 @@ contains
     call dgemm('N', 'N', ry1, rx1*ra1, n*ry2, 1d0, y, ry1, res2, n*ry2, 0d0, phi2, ry1)
     ! phi2: ry1, rx1, ra1
     call dtransp(ry1, rx1*ra1, phi2)
-    deallocate(res1,res2)
+    deallocate(res1, res2)
   end subroutine dphi_right
 
   subroutine zphi_right(rx1, m, rx2, ry1, n, ry2, ra1, ra2, phi2_old, A, x, y, phi2)
