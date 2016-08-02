@@ -6,17 +6,14 @@ use matrix_util
 contains
  !The algorithm for the dtransposed mv is quite simple
 !
-  subroutine dbfun3(rx1, m, rx2, ry1, n, ry2, ra1, ra2, phi1, A, phi2, x, y, C)
+  subroutine dbfun3(rx1, m, rx2, ry1, n, ry2, ra1, ra2, phi1, A, phi2, x, y)
     ! sizes of res1, res2: max(rx1*m*ra2*ry2, rx1*ra1*n*ry2)
     integer, intent(in) :: rx1, m, rx2, ry1, n, ry2, ra1, ra2
     real(8), intent(in) :: phi1(*), A(*), phi2(*), x(*)
     real(8), intent(inout) :: y(*)
-    integer, optional  :: C
 !    real(8) :: res1(rx1,m,ra2,ry2)
 !    real(8) :: res2(ra1,n,ry2,rx1)
     real(8),allocatable :: res1(:), res2(:)
-    real(8) :: dnrm2
-
     allocate(res1(rx1*m*ra2*ry2), res2(ra1*n*ry2*rx1))
     !phi2(rx2,ra2,ry2)
     !phi1(ry1,rx1,ra1) 

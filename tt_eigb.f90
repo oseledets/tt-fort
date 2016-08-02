@@ -12,22 +12,17 @@ use dispmodule
  integer, parameter :: primme_kind = 8
 
 contains
- subroutine primme_matvec(x,y,k,primme, debug)
+ subroutine primme_matvec(x,y,k,primme)
      use ttals, only: dbfun3
      implicit none
      integer(kind=primme_kind) :: primme
      integer, intent(in) :: k
      real(8), intent(in) :: x(*)
      real(8) :: y(*)
-     integer, optional :: debug
      integer :: i
      do i = 1,k
-        if ( .not. present(debug) ) then
-            call dbfun3(rx1T, mT, rx2T, ry1T, nT, ry2T, ra1T, ra2T, phi1T, AT, phi2T, x((i-1)*xsizeT+1), y((i-1)*ysizeT+1))
-        else
-            call dbfun3(rx1T, mT, rx2T, ry1T, nT, ry2T, ra1T, ra2T, phi1T, AT, phi2T, x((i-1)*xsizeT+1), y((i-1)*ysizeT+1), debug)
-        end if
-    end do
+        call dbfun3(rx1T, mT, rx2T, ry1T, nT, ry2T, ra1T, ra2T, phi1T, AT, phi2T, x((i-1)*xsizeT+1), y((i-1)*ysizeT+1))
+     end do
 
  end subroutine primme_matvec
 
@@ -134,16 +129,12 @@ real(8), allocatable :: rnorms(:), U(:,:)
 real(8) fv, fvold !Functional
 integer(kind=primme_kind) ::  primme, ierr, num_matvecs
 include 'primme_f77.h'
-integer,allocatable :: pa(:)
-integer :: i,j,k, swp, dir, lwork, mm, nn, rnew, max_matvecs, rmax2, sz
+integer, allocatable :: pa(:)
+integer :: i,k, swp, dir, lwork, mm, nn, rnew, max_matvecs, rmax2, sz
 integer info
 integer total_mv
-real(8) :: err, ermax, res, res_old, min_res
-character dum(100)
-
-
+real(8) :: ermax, res,  min_res
 real(8) dnrm2
-real(8) dsqrt
 INTEGER :: i_, n_, clock_
 INTEGER, DIMENSION(:), ALLOCATABLE :: seed_
 
@@ -153,7 +144,6 @@ CALL SYSTEM_CLOCK(COUNT=clock_)
 seed_ = clock_ + 37 * (/ (i_ - 1, i_ = 1, n_) /)
 CALL RANDOM_SEED(PUT = seed_)
 DEALLOCATE(seed_)
-
 fvold = 0d0
 total_mv = 0
 min_res = 1d-1
@@ -184,17 +174,12 @@ call disp('Looking for '//tostring(B*1d0)//' eigenvalues with accuracy '//tostri
   if (present(verb)) then
     verb0 = verb
   end if
-
   max_full_size0 = 2000
   if (present(max_full_size)) then
     max_full_size0 = max_full_size
   end if
-
   allocate(pa(d+1))
-
   call compute_ps(d,ra,n(1:d)*m(1:d),pa)
-
-
 ! Work arrays for MPS blocks
   sz = rmax*maxval(n(1:d))*rmax*max(B+1, max_basis_size)
   lwork = max(rmax*max(rmax,max(B,maxval(n(1:d)))), max_full_size0)*256
@@ -203,20 +188,16 @@ call disp('Looking for '//tostring(B*1d0)//' eigenvalues with accuracy '//tostri
     print *, 'cannot allocate'
     stop
   end if
-
   mm = 1
   do i=1,d
     allocate(crnew(i)%p(ry(i)*n(i)*ry(i+1)*2))
     call dcopy(ry(i)*n(i)*ry(i+1), crY0(mm), 1, crnew(i)%p, 1)
     mm = mm + ry(i)*n(i)*ry(i+1)
   end do
-
-
  allocate(phinew(1)%p(1))
  allocate(phinew(d+1)%p(1))
  phinew(1)%p(1) = 1d0
  phinew(d+1)%p(1) = 1d0
-
 !   QR, psi
   dir = 1
   i = 1
@@ -228,13 +209,10 @@ call disp('Looking for '//tostring(B*1d0)//' eigenvalues with accuracy '//tostri
        call dcopy(rnew*n(i+1)*ry(i+2), curcr, 1, crnew(i+1)%p,1)
        ry(i+1) = rnew;
        !     Phir
-
        allocate(phinew(i+1)%p(ry(i+1)*ry(i+1)*ra(i+1)*2))
        call dphi_left(ry(i), m(i), ry(i+1), ry(i), n(i), ry(i+1), ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, &
             phinew(i+1)%p)
-
     end if
-
     i = i+dir
   end do
   i = d
@@ -256,7 +234,6 @@ call disp('Looking for '//tostring(B*1d0)//' eigenvalues with accuracy '//tostri
       if (ry(i)*n(i)*ry(i+1)<max_full_size0) then
           allocate(locmat(ry(i)*n(i)*ry(i+1)*ry(i)*n(i)*ry(i+1)))
           call d2d_fullmat(ry(i), n(i), ry(i+1), ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), phinew(i+1)%p, locmat)
-
           ! Full EIG
           call dsyev('V', 'U', ry(i)*n(i)*ry(i+1), locmat, ry(i)*n(i)*ry(i+1), curcr, work, lwork, info)
           if ( info .ne. 0 ) then
@@ -271,7 +248,6 @@ call disp('Looking for '//tostring(B*1d0)//' eigenvalues with accuracy '//tostri
           num_matvecs = 0
           deallocate(locmat)
       else
-
           !Initialization of the primme stuff;
           call primme_initialize_f77(primme)
           call primme_set_member_f77(primme, PRIMMEF77_numEvals, B)
@@ -285,33 +261,24 @@ call disp('Looking for '//tostring(B*1d0)//' eigenvalues with accuracy '//tostri
           !if ( dir < 0 ) then
           !   call primme_set_member_f77(primme, PRIMMEF77_maxMatvecs, 500)
           !end if
-
           !Uncomment if dynamic
           !call primme_set_member_f77(primme, PRIMMEF77_eps, min(min_res, res_old/(1000)))
           !call primme_display_params_f77(primme)
-
           !call primme_set_member_f77(primme, PRIMMEF77_initSize, B)
           !call primme_set_member_f77(primme, PRIMMEF77_maxBlockSize, ry(i)*n(i)*ry(i+1))
           call primme_set_member_f77(primme, PRIMMEF77_maxMatvecs, max_matvecs)
           !Calculate initial residue
-
           call primme_set_member_f77(primme, PRIMMEF77_minRestartSize,min(B+1,ry(i)*n(i)*ry(i+1)-1))
           call primme_set_member_f77(primme, PRIMMEF77_maxBasisSize, max_basis_size)
-
           call primme_set_member_f77(primme, PRIMMEF77_eps, eps2/resid_damp)
           call primme_set_member_f77(primme, PRIMMEF77_initSize, B)
-
           ! if ( (swp .eq. 4) .and. (i .eq. 35) ) then
           !call primme_set_member_f77(primme, PRIMMEF77_printLevel,4)
-
           ! end if
           !Solver part
-
           !return
-
           call dcopy(ry(i)*n(i)*ry(i+1)*B,crnew(i)%p,1,curcr,1)
           call dprimme_f77(lambda, curcr, rnorms, primme, ierr)
-
           call primmetop_get_member_f77(primme, PRIMMEF77_stats_numMatvecs, num_matvecs)
           call primme_Free_f77(primme)
           !Compute the local residue
@@ -323,11 +290,7 @@ call disp('Looking for '//tostring(B*1d0)//' eigenvalues with accuracy '//tostri
           res = dnrm2(B,rnorms,1)
 
       end if
-
-
       fv = sum(lambda(1:B))
-
-
       erloc = (fvold - fv)/abs(fv)
       ermax = max(ermax, erloc)
       if (verb0 > 0) then
@@ -447,19 +410,18 @@ call disp('Looking for '//tostring(B*1d0)//' eigenvalues with accuracy '//tostri
           i = i + dir
       end if
  end do
-  100 continue
   ry(d+1) = B
   nn = sum(ry(2:d+1)*ry(1:d)*n(1:d))
   if ( .not. allocated(result_core) ) then
      allocate(result_core(nn))
   end if
 
-  nn = 1;
-  do i=1,d
+  nn = 1
+  do i=1, d
     call dcopy(ry(i)*n(i)*ry(i+1), crnew(i)%p, 1, result_core(nn), 1)
     nn = nn+ry(i)*n(i)*ry(i+1)
   end do
-  do i = 1,d+1
+  do i = 1, d+1
      if ( associated(crnew(i)%p)) then
         deallocate(crnew(i)%p)
      end if
@@ -471,8 +433,6 @@ call disp('Looking for '//tostring(B*1d0)//' eigenvalues with accuracy '//tostri
    deallocate(work)
    deallocate(curcr)
    deallocate(pa)
-
-
 end subroutine
 
 

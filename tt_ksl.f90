@@ -229,15 +229,13 @@ contains
     real(8), allocatable :: R(:)
     real(8), allocatable :: full_core(:)
     real(8) eps
-    real(8) :: sv(rmax)
-    real(8), allocatable :: rnorms(:), W(:,:), X(:,:), Bmat(:,:), U(:,:), phitmp(:), Stmp(:)
+    real(8), allocatable :: phitmp(:), Stmp(:)
     integer, allocatable :: pa(:)
-    integer :: i,j, k, swp, dir, lwork, mm, nn, rnew, max_matvecs, rmax2 
+    integer :: i, swp, dir, lwork, mm, nn, rnew, rmax2 
     integer :: typ, order
     integer, optional :: typ0, order0
-    real(8) :: err, ermax, res, res_old, min_res
+    real(8) :: ermax, min_res
     real(8) anorm
-    real(8) dznrm2
 
     typ = 2 ! 1 - KSL, 2 - KSL-symm
     if ( present(typ0) ) then
@@ -409,9 +407,6 @@ contains
           i = i + dir
        end if
     end do
-
-100 continue
-
     nn = sum(ry(2:d+1)*ry(1:d)*n(1:d))
     if ( allocated(dresult_core)) then
        if ( size(dresult_core) < nn ) then
@@ -471,17 +466,14 @@ contains
     complex(8),allocatable :: R(:)
     complex(8),allocatable :: full_core(:)
     real(8) eps
-    real(8) :: sv(rmax)
-    complex(8), allocatable :: rnorms(:), W(:,:), X(:,:), Bmat(:,:), U(:,:), phitmp(:), Stmp(:)
+    complex(8), allocatable :: phitmp(:), Stmp(:)
     integer,allocatable :: pa(:)
-    complex(8), allocatable :: tmp1(:), tmp2(:),tmp3(:,:,:)
-    integer :: i,j, k, sz,swp, dir, lwork, mm, nn, rnew, max_matvecs, rmax2 
+    integer :: i, swp, dir, lwork, mm, nn, rnew, rmax2 
     integer :: typ
     integer, optional, intent(in) :: order0
     integer :: order
-    real(8) :: err, ermax, res, res_old, min_res
+    real(8) :: ermax, min_res
     real(8) anorm
-    real(8) dznrm2
     complex(8) ZERO, ONE
     parameter( ZERO=(0.0d0,0.0d0), ONE=(1.0d0,0.0d0) )
 
