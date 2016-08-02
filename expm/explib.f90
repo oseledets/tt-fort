@@ -1,7 +1,7 @@
 module explib
  contains 
    subroutine dexp_mv(n, m, tau, v, w, tol, anorm, matvec, verb)
-     integer, intent(in) :: n,m
+     integer, intent(in) :: n, m
      double precision, intent(in) :: tau, tol, anorm
      double precision, intent(in) :: v(n)
      double precision, intent(out) :: w(n)
@@ -15,17 +15,18 @@ module explib
      integer :: itrace = 0
      integer iflag
      external matvec
+
      lwsp = (n*(m+1)+n+(m+2)**2+4*(m+2)**2+ideg+1)
      lwsp = max(lwsp,200)
      liwsp = max((m+2),200)
      allocate(wsp(lwsp))
      allocate(iwsp(liwsp))
-     m1 = min(m,n) !Fix sizes
+     m1 = min(m, n) !Fix sizes
      if ( m1 .eq. 0 ) then !The matrix is 1 x 1 :)
-         call matvec(1d0,w)
+         call matvec(1d0, w)
          w(1) = v(1) * exp(w(1) * tau)
      else
-         call dgexpv(n,m1,tau,v,w,tol,anorm,wsp,lwsp,iwsp,liwsp,matvec,itrace,iflag)
+         call dgexpv(n, m1, tau, v, w, tol, anorm, wsp, lwsp, iwsp, liwsp, matvec, itrace, iflag)
          if ( iflag .ne. 0 ) then
              print *,'exp_mv failed with iflag=',iflag
          end if

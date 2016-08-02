@@ -6,7 +6,7 @@ module bfun_diag_ksl
   integer,private ::  xsizeT, ysizeT
   type, public ::  dpointd
      real(8), dimension(:), pointer :: p=>null()
-  end type pointd
+  end type dpointd
 
   type, public :: zpointd
      complex(8), dimension(:), pointer :: p=>null()
@@ -204,8 +204,8 @@ contains
   subroutine dextract_slice(ra1, n, ra2, core, core_number, res)
     implicit none
     integer :: ra1, n, ra2, core_number
-    complex(8) :: core(ra1, n, ra2)
-    complex(8) :: res(ra1, ra2)
+    real(8) :: core(ra1, n, ra2)
+    real(8) :: res(ra1, ra2)
     res(:, :) = core(:, core_number, :)
   end subroutine 
 
@@ -213,8 +213,8 @@ contains
   subroutine dset_slice(ra1, n, ra2, core, core_number, res)
     implicit none
     integer :: ra1, n, ra2, core_number
-    complex(8) :: core(ra1, n, ra2)
-    complex(8) :: res(ra1, ra2)
+    real(8) :: core(ra1, n, ra2)
+    real(8) :: res(ra1, ra2)
     core(:, core_number, :) = res(:, :)
   end subroutine 
 
@@ -328,7 +328,7 @@ contains
     integer, intent(in), optional :: kickrank, nswp, verb, typ0
     ! verb: 0: off; 1: matlab; 2: console
     integer :: kickrank0, nswp0, verb0
-    complex(8), intent(in) :: crA(*), crY0(*)
+    real(8), intent(in) :: crA(*), crY0(*)
     real(8), intent(in) :: tau
     real(8) :: tau0
     type(dpointd) :: crnew(d+1)
@@ -364,7 +364,7 @@ contains
     rmax2 = rmax 
     !Inner parameters
     eps = 1e-8 !For local solvers
-    call disp('Solving a complex-valued dynamical problem with tau='//tostring(tau))
+    call disp('Solving a real-valued dynamical problem with tau='//tostring(tau))
     kickrank0 = 5;
     if (present(kickrank)) then
        kickrank0 = kickrank
@@ -392,7 +392,7 @@ contains
     mm = 1
     do i=1,d
        allocate(crnew(i)%p(ry(i)*n(i)*ry(i+1)*2))
-       call zcopy(ry(i)*n(i)*ry(i+1), crY0(mm), 1, crnew(i)%p, 1)
+       call dcopy(ry(i)*n(i)*ry(i+1), crY0(mm), 1, crnew(i)%p, 1)
        mm = mm + ry(i)*n(i)*ry(i+1)
     end do
     !open(unit=10,status='replace',file='test_eye_ksl.dat',form='unformatted',access='stream')
@@ -438,7 +438,6 @@ contains
        !True iteration when started from the left:
        !move (US), move S, next core
        !and backwards move S, move (US), prev. core
-        print *, 'Phi_mat:', phinew(1)%p(1), phinew(2)%p(1), phinew(3)%p(1)
        if ( dir < 0 ) then
            call init_bfun_sizes(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), &
                ra(i), ra(i+1), ry(i)*n(i)*ry(i+1), ry(i)*n(i)*ry(i+1))
@@ -449,15 +448,10 @@ contains
                !anorm = znormest(ry(i)*n(i)*ry(i+1),4, zmatvec, zmatvec_transp)
                anorm = 1d0 !This is the point we need to fix later with the norm estimate 
                call dextract_slice(ry(i), n(i), ry(i+1), crnew(i)%p, k, slice)
-               print *, 'diag-KSL, tau0:', tau0
-               print *, 'diag-KSL, slice:', slice(1)
-               call dexp_mv(ry(i)*ry(i+1), order, tau0, slice, new_slice, eps, anorm, zmatvec)
-               print *, 'diag-KSL: slice-after:', new_slice(1)
+               call dexp_mv(ry(i)*ry(i+1), order, tau0, slice, new_slice, eps, anorm, dmatvec)
                !print *, i, dir, phinew(i)%p(1), phinew(i+1)%p(1)
                call dset_slice(ry(i), n(i), ry(i+1), curcr, k, new_slice)
            end do
-           print *, 'diag-KSL, curcr after mv:', curcr(1), abs(curcr(1)) 
-           !print *, 'After:', new_slice(1:ry(i)*ry(i+1)), abs(new_slice(1:ry(i)*ry(i+1)))
            if ( i > 1 ) then
                print *,'1'
                call dtransp(ry(i), n(i)*ry(i+1), curcr)
@@ -476,16 +470,12 @@ contains
                call dinit_sfun(ry(i), ry(i), ra(i), rnew, rnew, phinew(i)%p, phitmp)
                !anorm = znormest(ry(i+1)*ry(i+1), 4, zsfun_matvec, zsfun_matvec_transp)
                anorm = 1d0
-               print *, 'diag-KSL, Rmat:', R(1)
-               call dexp_mv(ry(i)*rnew, order, -tau0, R, Stmp, eps, anorm, zsfun_matvec)
-               print *, 'diag-KSL, Stmp:', Stmp(1)
+               call dexp_mv(ry(i)*rnew, order, -tau0, R, Stmp, eps, anorm, dsfun_matvec)
                call dgemm('n', 'n', ry(i-1) * n(i-1), rnew, ry(i), ONE, crnew(i-1)%p,&
                ry(i-1)*n(i-1), Stmp, ry(i), ZERO, curcr, ry(i-1)*n(i-1))
                ry(i) = rnew
                call dcopy(ry(i-1)*n(i-1)*ry(i), curcr, 1, crnew(i-1)%p, 1)
-               call dcopy(ry(i)*ra(i)*ry(i),phitmp,1,phinew(i)%p,1) !Update phi  
-               print *, 'diag-KSL, phinew(i):', phinew(i)%p(1)
-               print *, 'diag-KSL, crnew(i-1):', crnew(i-1)%p(1)
+               call dcopy(ry(i)*ra(i)*ry(i), phitmp, 1, phinew(i)%p, 1) !Update phi  
            else !i == 1 
                call dcopy(ry(i)*n(i)*ry(i+1),curcr,1,crnew(i)%p,1) 
            end if
@@ -496,7 +486,7 @@ contains
                call dextract_slice(ra(i), n(i), ra(i+1), crA(pa(i):pa(i+1)-1), k, matrix_slice)
                call dinit_bfun_main(phinew(i)%p, matrix_slice, phinew(i+1)%p) !Additional setup for the zmatvec subroutine 
                call dextract_slice(ry(i), n(i), ry(i+1), crnew(i)%p, k, slice)
-               call dexp_mv(ry(i)*ry(i+1), order, tau0, slice, new_slice, eps, anorm, zmatvec)
+               call dexp_mv(ry(i)*ry(i+1), order, tau0, slice, new_slice, eps, anorm, dmatvec)
                call dset_slice(ry(i), n(i), ry(i+1), curcr, k, new_slice)
            end do
                !anorm = znormest(ry(i) * n(i) * ry(i+1),4, zmatvec, zmatvec_transp)
@@ -512,7 +502,7 @@ contains
                call dinit_sfun(rnew, rnew, ra(i+1), ry(i+1), ry(i+1), phitmp, phinew(i+1)%p)
                !anorm = znormest(ry(i+1)*ry(i+1), 4, zsfun_matvec, zsfun_matvec_transp)
                anorm = 1d0
-               call dexp_mv(rnew * ry(i+1), order, -tau0, R, Stmp, eps, anorm, zsfun_matvec)
+               call dexp_mv(rnew * ry(i+1), order, -tau0, R, Stmp, eps, anorm, dsfun_matvec)
                call dgemm('n', 'n', rnew, n(i+1) * ry(i+2), ry(i+1), ONE, &
                Stmp, rnew, crnew(i+1) % p, ry(i+1), &
                ZERO, curcr, rnew)
@@ -550,16 +540,16 @@ contains
        allocate(dresult_core(nn))
     end if
     nn = 1
-    do i=1,d
-       call dcopy(ry(i)*n(i)*ry(i+1), crnew(i)%p, 1, zresult_core(nn), 1)
+    do i = 1, d
+       call dcopy(ry(i)*n(i)*ry(i+1), crnew(i)%p, 1, dresult_core(nn), 1)
        nn = nn + ry(i)*n(i)*ry(i+1)
     end do
-    do i = 1,d
+    do i = 1, d
        if ( associated(crnew(i)%p)) then
           deallocate(crnew(i)%p)
        end if
     end do
-    do i = 1,d+1
+    do i = 1, d+1
        if ( associated(phinew(i)%p)) then
           deallocate(phinew(i)%p)
        end if
@@ -699,7 +689,6 @@ contains
        !True iteration when started from the left:
        !move (US), move S, next core
        !and backwards move S, move (US), prev. core
-        print *, 'Phi_mat:', phinew(1)%p(1), phinew(2)%p(1), phinew(3)%p(1)
        if ( dir < 0 ) then
            call init_bfun_sizes(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), &
                ra(i), ra(i+1), ry(i)*n(i)*ry(i+1), ry(i)*n(i)*ry(i+1))
@@ -710,43 +699,30 @@ contains
                !anorm = znormest(ry(i)*n(i)*ry(i+1),4, zmatvec, zmatvec_transp)
                anorm = 1d0 !This is the point we need to fix later with the norm estimate 
                call zextract_slice(ry(i), n(i), ry(i+1), crnew(i)%p, k, slice)
-               print *, 'diag-KSL, tau0:', tau0
-               print *, 'diag-KSL, slice:', slice(1)
                call zexp_mv(ry(i)*ry(i+1), order, tau0, slice, new_slice, eps, anorm, zmatvec)
-               print *, 'diag-KSL: slice-after:', new_slice(1)
                !print *, i, dir, phinew(i)%p(1), phinew(i+1)%p(1)
                call zset_slice(ry(i), n(i), ry(i+1), curcr, k, new_slice)
            end do
-           print *, 'diag-KSL, curcr after mv:', curcr(1), abs(curcr(1)) 
            !print *, 'After:', new_slice(1:ry(i)*ry(i+1)), abs(new_slice(1:ry(i)*ry(i+1)))
            if ( i > 1 ) then
-               print *,'1'
                call ztransp(ry(i), n(i)*ry(i+1), curcr)
                rnew = min(n(i)*ry(i+1), ry(i))
                call zqr(n(i)*ry(i+1), ry(i), curcr, R) 
-               print *,'2'
                call ztransp(n(i) * ry(i+1), rnew, curcr)
                call zcopy(rnew * n(i) * ry(i+1), curcr, 1, crnew(i)%p, 1)
                call ztransp(rnew, ry(i), R)
                !This should be also rewritten to the diagonal A
-               print *,'3'
                call zphi_diag_right(rnew, n(i), ry(i+1), ra(i), ra(i+1), phinew(i+1)%p, crA(pa(i)), curcr, phitmp)
-               print *,'4'
                !phitmp is now ry(i) x ra(i) x ry(i) 
-               !print *, 'phinew:', phinew(i)%p(1)
                call zinit_sfun(ry(i), ry(i), ra(i), rnew, rnew, phinew(i)%p, phitmp)
                !anorm = znormest(ry(i+1)*ry(i+1), 4, zsfun_matvec, zsfun_matvec_transp)
                anorm = 1d0
-               print *, 'diag-KSL, Rmat:', R(1)
                call zexp_mv(ry(i)*rnew, order, -tau0, R, Stmp, eps, anorm, zsfun_matvec)
-               print *, 'diag-KSL, Stmp:', Stmp(1)
                call zgemm('n', 'n', ry(i-1) * n(i-1), rnew, ry(i), ONE, crnew(i-1)%p,&
                ry(i-1)*n(i-1), Stmp, ry(i), ZERO, curcr, ry(i-1)*n(i-1))
                ry(i) = rnew
                call zcopy(ry(i-1)*n(i-1)*ry(i), curcr, 1, crnew(i-1)%p, 1)
                call zcopy(ry(i)*ra(i)*ry(i),phitmp,1,phinew(i)%p,1) !Update phi  
-               print *, 'diag-KSL, phinew(i):', phinew(i)%p(1)
-               print *, 'diag-KSL, crnew(i-1):', crnew(i-1)%p(1)
            else !i == 1 
                call zcopy(ry(i)*n(i)*ry(i+1),curcr,1,crnew(i)%p,1) 
            end if
