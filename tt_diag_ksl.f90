@@ -4,7 +4,7 @@ module bfun_diag_ksl
   real(8), pointer, private :: phi1T(:), phi2T(:),res1T(:), res2T(:), AT(:)
   complex(8), pointer, private :: zphi1T(:), zphi2T(:), zres1T(:), zres2T(:), zAT(:)
   integer,private ::  xsizeT, ysizeT
-  type, public ::  pointd
+  type, public ::  dpointd
      real(8), dimension(:), pointer :: p=>null()
   end type pointd
 
@@ -188,12 +188,12 @@ end module sfun_diag_ksl
 
 module dyn_diag_tt
   implicit none
-  real(8), allocatable :: result_core(:)
+  real(8), allocatable :: dresult_core(:)
   complex(8), allocatable :: zresult_core(:)
 contains
   subroutine deallocate_result
-    if ( allocated(result_core) ) then
-       deallocate(result_core)
+    if ( allocated(dresult_core) ) then
+       deallocate(dresult_core)
     end if
     if ( allocated(zresult_core) ) then
        deallocate(zresult_core) 
@@ -277,8 +277,8 @@ contains
       use ttals
       implicit none
       integer :: ry1, n, ry2, ra1, ra2
-      real(8) :: A(ra1, n, ra2), x(ry1, n, ry2), phi(*), res(ry2, ry2, ra2)
-      real(8) :: tmp(ry2, ry2, ra2), Aslice(ra1, ra2), Xslice(ry1, ry2)
+      real(8) :: A(ra1, n, ra2), x(ry1, n, ry2), phi(*), res(ry1, ry1, ra1)
+      real(8) :: tmp(ry1, ry1, ra1), Aslice(ra1, ra2), Xslice(ry1, ry2)
       integer :: k
       res(:, :, :) = 0d0    
       do k = 1, n
@@ -313,7 +313,7 @@ contains
   !! KLS-scheme
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !! What we have: we have a starting vector + a matrix (no vector X!) 
-  subroutine dtt_diag_ksl(d, n, ra, crA, crY0, ry, tau, rmax, kickrank, nswp, verb)
+  subroutine dtt_diag_ksl(d, n, ra, crA, crY0, ry, tau, rmax, kickrank, nswp, verb, typ0, order0)
     use dispmodule
     use matrix_util ! dqr
     use ttals   ! als stuff
@@ -321,34 +321,51 @@ contains
     use bfun_diag_ksl !bfun declarations
     use sfun_diag_ksl !We have to do this
     use explib !Krylov exponential
+    use rnd_lib
     implicit none
     integer,intent(in) :: d, n(d), ra(d+1), rmax
     integer,intent(inout) :: ry(d+1)
-    integer, intent(in), optional :: kickrank, nswp, verb
+    integer, intent(in), optional :: kickrank, nswp, verb, typ0
     ! verb: 0: off; 1: matlab; 2: console
     integer :: kickrank0, nswp0, verb0
-    real(8), intent(in) :: crA(*), crY0(*)
+    complex(8), intent(in) :: crA(*), crY0(*)
     real(8), intent(in) :: tau
-    type(pointd) :: crnew(d+1)
-    type(pointd) :: phinew(d+1)
-    real(8),allocatable, target :: curcr(:)
-    real(8),allocatable, target :: work(:)
-    real(8),allocatable :: R(:)
-    real(8),allocatable :: full_core(:)
+    real(8) :: tau0
+    type(dpointd) :: crnew(d+1)
+    type(dpointd) :: phinew(d+1)
+    real(8), allocatable, target :: curcr(:)
+    real(8), allocatable, target :: slice(:), new_slice(:), matrix_slice(:)
+    real(8), allocatable, target :: work(:)
+    real(8), allocatable :: R(:)
+    real(8), allocatable :: full_core(:)
     real(8) eps
     real(8) :: sv(rmax)
     real(8), allocatable :: rnorms(:), W(:,:), X(:,:), Bmat(:,:), U(:,:), phitmp(:), Stmp(:)
-    integer,allocatable :: pa(:)
-    integer :: i,j, k, swp, dir, lwork, mm, nn, rnew, max_matvecs, rmax2 
+    integer, allocatable :: pa(:)
+    real(8), allocatable :: tmp1(:), tmp2(:),tmp3(:,:,:)
+    integer :: i, j, k, sz,swp, dir, lwork, mm, nn, rnew, max_matvecs, rmax2 
+    integer :: typ
+    integer, optional, intent(in) :: order0
+    integer :: order
     real(8) :: err, ermax, res, res_old, min_res
     real(8) anorm
     real(8) dznrm2
+    real(8) ZERO, ONE
+    parameter( ZERO=0.d0, ONE=1.d0)
+    typ = 2 ! 1 - KSL, 2 - KSL-symm scheme which is used by default
+    if ( present(typ0) ) then
+        typ = typ0 
+    endif
+    order = 8
+    if ( present(order0) ) then
+        order = order0
+    endif
     min_res = 1d-1
     rmax2 = rmax 
     !Inner parameters
     eps = 1e-8 !For local solvers
-    call disp('Solving a real-valued dynamical problem with diagonal operator and tau='//tostring(tau))
-    kickrank0 = 5
+    call disp('Solving a complex-valued dynamical problem with tau='//tostring(tau))
+    kickrank0 = 5;
     if (present(kickrank)) then
        kickrank0 = kickrank
     end if
@@ -365,6 +382,7 @@ contains
     lwork = rmax*maxval(n(1:d))*rmax
     nn = maxval(ra(1:d+1))*rmax*rmax
     allocate(curcr(lwork))
+    allocate(slice(rmax*rmax), new_slice(rmax*rmax), matrix_slice(maxval(ra)**2))
     nn = maxval(ra(1:d+1))*rmax*maxval(n(1:d))*rmax
     allocate(work(nn))
     allocate(R(lwork))
@@ -374,13 +392,17 @@ contains
     mm = 1
     do i=1,d
        allocate(crnew(i)%p(ry(i)*n(i)*ry(i+1)*2))
-       call dcopy(ry(i)*n(i)*ry(i+1), crY0(mm), 1, crnew(i)%p, 1)
+       call zcopy(ry(i)*n(i)*ry(i+1), crY0(mm), 1, crnew(i)%p, 1)
        mm = mm + ry(i)*n(i)*ry(i+1)
     end do
+    !open(unit=10,status='replace',file='test_eye_ksl.dat',form='unformatted',access='stream')
+    !write(10) d,n(1:d),m(1:d),ra(1:d+1),ry(1:d+1),pa(d+1)-1,crA(1:(pa(d+1)-1)),mm-1,crY0(1:mm-1),tau,rmax,kickrank,nswp,verb 
+    !close(10)
+    !return
     allocate(phinew(1)%p(1))
     allocate(phinew(d+1)%p(1))
-    phinew(1)%p(1) = 1d0
-    phinew(d+1)%p(1) = 1d0
+    phinew(1)%p(1) = ONE
+    phinew(d+1)%p(1) = ONE
     !   QR, psi
     dir = 1
     i = 1
@@ -388,124 +410,149 @@ contains
        rnew = min(ry(i)*n(i), ry(i+1))
        call dqr(ry(i)*n(i), ry(i+1), crnew(i)%p, R)
        if ( i < d ) then
-          call dgemm('N', 'N', rnew, n(i+1)*ry(i+2), ry(i+1), 1d0, R, rnew, crnew(i+1)%p, ry(i+1), 0d0, curcr, rnew)
+          call dgemm('N', 'N', rnew, n(i+1)*ry(i+2), ry(i+1), ONE, R, rnew, crnew(i+1)%p, ry(i+1), ZERO, curcr, rnew)
           call dcopy(rnew*n(i+1)*ry(i+2), curcr, 1, crnew(i+1)%p,1)
-          ry(i+1) = rnew
+          ry(i+1) = rnew;
           !     Phir
           !phinew(i+1) is ry(i)*n(i)*ry(i+1)
           allocate(phinew(i+1)%p(ry(i+1)*ry(i+1)*ra(i+1)))
           call dphi_diag_left(ry(i), n(i), ry(i+1), ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), crnew(i)%p, phinew(i+1)%p)
        end if
-       i = i+dir
+       i = i + dir
     end do
-    i = d
     ermax = 0d0
     i = d
     dir = -1
-    swp = 1
+    swp = 0
     call init_seed()
     ermax = 0d0
-    swp = 1
-    do while (swp .eq. 1)
+    if ( typ .eq. 1) then
+        tau0 = tau
+    else if ( typ .eq. 2  ) then
+        tau0 = tau/2
+    endif
+    !The symmetrized scheme consists in: U1 - S1 - U2 - S2 - U3
+    !Step in U3, S2, U2, S1, U1;
+    !Backwards would be: U1 (again) S1 U2 S2 U3, i.e. - step in core; step in S 
+    do while (swp < 1)
        !True iteration when started from the left:
        !move (US), move S, next core
        !and backwards move S, move (US), prev. core
+        print *, 'Phi_mat:', phinew(1)%p(1), phinew(2)%p(1), phinew(3)%p(1)
        if ( dir < 0 ) then
-          call init_bfun_sizes(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), ra(i), ra(i+1), ry(i)*n(i)*ry(i+1), ry(i)*n(i)*ry(i+1))
-          call dinit_bfun_main(phinew(i)%p, crA(pa(i):pa(i+1)-1), phinew(i+1)%p)
-          anorm = normest(ry(i)*n(i)*ry(i+1),4, dmatvec, dmatvec_transp)
-          call exp_mv(ry(i)*n(i)*ry(i+1), 5, tau/2, crnew(i)%p, curcr, eps, anorm, dmatvec)
-          if ( i < d ) then
-             !In this case, we have to put S(i+1) backwards in time (heh)
-             call dqr(n(i)*ry(i), ry(i+1), curcr, R) 
-             call dphi_diag_left(ry(i), n(i), ry(i+1), ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), curcr, phitmp)
-             call dinit_sfun(ry(i+1), ry(i+1), ra(i+1), ry(i+1), ry(i+1), phitmp, phinew(i+1)%p)
-             anorm = normest(ry(i+1)*ry(i+1), 4, dsfun_matvec, dsfun_matvec_transp)
-             call exp_mv(ry(i+1)*ry(i+1), 5, -tau/2, R, Stmp, eps, anorm, dsfun_matvec)
-             call dgemm('n','n',ry(i)*n(i),ry(i+1),ry(i+1),1d0,curcr, ry(i)*n(i), Stmp, ry(i+1), 0d0, crnew(i)%p, ry(i)*n(i))
-             call dcopy(ry(i)*n(i)*ry(i+1),crnew(i)%p,1,curcr,1)
-          end if
-          if ( i > 1 ) then
-             call dtransp(ry(i),n(i)*ry(i+1), curcr)
-             call dqr(n(i)*ry(i+1), ry(i), curcr, R)
-             call dtransp(n(i)*ry(i+1), ry(i), curcr, crnew(i)%p)
-             call dgemm('n','t',ry(i-1)*n(i),ry(i), ry(i), 1d0, crnew(i-1)%p, ry(i-1)*n(i), R, ry(i), 0d0, curcr, ry(i-1)*n(i))
-             call dcopy(ry(i-1)*n(i)*ry(i), curcr, 1, crnew(i-1)%p, 1)
-
-             !And recompute phi
-             if ( size(phinew(i)%p) < ry(i)*ry(i)*ra(i) ) then
-                deallocate(phinew(i)%p)
-                allocate(phinew(i)%p(ry(i)*ry(i)*ra(i)*2))
-             end if
-             call dphi_diag_right(ry(i), n(i), ry(i+1), ra(i), ra(i+1), phinew(i+1)%p, crA(pa(i)), crnew(i)%p, phinew(i)%p)
-             !call dphi_right(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), ra(i), &
-             !ra(i+1), phinew(i+1)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phinew(i)%p)
-          end if
-       end if
-       if ( dir > 0 ) then
-          !We will rewrite to (an ordinary) LR-iteration that starts from the first core, but it seems to be not the second order
-          !dqr ->
-          !step S
-          !update core
-          !dqr ->
-          !mul 
-          if ( i < d ) then
-             call dqr(ry(i)*n(i),ry(i+1),crnew(i)%p,R)
-             !The size of the updated s would be ry(i+1) -> 
-             call dphi_diag_left(ry(i), n(i), ry(i+1), ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), curcr, phitmp)
-             call dinit_sfun(ry(i+1), ry(i+1), ra(i+1), ry(i+1), ry(i+1), phitmp, phinew(i+1)%p)
-             anorm = normest(ry(i+1)*ry(i+1),4,dsfun_matvec,dsfun_matvec_transp)
-             call exp_mv(ry(i+1)*ry(i+1), 5, -tau/2, R, Stmp, eps, anorm, dsfun_matvec)
-             call dgemm('n','n',ry(i)*n(i),ry(i+1),ry(i+1),1d0,crnew(i)%p,ry(i)*n(i),Stmp,ry(i+1),0d0,curcr,ry(i)*n(i))
-          else
-             call dcopy(ry(i)*n(i)*ry(i+1),crnew(i)%p,1,curcr,1)
-          end if
-
-          call init_bfun_sizes(ry(i),n(i),ry(i+1),ry(i),n(i),ry(i+1),ra(i),ra(i+1),ry(i)*n(i)*ry(i+1),ry(i)*n(i)*ry(i+1))
-          call dinit_bfun_main(phinew(i)%p,crA(pa(i):pa(i+1)-1),phinew(i+1)%p)
-
-          anorm = normest(ry(i)*n(i)*ry(i+1),4, dmatvec, dmatvec_transp)
-          call exp_mv(ry(i)*n(i)*ry(i+1),5 ,tau/2,curcr,crnew(i)%p,eps,anorm,dmatvec)
-
-          if ( i < d ) then
-             call dqr(ry(i)*n(i),ry(i+1),crnew(i)%p,R)
-             call dgemm('n','n',ry(i+1),n(i+1)*ry(i+2),ry(i+1),1d0,R,ry(i+1),crnew(i+1)%p,ry(i+1),0d0,curcr,ry(i+1))
-             call dcopy(ry(i+1)*n(i+1)*ry(i+2),curcr,1,crnew(i+1)%p,1)
-             if ( size(phinew(i+1)%p) < ry(i+1)*ry(i+1)*ra(i+1) ) then
-                deallocate(phinew(i+1)%p)
-                allocate(phinew(i+1)%p(ry(i+1)*ry(i+1)*ra(i+1)*2))
-             end if
-             call dphi_diag_left(ry(i), n(i), ry(i+1), ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), crnew(i)%p, phinew(i+1)%p)
-          end if
+           call init_bfun_sizes(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), &
+               ra(i), ra(i+1), ry(i)*n(i)*ry(i+1), ry(i)*n(i)*ry(i+1))
+               !print *, 'Before:', c(1:ry(i)*ry(i+1)), abs(slice(1:ry(i)*ry(i+1)))
+           do k = 1, n(i) !Take block diagonal part and solve it separatedbly
+               call dextract_slice(ra(i), n(i), ra(i+1), crA(pa(i):pa(i+1)-1), k, matrix_slice)
+               call dinit_bfun_main(phinew(i)%p, matrix_slice, phinew(i+1)%p) !Additional setup for the zmatvec subroutine 
+               !anorm = znormest(ry(i)*n(i)*ry(i+1),4, zmatvec, zmatvec_transp)
+               anorm = 1d0 !This is the point we need to fix later with the norm estimate 
+               call dextract_slice(ry(i), n(i), ry(i+1), crnew(i)%p, k, slice)
+               print *, 'diag-KSL, tau0:', tau0
+               print *, 'diag-KSL, slice:', slice(1)
+               call dexp_mv(ry(i)*ry(i+1), order, tau0, slice, new_slice, eps, anorm, zmatvec)
+               print *, 'diag-KSL: slice-after:', new_slice(1)
+               !print *, i, dir, phinew(i)%p(1), phinew(i+1)%p(1)
+               call dset_slice(ry(i), n(i), ry(i+1), curcr, k, new_slice)
+           end do
+           print *, 'diag-KSL, curcr after mv:', curcr(1), abs(curcr(1)) 
+           !print *, 'After:', new_slice(1:ry(i)*ry(i+1)), abs(new_slice(1:ry(i)*ry(i+1)))
+           if ( i > 1 ) then
+               print *,'1'
+               call dtransp(ry(i), n(i)*ry(i+1), curcr)
+               rnew = min(n(i)*ry(i+1), ry(i))
+               call dqr(n(i)*ry(i+1), ry(i), curcr, R) 
+               print *,'2'
+               call dtransp(n(i) * ry(i+1), rnew, curcr)
+               call dcopy(rnew * n(i) * ry(i+1), curcr, 1, crnew(i)%p, 1)
+               call dtransp(rnew, ry(i), R)
+               !This should be also rewritten to the diagonal A
+               print *,'3'
+               call dphi_diag_right(rnew, n(i), ry(i+1), ra(i), ra(i+1), phinew(i+1)%p, crA(pa(i)), curcr, phitmp)
+               print *,'4'
+               !phitmp is now ry(i) x ra(i) x ry(i) 
+               !print *, 'phinew:', phinew(i)%p(1)
+               call dinit_sfun(ry(i), ry(i), ra(i), rnew, rnew, phinew(i)%p, phitmp)
+               !anorm = znormest(ry(i+1)*ry(i+1), 4, zsfun_matvec, zsfun_matvec_transp)
+               anorm = 1d0
+               print *, 'diag-KSL, Rmat:', R(1)
+               call dexp_mv(ry(i)*rnew, order, -tau0, R, Stmp, eps, anorm, zsfun_matvec)
+               print *, 'diag-KSL, Stmp:', Stmp(1)
+               call dgemm('n', 'n', ry(i-1) * n(i-1), rnew, ry(i), ONE, crnew(i-1)%p,&
+               ry(i-1)*n(i-1), Stmp, ry(i), ZERO, curcr, ry(i-1)*n(i-1))
+               ry(i) = rnew
+               call dcopy(ry(i-1)*n(i-1)*ry(i), curcr, 1, crnew(i-1)%p, 1)
+               call dcopy(ry(i)*ra(i)*ry(i),phitmp,1,phinew(i)%p,1) !Update phi  
+               print *, 'diag-KSL, phinew(i):', phinew(i)%p(1)
+               print *, 'diag-KSL, crnew(i-1):', crnew(i-1)%p(1)
+           else !i == 1 
+               call dcopy(ry(i)*n(i)*ry(i+1),curcr,1,crnew(i)%p,1) 
+           end if
+       else   ! dir > 0
+           call init_bfun_sizes(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), ra(i), &
+           ra(i+1), ry(i)*n(i)*ry(i+1), ry(i)*n(i)*ry(i+1))
+           do k = 1, n(i)
+               call dextract_slice(ra(i), n(i), ra(i+1), crA(pa(i):pa(i+1)-1), k, matrix_slice)
+               call dinit_bfun_main(phinew(i)%p, matrix_slice, phinew(i+1)%p) !Additional setup for the zmatvec subroutine 
+               call dextract_slice(ry(i), n(i), ry(i+1), crnew(i)%p, k, slice)
+               call dexp_mv(ry(i)*ry(i+1), order, tau0, slice, new_slice, eps, anorm, zmatvec)
+               call dset_slice(ry(i), n(i), ry(i+1), curcr, k, new_slice)
+           end do
+               !anorm = znormest(ry(i) * n(i) * ry(i+1),4, zmatvec, zmatvec_transp)
+               !print *,'estimated norm:', anorm
+               !anorm = 1d0
+               !call zexp_mv(ry(i) * n(i) * ry(i+1), order, tau0, &
+               !            crnew(i) % p, curcr, eps, anorm, zmatvec)
+           if ( i < d ) then ! Update S
+               call dqr(ry(i)*n(i), ry(i+1), curcr, R) 
+               rnew = min(ry(i)*n(i), ry(i+1))
+               call dcopy(ry(i)*n(i)*rnew, curcr, 1, crnew(i)%p, 1)
+               call dphi_diag_left(ry(i), n(i), rnew, ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), curcr, phitmp)
+               call dinit_sfun(rnew, rnew, ra(i+1), ry(i+1), ry(i+1), phitmp, phinew(i+1)%p)
+               !anorm = znormest(ry(i+1)*ry(i+1), 4, zsfun_matvec, zsfun_matvec_transp)
+               anorm = 1d0
+               call dexp_mv(rnew * ry(i+1), order, -tau0, R, Stmp, eps, anorm, zsfun_matvec)
+               call dgemm('n', 'n', rnew, n(i+1) * ry(i+2), ry(i+1), ONE, &
+               Stmp, rnew, crnew(i+1) % p, ry(i+1), &
+               ZERO, curcr, rnew)
+               call dcopy(rnew * n(i+1) * ry(i+2), curcr, 1, crnew(i+1) % p, 1) 
+               ry(i+1) = rnew
+               call dcopy(ry(i+1) * ra(i+1) * ry(i+1), phitmp, 1, phinew(i+1) % p, 1)
+           else  ! Last core
+               call dcopy(ry(i) * n(i) * ry(i+1), curcr, 1, crnew(i) % p, 1 ) 
+           endif
        end if
        if ((dir>0) .and. (i==d )) then
-          dir = -1
-          i = d
-          !call disp('swp: '//tostring(1d0*swp)//' er = '//tostring(ermax)//' rmax:'//tostring(1d0*maxval(ry(1:d))))
-          swp = swp + 1
-          ermax = 0d0
+           dir = -1
+           i = d
+           swp = swp + 1
+           ermax = 0d0
        else if ((dir < 0) .and. (i == 1 )) then
-          dir = 1
-          i = 1
-          !goto 100
+           dir = 1
+           i = 1
+           if ( typ .eq. 1 ) then
+               goto 105
+           endif
        else
-          i = i + dir
+           i = i + dir
        end if
     end do
-100 continue
+105 continue
+    print *, 'Computation done'
     nn = sum(ry(2:d+1)*ry(1:d)*n(1:d))
-    if ( allocated(result_core)) then
-       if ( size(result_core) < nn ) then
-          deallocate(result_core)
+    if ( allocated(dresult_core)) then
+       if ( size(dresult_core) < nn ) then
+          deallocate(dresult_core)
        end if
     end if
-    if ( .not. allocated(result_core) ) then
-       allocate(result_core(nn))
+    if ( .not. allocated(dresult_core) ) then
+       allocate(dresult_core(nn))
     end if
     nn = 1
     do i=1,d
-       call dcopy(ry(i)*n(i)*ry(i+1), crnew(i)%p, 1, result_core(nn), 1)
-       nn = nn+ry(i)*n(i)*ry(i+1)
+       call dcopy(ry(i)*n(i)*ry(i+1), crnew(i)%p, 1, zresult_core(nn), 1)
+       nn = nn + ry(i)*n(i)*ry(i+1)
     end do
     do i = 1,d
        if ( associated(crnew(i)%p)) then
@@ -520,6 +567,9 @@ contains
     deallocate(R)
     deallocate(work)
     deallocate(curcr)
+    deallocate(slice)
+    deallocate(new_slice)
+    deallocate(matrix_slice)
     deallocate(full_core)
     deallocate(pa)
   end subroutine dtt_diag_ksl

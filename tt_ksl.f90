@@ -186,12 +186,12 @@ end module sfun_ksl
 
 module dyn_tt
   implicit none
-  real(8), allocatable :: result_core(:)
+  real(8), allocatable :: dresult_core(:)
   complex(8), allocatable :: zresult_core(:)
 contains
   subroutine deallocate_result
-    if ( allocated(result_core) ) then
-       deallocate(result_core)
+    if ( allocated(dresult_core) ) then
+       deallocate(dresult_core)
     end if
     if ( allocated(zresult_core) ) then
        deallocate(zresult_core) 
@@ -322,7 +322,7 @@ contains
           call init_bfun_sizes(ry(i),n(i),ry(i+1),ry(i),n(i),ry(i+1),ra(i),ra(i+1),ry(i)*n(i)*ry(i+1),ry(i)*n(i)*ry(i+1))
           call dinit_bfun_main(phinew(i)%p,crA(pa(i):pa(i+1)-1),phinew(i+1)%p)
           anorm = normest(ry(i)*n(i)*ry(i+1),4, dmatvec, dmatvec_transp)
-          call exp_mv(ry(i)*n(i)*ry(i+1),5,tau/2,crnew(i)%p,curcr,eps,anorm,dmatvec)
+          call dexp_mv(ry(i)*n(i)*ry(i+1),5,tau/2,crnew(i)%p,curcr,eps,anorm,dmatvec)
           if ( i < d ) then
              !In this case, we have to put S(i+1) backwards in time (heh)
              call dqr(n(i)*ry(i), ry(i+1), curcr, R) 
@@ -331,7 +331,7 @@ contains
              ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), curcr, curcr, phitmp)
              call dinit_sfun(ry(i+1), ry(i+1), ra(i+1), ry(i+1), ry(i+1), phitmp, phinew(i+1)%p)
              anorm = normest(ry(i+1)*ry(i+1), 4, dsfun_matvec, dsfun_matvec_transp)
-             call exp_mv(ry(i+1)*ry(i+1), 5, -tau/2, R, Stmp, eps, anorm, dsfun_matvec)
+             call dexp_mv(ry(i+1)*ry(i+1), 5, -tau/2, R, Stmp, eps, anorm, dsfun_matvec)
              call dgemm('n','n',ry(i)*n(i),ry(i+1),ry(i+1),1d0,curcr, ry(i)*n(i), Stmp, ry(i+1), 0d0, crnew(i)%p, ry(i)*n(i))
              call dcopy(ry(i)*n(i)*ry(i+1),crnew(i)%p,1,curcr,1)
           end if
@@ -367,7 +367,7 @@ contains
              ra(i+1), phinew(i)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phitmp)
              call dinit_sfun(ry(i+1), ry(i+1), ra(i+1), ry(i+1), ry(i+1), phitmp, phinew(i+1)%p)
              anorm = normest(ry(i+1)*ry(i+1),4,dsfun_matvec,dsfun_matvec_transp)
-             call exp_mv(ry(i+1)*ry(i+1), 5, -tau/2, R, Stmp, eps, anorm, dsfun_matvec)
+             call dexp_mv(ry(i+1)*ry(i+1), 5, -tau/2, R, Stmp, eps, anorm, dsfun_matvec)
              call dgemm('n','n',ry(i)*n(i),ry(i+1),ry(i+1),1d0,crnew(i)%p,ry(i)*n(i),Stmp,ry(i+1),0d0,curcr,ry(i)*n(i))
           else
              call dcopy(ry(i)*n(i)*ry(i+1),crnew(i)%p,1,curcr,1)
@@ -377,7 +377,7 @@ contains
           call dinit_bfun_main(phinew(i)%p,crA(pa(i):pa(i+1)-1),phinew(i+1)%p)
 
           anorm = normest(ry(i)*n(i)*ry(i+1),4, dmatvec, dmatvec_transp)
-          call exp_mv(ry(i)*n(i)*ry(i+1),5 ,tau/2,curcr,crnew(i)%p,eps,anorm,dmatvec)
+          call dexp_mv(ry(i)*n(i)*ry(i+1),5 ,tau/2,curcr,crnew(i)%p,eps,anorm,dmatvec)
 
           if ( i < d ) then
              call dqr(ry(i)*n(i),ry(i+1),crnew(i)%p,R)
@@ -412,18 +412,18 @@ contains
 100 continue
 
     nn = sum(ry(2:d+1)*ry(1:d)*n(1:d))
-    if ( allocated(result_core)) then
-       if ( size(result_core) < nn ) then
-          deallocate(result_core)
+    if ( allocated(dresult_core)) then
+       if ( size(dresult_core) < nn ) then
+          deallocate(dresult_core)
        end if
     end if
-    if ( .not. allocated(result_core) ) then
-       allocate(result_core(nn))
+    if ( .not. allocated(dresult_core) ) then
+       allocate(dresult_core(nn))
     end if
 
     nn = 1
     do i=1,d
-       call dcopy(ry(i)*n(i)*ry(i+1), crnew(i)%p, 1, result_core(nn), 1)
+       call dcopy(ry(i)*n(i)*ry(i+1), crnew(i)%p, 1, dresult_core(nn), 1)
        nn = nn+ry(i)*n(i)*ry(i+1)
     end do
     do i = 1,d

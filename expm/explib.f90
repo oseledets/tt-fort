@@ -1,6 +1,6 @@
 module explib
  contains 
-   subroutine exp_mv(n, m, tau, v, w, tol, anorm, matvec, verb)
+   subroutine dexp_mv(n, m, tau, v, w, tol, anorm, matvec, verb)
      integer, intent(in) :: n,m
      double precision, intent(in) :: tau, tol, anorm
      double precision, intent(in) :: v(n)
@@ -35,7 +35,7 @@ module explib
      end if
      deallocate(wsp)
      deallocate(iwsp)
- end subroutine exp_mv
+ end subroutine dexp_mv
    
 
    subroutine zexp_mv(n, m, tau, v, w, tol, anorm, matvec, verb)
