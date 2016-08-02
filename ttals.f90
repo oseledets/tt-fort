@@ -118,11 +118,8 @@ contains
     integer, intent(in) :: rx1, m, rx2, ry1, n, ry2, ra1, ra2
     real(8), intent(in) :: phi2(*), A(*), x(*)
     real(8), intent(inout) :: y(*), res1(*), res2(*)
-
-
     !   phi2: b2,a2,c2: rx2, ra2, ry2
     !  x: b1,j1,b2: rx1,m,rx2
-
     call dgemm('N', 'N', rx1*m, ra2*ry2, rx2, 1d0, x, rx1*m, phi2, rx2, 0d0, res1, rx1*m)
     !    res1: rx1,m,ra2,ry2: b1,j1,a2,c2
     call dtransp(rx1, m*ra2*ry2, res1, res2)
@@ -130,31 +127,28 @@ contains
     !     j1, a2, c2, b1
     call dgemm('N', 'N', ra1*n, ry2*rx1, m*ra2, 1d0, A, ra1*n, res1, m*ra2, 0d0, res2, ra1*n)
     !     res2: ra1,n,ry2,rx1 : a1, i1, c2, b1
-    call dtransp(ra1*n*ry2, rx1, res2, y)
+    call dtransp(ra1*n*ry1, rx1, res2, y)
     !   output is rx1*ra1,n,ry2
   end subroutine dbfun3_right
+
 
   subroutine zbfun3_right(rx1, m, rx2, ry1, n, ry2, ra1, ra2, A, phi2, x, y, res1, res2)
     ! sizes of res1, res2: max(rx1*m*ra2*ry2, rx1*ra1*n*ry2)
     integer, intent(in) :: rx1, m, rx2, ry1, n, ry2, ra1, ra2
     complex(8), intent(in) :: phi2(*), A(*), x(*)
     complex(8), intent(inout) :: y(*), res1(*), res2(*)
-
-
     !   phi2: b2,a2,c2: rx2, ra2, ry2
     !  x: b1,j1,b2: rx1,m,rx2
-
-    call dgemm('N', 'N', rx1*m, ra2*ry2, rx2, 1d0, x, rx1*m, phi2, rx2, 0d0, res1, rx1*m)
+    call zgemm('N', 'N', rx1*m, ra2*ry2, rx2, 1d0, x, rx1*m, phi2, rx2, 0d0, res1, rx1*m)
     !    res1: rx1,m,ra2,ry2: b1,j1,a2,c2
     call ztransp(rx1, m*ra2*ry2, res1, res2)
-    call dcopy(m*ra2*ry2*rx1, res2, 1, res1, 1)
+    call zcopy(m*ra2*ry2*rx1, res2, 1, res1, 1)
     !     j1, a2, c2, b1
-    call dgemm('N', 'N', ra1*n, ry2*rx1, m*ra2, 1d0, A, ra1*n, res1, m*ra2, 0d0, res2, ra1*n)
+    call zgemm('N', 'N', ra1*n, ry2*rx1, m*ra2, 1d0, A, ra1*n, res1, m*ra2, 0d0, res2, ra1*n)
     !     res2: ra1,n,ry2,rx1 : a1, i1, c2, b1
-    call ztransp(ra1*n*ry2, rx1, res2, y)
+    call ztransp(ra1*n*ry1, rx1, res2, y)
     !   output is rx1*ra1,n,ry2
   end subroutine zbfun3_right
-
 
 
   subroutine dphi_right(rx1, m, rx2, ry1, n, ry2, ra1, ra2, phi2_old, A, x, y, phi2)
@@ -165,8 +159,6 @@ contains
 !    real(8) :: res1(rx1*m*ra2*ry2)
 !    real(8) :: res2(ra1*n*ry2*rx1)
     real(8), allocatable :: res1(:), res2(:)
-    real(8) :: dnrm2
-
     allocate(res1(rx1*m*ra2*ry2),res2(rx1*ra1*n*ry2))
     !   phi2: b2,a2,c2: rx2, ra2, ry2
     !  x: b1,j1,b2: rx1,m,rx2
@@ -184,6 +176,7 @@ contains
     deallocate(res1, res2)
   end subroutine dphi_right
 
+
   subroutine zphi_right(rx1, m, rx2, ry1, n, ry2, ra1, ra2, phi2_old, A, x, y, phi2)
     ! sizes of res1, res2: max(rx1*m*ra2*ry2, rx1*ra1*n*ry2, rx1*ra1*ry1)
     integer, intent(in) :: rx1, m, rx2, ry1, n, ry2, ra1, ra2
@@ -194,11 +187,7 @@ contains
     parameter( ZERO=(0.0d0,0.0d0), ONE=(1.0d0,0.0d0) )
     complex(8) :: res1(rx1,m,ra2,ry2)
     complex(8) :: res2(ra1,n,ry2,rx1)
-    
     ycopy(1:ry1*n*ry2) = conjg(y(1:ry1*n*ry2))
-
-
-
     !   phi2: b2,a2,c2: rx2, ra2, ry2
     !  x: b1,j1,b2: rx1,m,rx2
     call zgemm('N', 'N', rx1*m, ra2*ry2, rx2, ONE, x, rx1*m, phi2_old, rx2, ZERO, res1, rx1*m)
@@ -213,8 +202,6 @@ contains
     ! phi2: ry1, rx1, ra1
     call ztransp(ry1, rx1*ra1, phi2)
   end subroutine zphi_right
-
-
 
   ! y'Ax
   subroutine dphi_left(rx1, m, rx2, ry1, n, ry2, ra1, ra2, phi1_old, A, x, y, phi1)
