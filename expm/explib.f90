@@ -98,7 +98,7 @@ module explib
      allocate(iwsp(liwsp))
      m1 = min(m, n) !Fix sizes
      if ( m1 .eq. 1 ) then !The matrix is 1 x 1 :)
-        call matvec((1d0,0d0), w)
+        call matvec((1d0, 0d0), w)
         w(1) = v(1) * exp(w(1) * tau)
      else
          nrm = dznrm2(n, v, 1)
@@ -122,5 +122,4 @@ module explib
      deallocate(wsp)
      deallocate(iwsp)
    end subroutine zexp_mv
-
 end module explib

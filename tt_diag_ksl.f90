@@ -28,8 +28,7 @@ contains
     implicit none
     complex(8), intent(in) :: x(*)
     complex(8) :: y(*)
-    call zcopy(rx1T*rx2T, x, 1, y, 1)
-    !call zbfun3(rx1T, 1, rx2T, ry1T, 1, ry2T, ra1T, ra2T, zphi1T, zAT, zphi2T, x, y)
+    call zbfun3(rx1T, 1, rx2T, ry1T, 1, ry2T, ra1T, ra2T, zphi1T, zAT, zphi2T, x, y)
  end subroutine zmatvec
 
 
@@ -664,7 +663,7 @@ contains
        call zqr(ry(i)*n(i), ry(i+1), crnew(i)%p, R)
        if ( i < d ) then
           call zgemm('N', 'N', rnew, n(i+1)*ry(i+2), ry(i+1), ONE, R, rnew, crnew(i+1)%p, ry(i+1), ZERO, curcr, rnew)
-          call zcopy(rnew*n(i+1)*ry(i+2), curcr, 1, crnew(i+1)%p,1)
+          call zcopy(rnew*n(i+1)*ry(i+2), curcr, 1, crnew(i+1)%p, 1)
           ry(i+1) = rnew
           !     Phir
           !phinew(i+1) is ry(i)*n(i)*ry(i+1)
@@ -751,7 +750,7 @@ contains
                ry(i+1) = rnew
                call zcopy(ry(i+1) * ra(i+1)*ry(i+1), phitmp, 1, phinew(i+1)%p, 1)
            else  ! Last core
-               call zcopy(ry(i)*n(i)*ry(i+1), curcr, 1, crnew(i)%p, 1 ) 
+               call zcopy(ry(i)*n(i)*ry(i+1), curcr, 1, crnew(i)%p, 1) 
            endif
        end if
        if ((dir>0) .and. (i==d )) then
