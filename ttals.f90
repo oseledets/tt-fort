@@ -36,13 +36,12 @@ contains
     integer, intent(in) :: rx1, m, rx2, ry1, n, ry2, ra1, ra2
     complex(8), intent(in) :: phi1(*), A(*), phi2(*), x(*)
     complex(8), intent(inout) :: y(*)
-    complex(8) :: res1(rx1,m,ra2,ry2)
-    complex(8) :: res2(ra1,n,ry2,rx1)
+    complex(8), allocatable :: res1(:), res2(:)
     complex(8) ::  ZERO, ONE
     parameter( ZERO=(0.0d0,0.0d0), ONE=(1.0d0,0.0d0) )
+    allocate(res1(rx1*m*ra2*ry2), res2(ra1*n*ry2*rx1))
     !phi2(rx2,ra2,ry2)
-    !phi1(ry1,rx1,ra1) 
-    
+    !phi1(ry1,rx1,ra1)  
     call zgemm('N', 'N', rx1*m, ra2*ry2, rx2, ONE, x, rx1*m, phi2, rx2, ZERO, res1, rx1*m)
     !    res1: rx1,m,ra2,ry2: b1,j1,a2,c2
     call ztransp(rx1, m*ra2*ry2, res1)
@@ -54,7 +53,7 @@ contains
     !    phi1: c1, b1, a1 : ry1, rx1, ra1
     call zgemm('N', 'N', ry1, n*ry2, rx1*ra1, ONE, phi1, ry1, res2, rx1*ra1, ZERO, y, ry1)
     !     y: c1,i1,c2
-
+    deallocate(res1, res2)
   end subroutine zbfun3
 
 

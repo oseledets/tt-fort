@@ -225,18 +225,16 @@ contains
     type(pointd) :: crnew(d+1)
     type(pointd) :: phinew(d+1)
     real(8), allocatable, target :: curcr(:)
-    real(8), allocatable, target :: work(:)
     real(8), allocatable :: R(:)
-    real(8), allocatable :: full_core(:)
     real(8) eps
     real(8), allocatable :: phitmp(:), Stmp(:)
     integer, allocatable :: pa(:)
-    integer :: i, swp, dir, lwork, mm, nn, rnew, rmax2 
+    integer :: i, swp, dir, mm, nn, rnew, rmax2 
+    integer :: max_phi_size, max_core_size, max_R_size
     integer :: typ, order
     integer, optional :: typ0, order0
     real(8) :: ermax, min_res
     real(8) anorm
-
     typ = 2 ! 1 - KSL, 2 - KSL-symm
     if ( present(typ0) ) then
         typ = typ0 
@@ -265,15 +263,24 @@ contains
     end if
     allocate(pa(d+1))
     call compute_ps(d,ra,n(1:d)*m(1:d),pa)
-    lwork = rmax*maxval(n(1:d))*rmax
-    nn = maxval(ra(1:d+1))*rmax*rmax
-    allocate(curcr(lwork))
-    nn = maxval(ra(1:d+1))*rmax*max(maxval(n(1:d)),maxval(m(1:d)))*rmax
-    allocate(work(nn))
-    allocate(R(lwork))
-    allocate(full_core(nn))
-    allocate(phitmp(maxval(ra(1:d+1))*maxval(ry(1:d+1))**2))
-    allocate(Stmp(maxval(ry(1:d+1))**2))
+    !Find memory for the temporary arrays
+    max_phi_size = 0
+    max_core_size = 0
+    max_R_size = 0
+    do i = 1, d
+        if (ry(i)*n(i)*ry(i+1) > max_core_size) then
+            max_core_size = ry(i)*n(i)*ry(i+1)
+        end if
+        if (ry(i)*ry(i) > max_R_size) then
+            max_R_size = ry(i)*ry(i)
+        end if
+        if (ry(i)*ry(i)*ra(i) > max_phi_size) then
+            max_phi_size = ry(i)*ry(i)*ra(i)
+        end if
+    end do
+    allocate(curcr(max_core_size))
+    allocate(R(max_R_size))
+    allocate(Stmp(max_R_size), phitmp(max_phi_size))
     mm = 1
     do i=1,d
        allocate(crnew(i)%p(ry(i)*n(i)*ry(i+1)*2))
@@ -304,12 +311,10 @@ contains
        i = i+dir
     end do
     i = d
-
     ermax = 0d0
     i = d
     dir = -1
     swp = 1
-
     call init_seed()
     ermax = 0d0
     swp = 1
@@ -341,7 +346,6 @@ contains
              call dtransp(n(i)*ry(i+1), ry(i), curcr, crnew(i)%p)
              call dgemm('n','t',ry(i-1)*n(i),ry(i), ry(i), 1d0, crnew(i-1)%p, ry(i-1)*n(i), R, ry(i), 0d0, curcr, ry(i-1)*n(i))
              call dcopy(ry(i-1)*n(i)*ry(i), curcr, 1, crnew(i-1)%p, 1)
-
              !And recompute phi
              if ( size(phinew(i)%p) < ry(i)*ry(i)*ra(i) ) then
                 deallocate(phinew(i)%p)
@@ -371,13 +375,10 @@ contains
           else
              call dcopy(ry(i)*n(i)*ry(i+1),crnew(i)%p,1,curcr,1)
           end if
-
           call init_bfun_sizes(ry(i),n(i),ry(i+1),ry(i),n(i),ry(i+1),ra(i),ra(i+1),ry(i)*n(i)*ry(i+1),ry(i)*n(i)*ry(i+1))
           call dinit_bfun_main(phinew(i)%p,crA(pa(i):pa(i+1)-1),phinew(i+1)%p)
-
           anorm = normest(ry(i)*n(i)*ry(i+1),4, dmatvec, dmatvec_transp)
           call dexp_mv(ry(i)*n(i)*ry(i+1), order, tau/2, curcr, crnew(i)%p, eps, anorm, dmatvec)
-
           if ( i < d ) then
              call dqr(ry(i)*n(i),ry(i+1),crnew(i)%p,R)
              call dgemm('n','n',ry(i+1),n(i+1)*ry(i+2),ry(i+1),1d0,R,ry(i+1),crnew(i+1)%p,ry(i+1),0d0,curcr,ry(i+1))
@@ -390,9 +391,6 @@ contains
              ra(i+1), phinew(i)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phinew(i+1)%p)
           end if
        end if
-
-
-
        if ((dir>0) .and. (i==d )) then
           dir = -1
           i = d
@@ -433,9 +431,7 @@ contains
        end if
     end do
     deallocate(R)
-    deallocate(work)
     deallocate(curcr)
-    deallocate(full_core)
     deallocate(pa)
 
 
@@ -462,15 +458,14 @@ contains
     type(zpointd) :: crnew(d+1)
     type(zpointd) :: phinew(d+1)
     complex(8),allocatable, target :: curcr(:)
-    complex(8),allocatable, target :: work(:)
     complex(8),allocatable :: R(:)
-    complex(8),allocatable :: full_core(:)
     real(8) eps
     complex(8), allocatable :: phitmp(:), Stmp(:)
     integer,allocatable :: pa(:)
-    integer :: i, swp, dir, lwork, mm, nn, rnew, rmax2 
+    integer :: i, swp, dir, mm, nn, rnew, rmax2 
     integer :: typ
     integer, optional, intent(in) :: order0
+    integer :: max_phi_size, max_core_size, max_R_size
     integer :: order
     real(8) :: ermax, min_res
     real(8) anorm
@@ -504,31 +499,30 @@ contains
        verb0 = verb
     end if
     allocate(pa(d+1))
-
     call compute_ps(d,ra,n(1:d)*m(1:d),pa)
-
-
-    lwork = rmax*maxval(n(1:d))*rmax
-
-    nn = maxval(ra(1:d+1))*rmax*rmax
-    allocate(curcr(lwork))
-    nn = maxval(ra(1:d+1))*rmax*max(maxval(n(1:d)),maxval(m(1:d)))*rmax
-    allocate(work(nn))
-    allocate(R(lwork))
-    allocate(full_core(nn))
-    allocate(phitmp(maxval(ra(1:d+1))*maxval(ry(1:d+1))**2))
-    allocate(Stmp(maxval(ry(1:d+1))**2))
-
+    max_phi_size = 0
+    max_core_size = 0
+    max_R_size = 0
+    do i = 1, d
+        if (ry(i)*n(i)*ry(i+1) > max_core_size) then
+            max_core_size = ry(i)*n(i)*ry(i+1)
+        end if
+        if (ry(i)*ry(i) > max_R_size) then
+            max_R_size = ry(i)*ry(i)
+        end if
+        if (ry(i)*ry(i)*ra(i) > max_phi_size) then
+            max_phi_size = ry(i)*ry(i)*ra(i)
+        end if
+    end do
+    allocate(curcr(max_core_size))
+    allocate(R(max_R_size))
+    allocate(Stmp(max_R_size), phitmp(max_phi_size))
     mm = 1
     do i=1,d
        allocate(crnew(i)%p(ry(i)*n(i)*ry(i+1)*2))
        call zcopy(ry(i)*n(i)*ry(i+1), crY0(mm), 1, crnew(i)%p, 1)
        mm = mm + ry(i)*n(i)*ry(i+1)
     end do
-    !open(unit=10,status='replace',file='test_eye_ksl.dat',form='unformatted',access='stream')
-    !write(10) d,n(1:d),m(1:d),ra(1:d+1),ry(1:d+1),pa(d+1)-1,crA(1:(pa(d+1)-1)),mm-1,crY0(1:mm-1),tau,rmax,kickrank,nswp,verb 
-    !close(10)
-    !return
     allocate(phinew(1)%p(1))
     allocate(phinew(d+1)%p(1))
     phinew(1) % p(1) = ONE
@@ -541,10 +535,9 @@ contains
        call zqr(ry(i)*n(i), ry(i+1), crnew(i) % p, R)
        if ( i < d ) then
           call zgemm('N', 'N', rnew, n(i+1)*ry(i+2), ry(i+1), ONE, R, rnew, crnew(i+1)%p, ry(i+1), ZERO, curcr, rnew)
-          call zcopy(rnew*n(i+1)*ry(i+2), curcr, 1, crnew(i+1)%p,1)
-          ry(i+1) = rnew;
+          call zcopy(rnew*n(i+1)*ry(i+2), curcr, 1, crnew(i+1)%p, 1)
+          ry(i+1) = rnew
           !     Phir
-
           !phinew(i+1) is ry(i)*n(i)*ry(i+1)
           allocate(phinew(i+1)%p(ry(i+1)*ry(i+1)*ra(i+1)*2))
           call zphi_left(ry(i), m(i), ry(i+1), ry(i), n(i), ry(i+1), &
@@ -553,17 +546,15 @@ contains
        end if
        i = i + dir
     end do
-
     ermax = 0d0
     i = d
     dir = -1
     swp = 0
-
     call init_seed()
     ermax = 0d0
-    if ( typ .eq. 1 ) then
+    if (typ .eq. 1) then
         tau0 = tau
-    else if ( typ .eq. 2  ) then
+    else if (typ .eq. 2) then
         tau0 = tau/2
     endif
     !The symmetrized scheme consists in: U1 - S1 - U2 - S2 - U3
@@ -588,7 +579,6 @@ contains
                call ztransp(n(i)*ry(i+1), rnew, curcr)
                call zcopy(rnew*n(i)*ry(i+1), curcr, 1, crnew(i)%p, 1)
                call ztransp(rnew, ry(i), R)
-
                call zphi_right(rnew, n(i), ry(i+1), rnew, n(i), ry(i+1), &
                ra(i), ra(i+1), phinew(i+1)%p, crA(pa(i)), curcr, curcr, phitmp)
                !phitmp is now ry(i) x ra(i) x ry(i) 
@@ -602,7 +592,7 @@ contains
                call zcopy(ry(i-1)*n(i-1)*ry(i), curcr, 1, crnew(i-1)%p, 1)
                call zcopy(ry(i)*ra(i)*ry(i),phitmp,1,phinew(i)%p,1) !Update phi 
            else !i == 1 
-               call zcopy(ry(i)*n(i)*ry(i+1),curcr,1,crnew(i)%p,1) 
+               call zcopy(ry(i)*n(i)*ry(i+1), curcr, 1, crnew(i)%p, 1) 
            end if
        else   ! dir > 0
            call init_bfun_sizes(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), ra(i), &
@@ -617,7 +607,6 @@ contains
                call zqr(ry(i) * n(i), ry(i+1), curcr, R) 
                rnew = min(ry(i) * n(i), ry(i+1))
                call zcopy(ry(i) * n(i) * rnew, curcr, 1, crnew(i)%p, 1)
-
                call zphi_left(ry(i), n(i), rnew, ry(i), n(i), rnew, &
                ra(i), ra(i+1), phinew(i) % p, crA(pa(i)), curcr, curcr, phitmp)
                call zinit_sfun(rnew, rnew, ra(i+1), ry(i+1), ry(i+1), phitmp, phinew(i+1)%p)
@@ -628,18 +617,12 @@ contains
                Stmp, rnew, crnew(i+1) % p, ry(i+1), &
                ZERO, curcr, rnew)
                call zcopy(rnew * n(i+1) * ry(i+2), curcr, 1, crnew(i+1) % p, 1) 
-
                ry(i+1) = rnew
                call zcopy(ry(i+1) * ra(i+1) * ry(i+1), phitmp, 1, phinew(i+1) % p, 1)
            else  ! Last core
                call zcopy(ry(i) * n(i) * ry(i+1), curcr, 1, crnew(i) % p, 1 ) 
            endif
-
        end if
-       
-
-
-
        if ((dir>0) .and. (i==d )) then
            dir = -1
            i = d
@@ -655,7 +638,6 @@ contains
            i = i + dir
        end if
     end do
-
 105 continue
     print *, 'Computation done'
     nn = sum(ry(2:d+1)*ry(1:d)*n(1:d))
@@ -667,9 +649,8 @@ contains
     if ( .not. allocated(zresult_core) ) then
        allocate(zresult_core(nn))
     end if
-
     nn = 1
-    do i=1,d
+    do i = 1, d
        call zcopy(ry(i)*n(i)*ry(i+1), crnew(i)%p, 1, zresult_core(nn), 1)
        nn = nn + ry(i)*n(i)*ry(i+1)
     end do
@@ -684,13 +665,7 @@ contains
        end if
     end do
     deallocate(R)
-    deallocate(work)
     deallocate(curcr)
-    deallocate(full_core)
     deallocate(pa)
-
-
   end subroutine ztt_ksl
-  
-
 end module dyn_tt
