@@ -568,8 +568,8 @@ contains
            call init_bfun_sizes(ry(i), n(i), ry(i + 1), ry(i), n(i), ry(i + 1), &
                ra(i), ra(i + 1), ry(i) * n(i) * ry(i + 1), ry(i) * n(i) * ry(i + 1))
            call zinit_bfun_main(phinew(i) % p, crA(pa(i):pa(i+1)-1), phinew(i+1) % p)
-           !anorm = znormest(ry(i)*n(i)*ry(i+1),4, zmatvec, zmatvec_transp)
-           anorm = 1d0
+           anorm = znormest(ry(i)*n(i)*ry(i+1),4, zmatvec, zmatvec_transp)
+           !anorm = 1d0
            call zexp_mv(ry(i) * n(i) * ry(i+1), order, tau0, &
                        crnew(i)%p, curcr, eps, anorm, zmatvec)
            if ( i > 1 ) then
@@ -583,8 +583,8 @@ contains
                ra(i), ra(i+1), phinew(i+1)%p, crA(pa(i)), curcr, curcr, phitmp)
                !phitmp is now ry(i) x ra(i) x ry(i) 
                call zinit_sfun(ry(i), ry(i), ra(i), rnew, rnew, phinew(i)%p, phitmp)
-               !anorm = znormest(ry(i+1)*ry(i+1), 4, zsfun_matvec, zsfun_matvec_transp)
-               anorm = 1d0
+               anorm = znormest(ry(i+1)*ry(i+1), 4, zsfun_matvec, zsfun_matvec_transp)
+               !anorm = 1d0
                call zexp_mv(ry(i)*rnew, order, -tau0, R, Stmp, eps, anorm, zsfun_matvec)
                call zgemm('n', 'n', ry(i-1) * n(i-1), rnew, ry(i), ONE, crnew(i-1)%p,&
                ry(i-1) * n(i-1), Stmp, ry(i), ZERO, curcr, ry(i-1) * n(i-1))
@@ -599,8 +599,8 @@ contains
            ra(i+1), ry(i)*n(i)*ry(i+1), ry(i)*n(i)*ry(i+1))
            call zinit_bfun_main(phinew(i)%p, crA(pa(i):pa(i+1)-1), phinew(i+1)%p)
 
-           !anorm = znormest(ry(i) * n(i) * ry(i+1),4, zmatvec, zmatvec_transp)
-           anorm = 1d0
+           anorm = znormest(ry(i) * n(i) * ry(i+1),4, zmatvec, zmatvec_transp)
+           !anorm = 1d0
            call zexp_mv(ry(i) * n(i) * ry(i+1), order, tau0, &
                        crnew(i) % p, curcr, eps, anorm, zmatvec)
            if ( i < d ) then ! Update S
@@ -610,8 +610,8 @@ contains
                call zphi_left(ry(i), n(i), rnew, ry(i), n(i), rnew, &
                ra(i), ra(i+1), phinew(i) % p, crA(pa(i)), curcr, curcr, phitmp)
                call zinit_sfun(rnew, rnew, ra(i+1), ry(i+1), ry(i+1), phitmp, phinew(i+1)%p)
-               !anorm = znormest(ry(i+1)*ry(i+1), 4, zsfun_matvec, zsfun_matvec_transp)
-               anorm = 1d0
+               anorm = znormest(ry(i+1)*ry(i+1), 4, zsfun_matvec, zsfun_matvec_transp)
+               !anorm = 1d0
                call zexp_mv(rnew * ry(i+1), order, -tau0, R, Stmp, eps, anorm, zsfun_matvec)
                call zgemm('n', 'n', rnew, n(i+1) * ry(i+2), ry(i+1), ONE, &
                Stmp, rnew, crnew(i+1) % p, ry(i+1), &
