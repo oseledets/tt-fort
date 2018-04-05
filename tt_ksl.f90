@@ -234,7 +234,7 @@ contains
     integer :: typ, order
     integer, optional :: typ0, order0
     real(8) :: ermax, min_res
-    real(8) anorm, anorm_t
+    real(8) anorm
     typ = 2 ! 1 - KSL, 2 - KSL-symm
     if ( present(typ0) ) then
         typ = typ0 
@@ -326,8 +326,6 @@ contains
           call init_bfun_sizes(ry(i),n(i),ry(i+1),ry(i),n(i),ry(i+1),ra(i),ra(i+1),ry(i)*n(i)*ry(i+1),ry(i)*n(i)*ry(i+1))
           call dinit_bfun_main(phinew(i)%p,crA(pa(i):pa(i+1)-1),phinew(i+1)%p)
           anorm = normest(ry(i)*n(i)*ry(i+1),4, dmatvec, dmatvec_transp)
-          anorm_t = norm_true(ry(i)*n(i)*ry(i+1), dmatvec, dmatvec_transp)
-          print *, 'anorm, anorm_t = ', anorm, anorm_t
           call dexp_mv(ry(i)*n(i)*ry(i+1),order,tau/2,crnew(i)%p,curcr,eps,anorm,dmatvec)
           if ( i < d ) then
              !In this case, we have to put S(i+1) backwards in time (heh)
@@ -337,8 +335,6 @@ contains
              ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), curcr, curcr, phitmp)
              call dinit_sfun(ry(i+1), ry(i+1), ra(i+1), ry(i+1), ry(i+1), phitmp, phinew(i+1)%p)
              anorm = normest(ry(i+1)*ry(i+1), 4, dsfun_matvec, dsfun_matvec_transp)
-             anorm_t = norm_true(ry(i+1)*ry(i+1), dsfun_matvec, dsfun_matvec_transp)
-             print *, 'anorm, anorm_t = ', anorm, anorm_t
              call dexp_mv(ry(i+1)*ry(i+1), order, -tau/2, R, Stmp, eps, anorm, dsfun_matvec)
              call dgemm('n','n',ry(i)*n(i),ry(i+1),ry(i+1),1d0,curcr, ry(i)*n(i), Stmp, ry(i+1), 0d0, crnew(i)%p, ry(i)*n(i))
              call dcopy(ry(i)*n(i)*ry(i+1),crnew(i)%p,1,curcr,1)
@@ -374,8 +370,6 @@ contains
              ra(i+1), phinew(i)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phitmp)
              call dinit_sfun(ry(i+1), ry(i+1), ra(i+1), ry(i+1), ry(i+1), phitmp, phinew(i+1)%p)
              anorm = normest(ry(i+1)*ry(i+1),4,dsfun_matvec,dsfun_matvec_transp)
-             anorm_t = norm_true(ry(i+1)*ry(i+1), dsfun_matvec,dsfun_matvec_transp)
-             print *, 'anorm, anorm_t = ', anorm, anorm_t 
              call dexp_mv(ry(i+1)*ry(i+1), order, -tau/2, R, Stmp, eps, anorm, dsfun_matvec)
              call dgemm('n','n',ry(i)*n(i),ry(i+1),ry(i+1),1d0,crnew(i)%p,ry(i)*n(i),Stmp,ry(i+1),0d0,curcr,ry(i)*n(i))
           else
@@ -384,8 +378,6 @@ contains
           call init_bfun_sizes(ry(i),n(i),ry(i+1),ry(i),n(i),ry(i+1),ra(i),ra(i+1),ry(i)*n(i)*ry(i+1),ry(i)*n(i)*ry(i+1))
           call dinit_bfun_main(phinew(i)%p,crA(pa(i):pa(i+1)-1),phinew(i+1)%p)
           anorm = normest(ry(i)*n(i)*ry(i+1),4, dmatvec, dmatvec_transp)
-          anorm_t = norm_true(ry(i)*n(i)*ry(i+1), dmatvec, dmatvec_transp)
-          print *, 'anorm, anorm_t = ', anorm, anorm_t 
           call dexp_mv(ry(i)*n(i)*ry(i+1), order, tau/2, curcr, crnew(i)%p, eps, anorm, dmatvec)
           if ( i < d ) then
              call dqr(ry(i)*n(i),ry(i+1),crnew(i)%p,R)
@@ -476,7 +468,7 @@ contains
     integer :: max_phi_size, max_core_size, max_R_size
     integer :: order
     real(8) :: ermax, min_res
-    real(8) anorm, anorm_t
+    real(8) anorm
     complex(8) ZERO, ONE
     parameter( ZERO=(0.0d0,0.0d0), ONE=(1.0d0,0.0d0) )
 
@@ -577,8 +569,6 @@ contains
                ra(i), ra(i + 1), ry(i) * n(i) * ry(i + 1), ry(i) * n(i) * ry(i + 1))
            call zinit_bfun_main(phinew(i) % p, crA(pa(i):pa(i+1)-1), phinew(i+1) % p)
            anorm = znormest(ry(i) * n(i) * ry(i+1), 4, zmatvec, zmatvec_transp)
-           ! anorm_t = znorm_true(ry(i) * n(i) * ry(i+1), zmatvec, zmatvec_transp)
-           ! print *, 'anorm, anorm_t = ', anorm, anorm_t
            call zexp_mv(ry(i) * n(i) * ry(i+1), order, tau0, &
                        crnew(i)%p, curcr, eps, anorm, zmatvec)
            if ( i > 1 ) then
@@ -593,8 +583,6 @@ contains
                !phitmp is now ry(i) x ra(i) x ry(i) 
                call zinit_sfun(ry(i), ry(i), ra(i), rnew, rnew, phinew(i)%p, phitmp)
                anorm = znormest(ry(i)*rnew, 4, zsfun_matvec, zsfun_matvec_transp)
-               ! anorm_t = znorm_true(ry(i)*rnew, zsfun_matvec, zsfun_matvec_transp)
-               ! print *, 'anorm, anorm_t = ', anorm, anorm_t
                call zexp_mv(ry(i)*rnew, order, -tau0, R, Stmp, eps, anorm, zsfun_matvec)
                call zgemm('n', 'n', ry(i-1) * n(i-1), rnew, ry(i), ONE, crnew(i-1)%p,&
                ry(i-1) * n(i-1), Stmp, ry(i), ZERO, curcr, ry(i-1) * n(i-1))
@@ -610,8 +598,6 @@ contains
            call zinit_bfun_main(phinew(i)%p, crA(pa(i):pa(i+1)-1), phinew(i+1)%p)
 
            anorm = znormest(ry(i) * n(i) * ry(i+1), 4, zmatvec, zmatvec_transp)
-           ! anorm_t = znorm_true(ry(i) * n(i) * ry(i+1), zmatvec, zmatvec_transp)
-           ! print *, 'anorm, anorm_t = ', anorm, anorm_t
            call zexp_mv(ry(i) * n(i) * ry(i+1), order, tau0, &
                        crnew(i) % p, curcr, eps, anorm, zmatvec)
            if ( i < d ) then ! Update S
@@ -622,8 +608,6 @@ contains
                ra(i), ra(i+1), phinew(i) % p, crA(pa(i)), curcr, curcr, phitmp)
                call zinit_sfun(rnew, rnew, ra(i+1), ry(i+1), ry(i+1), phitmp, phinew(i+1)%p)
                anorm = znormest(rnew * ry(i+1), 4, zsfun_matvec, zsfun_matvec_transp)
-               ! anorm_t = znorm_true(rnew * ry(i+1), zsfun_matvec, zsfun_matvec_transp)
-               ! print *, 'anorm, anorm_t = ', anorm, anorm_t
                call zexp_mv(rnew * ry(i+1), order, -tau0, R, Stmp, eps, anorm, zsfun_matvec)
                call zgemm('n', 'n', rnew, n(i+1) * ry(i+2), ry(i+1), ONE, &
                Stmp, rnew, crnew(i+1) % p, ry(i+1), &
