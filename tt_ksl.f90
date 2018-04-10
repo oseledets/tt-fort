@@ -124,28 +124,19 @@ contains
     real(8), intent(in) :: Sx(*)
     real(8), intent(out) :: Sy(*)
     real(8) :: res1(rx1,ra,ry2)
-    !phi1(ry1,rx1,ra)*phi2(rx2,ra,ry2)*S(rx1,rx2); S(rx2,rx1)
-    !S(rx1,rx2)*phi2(rx2,ra,ry2) = res(rx1,ra,ry2)*phi1(ry1,rx1,ra) 
-    !call dtransp(rx2,rx1,Sx)
-    call dgemm('n','n',rx1,ra*ry2,rx2,1d0,Sx,rx1,phi2,rx2,0d0, res1, rx1)
-    call dgemm('n','n',ry1,ry2,rx1*ra,1d0,phi1,ry1,res1,rx1*ra,0d0,Sy,ry1)
-    !call dtransp(rx1,rx2,Sx)
-    !call dtransp(ry1,ry2,Sy)
+    !phi1(rx1,ra,ry1)*phi2(rx2,ra,ry2)*S(rx1,rx2) -> S(ry1,ry2)
+    call dgemm('n','n',rx1,ra*ry2,rx2,ONE,Sx,rx1,phi2,rx2,ZERO,res1,rx1)
+    call dgemm('n','n',ry1,ry2,rx1*ra,ONE,phi1,ry1,res1,rx1*ra,ZERO,Sy,ry1)
   end subroutine dsfun_matvec
 
   subroutine dsfun_matvec_transp(Sy,Sx)
     use matrix_util,  only: dtransp
     real(8), intent(in) :: Sy(*)
     real(8), intent(out) :: Sx(*)
-    real(8) res1(ry2,rx1,ra)
-    !phi1(ry1,rx1,ra)*phi2(rx2,ra,ry2)*Sy(ry1,ry2) -> I think we will need at least one dtranspose :( 
-    ! (ry1 * (rx1*ra)) -> ry2 x rx2 x ra
-    call dgemm('t','n',ry2, rx1*ra, ry1, 1d0, Sy, ry1, phi1, ry1,0d0, res1, ry2)
-    !res1 is ry2 x rx1 x ra, conv with phi2(rx2,ra,ry2) 
-    call dtransp(ry2*rx1,ra, res1)
-    !res1 is ra x ry2 x rx1
-    call dgemm('t','t',rx1,rx2,ra*ry2,1d0, res1, ra*ry2, phi2, rx2, 0d0, Sx, rx1)
-    !Seems to be OK.
+    real(8) res1(rx1,ra,ry2)
+    !phi1(rx1,ra,ry1)*phi2(rx2,ra,ry2)*Sy(ry1,ry2) -> S(rx1, rx2)
+    call dgemm('n','n',rx1*ra,ry2,ry1,ONE,phi1,rx1*ra,Sy,ry1,ZERO,res1,rx1*ra)
+    call dgemm('n','t',rx1,rx2,ra*ry2,ONE,res1,rx1,phi2,rx2,ZERO,Sy,ry1)
   end subroutine dsfun_matvec_transp
 
   subroutine zsfun_matvec(Sx,Sy)
@@ -155,30 +146,21 @@ contains
     complex(8) :: res1(rx1,ra,ry2)
     complex(8) ::  ZERO, ONE
     parameter( ZERO=(0.0d0,0.0d0), ONE=(1.0d0,0.0d0) )
-    !phi1(ry1,rx1,ra)*phi2(rx2,ra,ry2)*S(rx1,rx2); S(rx2,rx1)
-    !S(rx1,rx2)*phi2(rx2,ra,ry2) = res(rx1,ra,ry2)*phi1(ry1,rx1,ra) 
-    !call dtransp(rx2,rx1,Sx)
-    call zgemm('n','n',rx1,ra*ry2,rx2,ONE,Sx,rx1,zphi2,rx2,ZERO, res1, rx1)
+    !phi1(rx1,ra,ry1)*phi2(rx2,ra,ry2)*S(rx1,rx2) -> S(ry1,ry2)
+    call zgemm('n','n',rx1,ra*ry2,rx2,ONE,Sx,rx1,zphi2,rx2,ZERO,res1,rx1)
     call zgemm('n','n',ry1,ry2,rx1*ra,ONE,zphi1,ry1,res1,rx1*ra,ZERO,Sy,ry1)
-    !call dtransp(rx1,rx2,Sx)
-    !call dtransp(ry1,ry2,Sy)
   end subroutine zsfun_matvec
 
   subroutine zsfun_matvec_transp(Sy,Sx)
     use matrix_util,  only: ztransp
     complex(8), intent(in) :: Sy(*)
     complex(8), intent(out) :: Sx(*)
-    complex(8) res1(ry2,rx1,ra)
+    complex(8) res1(rx1,ra,ry2)
     complex(8) ::  ZERO, ONE
     parameter( ZERO=(0.0d0,0.0d0), ONE=(1.0d0,0.0d0) )
-    !phi1(ry1,rx1,ra)*phi2(rx2,ra,ry2)*Sy(ry1,ry2) -> I think we will need at least one dtranspose :( 
-    ! (ry1 * (rx1*ra)) -> ry2 x rx2 x ra
-    call zgemm('t','n',ry2, rx1*ra, ry1, ONE, Sy, ry1, zphi1, ry1,ZERO, res1, ry2)
-    !res1 is ry2 x rx1 x ra, conv with phi2(rx2,ra,ry2) 
-    call ztransp(ry2*rx1,ra, res1)
-    !res1 is ra x ry2 x rx1
-    call zgemm('t','t',rx1,rx2,ra*ry2,ONE, res1, ra*ry2, zphi2, rx2, ZERO, Sx, rx1)
-    !Seems to be OK.
+    !phi1(rx1,ra,ry1)*phi2(rx2,ra,ry2)*Sy(ry1,ry2) -> S(rx1, rx2)
+    call zgemm('n','n',rx1*ra,ry2,ry1,ONE,zphi1,rx1*ra,Sy,ry1,ZERO,res1,rx1*ra)
+    call zgemm('n','t',rx1,rx2,ra*ry2,ONE,res1,rx1,zphi2,rx2,ZERO,Sy,ry1)
   end subroutine zsfun_matvec_transp
 
 end module sfun_ksl
@@ -248,7 +230,7 @@ contains
     !Inner parameters
     eps = 1e-8 !For local solvers
 
-    call disp('Solving a complex-valued dynamical problem with tau='//tostring(tau))
+    call disp('Solving a real-valued dynamical problem with tau='//tostring(tau))
     kickrank0 = 5;
     if (present(kickrank)) then
        kickrank0 = kickrank
@@ -568,8 +550,7 @@ contains
            call init_bfun_sizes(ry(i), n(i), ry(i + 1), ry(i), n(i), ry(i + 1), &
                ra(i), ra(i + 1), ry(i) * n(i) * ry(i + 1), ry(i) * n(i) * ry(i + 1))
            call zinit_bfun_main(phinew(i) % p, crA(pa(i):pa(i+1)-1), phinew(i+1) % p)
-           !anorm = znormest(ry(i)*n(i)*ry(i+1),4, zmatvec, zmatvec_transp)
-           anorm = 1d0
+           anorm = znormest(ry(i) * n(i) * ry(i+1), 4, zmatvec, zmatvec_transp)
            call zexp_mv(ry(i) * n(i) * ry(i+1), order, tau0, &
                        crnew(i)%p, curcr, eps, anorm, zmatvec)
            if ( i > 1 ) then
@@ -583,8 +564,7 @@ contains
                ra(i), ra(i+1), phinew(i+1)%p, crA(pa(i)), curcr, curcr, phitmp)
                !phitmp is now ry(i) x ra(i) x ry(i) 
                call zinit_sfun(ry(i), ry(i), ra(i), rnew, rnew, phinew(i)%p, phitmp)
-               !anorm = znormest(ry(i+1)*ry(i+1), 4, zsfun_matvec, zsfun_matvec_transp)
-               anorm = 1d0
+               anorm = znormest(ry(i)*rnew, 4, zsfun_matvec, zsfun_matvec_transp)
                call zexp_mv(ry(i)*rnew, order, -tau0, R, Stmp, eps, anorm, zsfun_matvec)
                call zgemm('n', 'n', ry(i-1) * n(i-1), rnew, ry(i), ONE, crnew(i-1)%p,&
                ry(i-1) * n(i-1), Stmp, ry(i), ZERO, curcr, ry(i-1) * n(i-1))
@@ -599,8 +579,7 @@ contains
            ra(i+1), ry(i)*n(i)*ry(i+1), ry(i)*n(i)*ry(i+1))
            call zinit_bfun_main(phinew(i)%p, crA(pa(i):pa(i+1)-1), phinew(i+1)%p)
 
-           !anorm = znormest(ry(i) * n(i) * ry(i+1),4, zmatvec, zmatvec_transp)
-           anorm = 1d0
+           anorm = znormest(ry(i) * n(i) * ry(i+1), 4, zmatvec, zmatvec_transp)
            call zexp_mv(ry(i) * n(i) * ry(i+1), order, tau0, &
                        crnew(i) % p, curcr, eps, anorm, zmatvec)
            if ( i < d ) then ! Update S
@@ -610,8 +589,7 @@ contains
                call zphi_left(ry(i), n(i), rnew, ry(i), n(i), rnew, &
                ra(i), ra(i+1), phinew(i) % p, crA(pa(i)), curcr, curcr, phitmp)
                call zinit_sfun(rnew, rnew, ra(i+1), ry(i+1), ry(i+1), phitmp, phinew(i+1)%p)
-               !anorm = znormest(ry(i+1)*ry(i+1), 4, zsfun_matvec, zsfun_matvec_transp)
-               anorm = 1d0
+               anorm = znormest(rnew * ry(i+1), 4, zsfun_matvec, zsfun_matvec_transp)
                call zexp_mv(rnew * ry(i+1), order, -tau0, R, Stmp, eps, anorm, zsfun_matvec)
                call zgemm('n', 'n', rnew, n(i+1) * ry(i+2), ry(i+1), ONE, &
                Stmp, rnew, crnew(i+1) % p, ry(i+1), &
@@ -635,7 +613,7 @@ contains
                goto 105
            endif
        else
-           i = i + dir
+          i = i + dir
        end if
     end do
 105 continue
