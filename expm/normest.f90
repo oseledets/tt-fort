@@ -17,7 +17,7 @@ contains
     integer :: t 
     external matvec, matvec_transp
     double precision :: v(n), x(n,t0), xold(n,t0), wrk(t0), H(n)
-    integer :: ind(n), indh(n), info
+    integer :: ind(n), indh(5*n), info
     double precision :: est
     integer :: kase,i,k !The reverse communication stuff
     i = 1 
@@ -37,7 +37,7 @@ contains
           call dcopy(n*t, xold, 1, x, 1)
        else if ( kase .eq. 2 ) then
           do k = 1,t
-             call matvec(x(:, k), xold(:, k))
+             call matvec_transp(x(:, k), xold(:, k))
           end do
           call dcopy(n*t, xold, 1, x, 1)
        else if ( kase .ne. 0 ) then
@@ -45,6 +45,7 @@ contains
        end if
        i = i + 1
     end do
+    ! print *, 'total matvecs: ', t*i
   end function normest
 
   function znormest(n,t0, matvec, matvec_transp) result(est)
@@ -57,7 +58,7 @@ contains
     parameter( ZERO=(0.0d0,0.0d0), ONE=(1.0d0,0.0d0) )
     
     
-    integer :: ind(n), indh(n), info
+    integer :: ind(n), indh(5*n), info
     double precision :: H(n)
     double precision :: est
     integer :: kase,i,k !The reverse communication stuff
@@ -89,6 +90,7 @@ contains
         end if
         i = i + 1
      end do
+     ! print *, 'total matvecs: ', t*i
   end function znormest
 
   function norm_true(n, matvec, matvec_transp) result(est)

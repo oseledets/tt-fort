@@ -124,28 +124,19 @@ contains
     real(8), intent(in) :: Sx(*)
     real(8), intent(out) :: Sy(*)
     real(8) :: res1(rx1,ra,ry2)
-    !phi1(ry1,rx1,ra)*phi2(rx2,ra,ry2)*S(rx1,rx2); S(rx2,rx1)
-    !S(rx1,rx2)*phi2(rx2,ra,ry2) = res(rx1,ra,ry2)*phi1(ry1,rx1,ra) 
-    !call dtransp(rx2,rx1,Sx)
-    call dgemm('n','n',rx1,ra*ry2,rx2,1d0,Sx,rx1,phi2,rx2,0d0, res1, rx1)
-    call dgemm('n','n',ry1,ry2,rx1*ra,1d0,phi1,ry1,res1,rx1*ra,0d0,Sy,ry1)
-    !call dtransp(rx1,rx2,Sx)
-    !call dtransp(ry1,ry2,Sy)
+    !phi1(rx1,ra,ry1)*phi2(rx2,ra,ry2)*S(rx1,rx2) -> S(ry1,ry2)
+    call dgemm('n','n',rx1,ra*ry2,rx2,ONE,Sx,rx1,phi2,rx2,ZERO,res1,rx1)
+    call dgemm('n','n',ry1,ry2,rx1*ra,ONE,phi1,ry1,res1,rx1*ra,ZERO,Sy,ry1)
   end subroutine dsfun_matvec
 
   subroutine dsfun_matvec_transp(Sy,Sx)
     use matrix_util,  only: dtransp
     real(8), intent(in) :: Sy(*)
     real(8), intent(out) :: Sx(*)
-    real(8) res1(ry2,rx1,ra)
-    !phi1(ry1,rx1,ra)*phi2(rx2,ra,ry2)*Sy(ry1,ry2) -> I think we will need at least one dtranspose :( 
-    ! (ry1 * (rx1*ra)) -> ry2 x rx2 x ra
-    call dgemm('t','n',ry2, rx1*ra, ry1, 1d0, Sy, ry1, phi1, ry1,0d0, res1, ry2)
-    !res1 is ry2 x rx1 x ra, conv with phi2(rx2,ra,ry2) 
-    call dtransp(ry2*rx1,ra, res1)
-    !res1 is ra x ry2 x rx1
-    call dgemm('t','t',rx1,rx2,ra*ry2,1d0, res1, ra*ry2, phi2, rx2, 0d0, Sx, rx1)
-    !Seems to be OK.
+    real(8) res1(rx1,ra,ry2)
+    !phi1(rx1,ra,ry1)*phi2(rx2,ra,ry2)*Sy(ry1,ry2) -> S(rx1, rx2)
+    call dgemm('n','n',rx1*ra,ry2,ry1,ONE,phi1,rx1*ra,Sy,ry1,ZERO,res1,rx1*ra)
+    call dgemm('n','t',rx1,rx2,ra*ry2,ONE,res1,rx1,phi2,rx2,ZERO,Sy,ry1)
   end subroutine dsfun_matvec_transp
 
   subroutine zsfun_matvec(Sx,Sy)
@@ -155,30 +146,21 @@ contains
     complex(8) :: res1(rx1,ra,ry2)
     complex(8) ::  ZERO, ONE
     parameter( ZERO=(0.0d0,0.0d0), ONE=(1.0d0,0.0d0) )
-    !phi1(rx1,ra,ry1)*phi2(rx2,ra,ry2)*S(rx1,rx2); S(rx2,rx1)
-    !S(rx1,rx2)*phi2(rx2,ra,ry2) = res(rx1,ra,ry2)*phi1(ry1,rx1,ra) 
-    !call dtransp(rx2,rx1,Sx)
-    call zgemm('n','n',rx1,ra*ry2,rx2,ONE,Sx,rx1,zphi2,rx2,ZERO, res1, rx1)
+    !phi1(rx1,ra,ry1)*phi2(rx2,ra,ry2)*S(rx1,rx2) -> S(ry1,ry2)
+    call zgemm('n','n',rx1,ra*ry2,rx2,ONE,Sx,rx1,zphi2,rx2,ZERO,res1,rx1)
     call zgemm('n','n',ry1,ry2,rx1*ra,ONE,zphi1,ry1,res1,rx1*ra,ZERO,Sy,ry1)
-    !call dtransp(rx1,rx2,Sx)
-    !call dtransp(ry1,ry2,Sy)
   end subroutine zsfun_matvec
 
   subroutine zsfun_matvec_transp(Sy,Sx)
     use matrix_util,  only: ztransp
     complex(8), intent(in) :: Sy(*)
     complex(8), intent(out) :: Sx(*)
-    complex(8) res1(ry2,rx1,ra)
+    complex(8) res1(rx1,ra,ry2)
     complex(8) ::  ZERO, ONE
     parameter( ZERO=(0.0d0,0.0d0), ONE=(1.0d0,0.0d0) )
-    !phi1(ry1,rx1,ra)*phi2(rx2,ra,ry2)*Sy(ry1,ry2) -> I think we will need at least one dtranspose :( 
-    ! (ry1 * (rx1*ra)) -> ry2 x rx2 x ra
-    call zgemm('t','n',ry2, rx1*ra, ry1, ONE, Sy, ry1, zphi1, ry1,ZERO, res1, ry2)
-    !res1 is ry2 x rx1 x ra, conv with phi2(rx2,ra,ry2) 
-    call ztransp(ry2*rx1,ra, res1)
-    !res1 is ra x ry2 x rx1
-    call zgemm('t','t',rx1,rx2,ra*ry2,ONE, res1, ra*ry2, zphi2, rx2, ZERO, Sx, rx1)
-    !Seems to be OK.
+    !phi1(rx1,ra,ry1)*phi2(rx2,ra,ry2)*Sy(ry1,ry2) -> S(rx1, rx2)
+    call zgemm('n','n',rx1*ra,ry2,ry1,ONE,zphi1,rx1*ra,Sy,ry1,ZERO,res1,rx1*ra)
+    call zgemm('n','t',rx1,rx2,ra*ry2,ONE,res1,rx1,zphi2,rx2,ZERO,Sy,ry1)
   end subroutine zsfun_matvec_transp
 
 end module sfun_ksl
@@ -631,7 +613,7 @@ contains
                goto 105
            endif
        else
-           i = i + dir
+          i = i + dir
        end if
     end do
 105 continue

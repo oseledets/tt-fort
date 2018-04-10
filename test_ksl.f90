@@ -49,14 +49,12 @@
        ntrials = ntrials - 1
     end do
     ! Test real code as well
-    ntrials = 10
-    do while ( ntrials > 0 )
-       call tt_ksl(d,n,m,ra,drA, drY, ry, tau, rmax, kickrank, nswp, verb)
-       ntrials = ntrials - 1
-    end do
+    ! ntrials = 10
+    ! do while ( ntrials > 0 )
+    !    call tt_ksl(d,n,m,ra,drA, drY, ry, tau, rmax, kickrank, nswp, verb)
+    !    ntrials = ntrials - 1
+    ! end do
     
-    !open(unit=10,status='replace',file='test_ksl.dat',form='unformatted')
-    !write(10) d,n,m,ra,ry,pa(d+1)-1,crA(1:(pa(d+1)-1)),mm-1,crY0(1:mm-1),tau,rmax,kickrank,nswp,verb 
-    !close(10)
-    !return
+    deallocate(n,m,ra,ry,crA, crY)
+    deallocate(drA, drY)
  end program
