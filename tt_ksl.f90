@@ -617,7 +617,7 @@ contains
        end if
     end do
 105 continue
-    print *, 'Computation done'
+    ! print *, 'Computation done'
     nn = sum(ry(2:d+1)*ry(1:d)*n(1:d))
     if ( allocated(zresult_core)) then
        if ( size(zresult_core) < nn ) then
