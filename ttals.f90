@@ -93,7 +93,7 @@ contains
     parameter( ZERO=(0.0d0,0.0d0), ONE=(1.0d0,0.0d0) )
     !conjx(ry1, n, ry2) * phi1(ry1, rx1, ra1) * A(ra1, n, m, ra2) * phi2(rx2, ra2, ry2)
     call zgemm('c','n', n * ry2, rx1 * ra1, ry1, ONE, x, &
-               ry1 * n, phi1, ry1, ZERO, res1, n * ry2)
+               ry1, phi1, ry1, ZERO, res1, n * ry2)
      !res1 is now n * ry2 * rx1 * ra1
     call ztransp(n, ry2 * rx1 * ra1, res1) 
      !res1 is now ry2 * rx1 * ra1 * n
