@@ -11,15 +11,16 @@ contains
     iseed(4) = 50
   end subroutine init_seed
 
-  function normest(n,t0, matvec, matvec_transp) result(est)
+  function normest_higham(n, t0, matvec, matvec_transp) result(est)
     implicit none
-    integer, intent(in) :: n,t0
-    integer :: t 
+    integer, intent(in) :: n, t0
+    integer :: t
     external matvec, matvec_transp
     double precision :: v(n), x(n,t0), xold(n,t0), wrk(t0), H(n)
     integer :: ind(n), indh(5*n), info
     double precision :: est
     integer :: kase,i,k !The reverse communication stuff
+
     i = 1 
     kase = 0
     t = min(n,t0)
@@ -46,9 +47,9 @@ contains
        i = i + 1
     end do
     ! print *, 'total matvecs: ', t*i
-  end function normest
+  end function normest_higham
 
-  function znormest(n,t0, matvec, matvec_transp) result(est)
+  function znormest_higham(n,t0, matvec, matvec_transp) result(est)
     implicit none
     integer, intent(in) :: n, t0
     integer :: t 
@@ -56,8 +57,7 @@ contains
     complex(8) :: v(n), x(n, t0), xold(n, t0)
     complex(8) ::  ZERO, ONE
     parameter( ZERO=(0.0d0,0.0d0), ONE=(1.0d0,0.0d0) )
-    
-    
+       
     integer :: ind(n), indh(5*n), info
     double precision :: H(n)
     double precision :: est
@@ -91,7 +91,7 @@ contains
         i = i + 1
      end do
      ! print *, 'total matvecs: ', t*i
-  end function znormest
+  end function znormest_higham
 
   function norm_true(n, matvec, matvec_transp) result(est)
     implicit none
@@ -142,5 +142,37 @@ contains
     est = zlange('1', n, n, A, n, work) 
     deallocate(A)
   end function znorm_true
-  
+
+  function normest(usecplx, usenrm, matvec, matvec_transp, n, t0 ) result(est)
+    implicit none
+    logical, intent(in) :: usecplx
+    integer, intent(in) :: usenrm, n
+    integer, intent(in), optional :: t0
+    external matvec, matvec_transp
+    integer :: t
+    double precision :: est
+
+    ! Set default number of vectors for Higham's norm estimator
+    if ( present(t0) ) then
+       t = t0
+    else
+       t = 4
+    end if
+
+    ! Select which norm estimator to choose and call it
+    if ( .not. usecplx ) then 
+       if (usenrm == 0) then ! Lapack 1-norm
+          est = norm_true(n, matvec, matvec_transp)
+       elseif (usenrm == 1) then ! Higham norm estimator
+          est = normest_higham(n, t, matvec, matvec_transp)
+       endif
+    else
+       if (usenrm == 0) then ! Lapack 1-norm
+          est = znorm_true(n, matvec, matvec_transp)
+       else if (usenrm == 1) then ! Higham norm estimator
+          est = znormest_higham(n, t, matvec, matvec_transp)
+       end if
+    end if
+  end function normest
+
 end module estnorm

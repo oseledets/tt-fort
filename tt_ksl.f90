@@ -188,7 +188,7 @@ contains
 
 
   !! What we have: we have a starting vector + a matrix (no vector X!) 
-  subroutine tt_ksl(d,n,m,ra,crA, crY0, ry, tau, rmax, kickrank, nswp, verb, typ0, order0)
+  subroutine tt_ksl(d,n,m,ra,crA, crY0, ry, tau, rmax, kickrank, nswp, verb, typ0, order0, usenrm0)
     use dispmodule
     use matrix_util ! dqr
     use ttals   ! als stuff
@@ -213,8 +213,8 @@ contains
     integer, allocatable :: pa(:)
     integer :: i, swp, dir, mm, nn, rnew, rmax2 
     integer :: max_phi_size, max_core_size, max_R_size
-    integer :: typ, order
-    integer, optional :: typ0, order0
+    integer :: typ, order, usenrm
+    integer, optional :: typ0, order0, usenrm0
     real(8) :: ermax, min_res
     real(8) anorm
     typ = 2 ! 1 - KSL, 2 - KSL-symm
@@ -243,6 +243,15 @@ contains
     if (present(verb)) then
        verb0 = verb
     end if
+    ! What norm to use in while solving KSL differential equations 
+    usenrm = 1 ! 0 - Lapack 1-norm, 1 - Use Higham's 1-norm approximation 
+    if ( present(usenrm0) ) then
+       if ( usenrm0 < 2 ) then 
+          usenrm = usenrm0
+       else
+          print *, 'Wrong arg usenrm: ', usenrm0, 'allowed values <0, 1>'
+       endif
+    endif
     allocate(pa(d+1))
     call compute_ps(d,ra,n(1:d)*m(1:d),pa)
     !Find memory for the temporary arrays
@@ -307,7 +316,7 @@ contains
        if ( dir < 0 ) then
           call init_bfun_sizes(ry(i),n(i),ry(i+1),ry(i),n(i),ry(i+1),ra(i),ra(i+1),ry(i)*n(i)*ry(i+1),ry(i)*n(i)*ry(i+1))
           call dinit_bfun_main(phinew(i)%p,crA(pa(i):pa(i+1)-1),phinew(i+1)%p)
-          anorm = normest(ry(i)*n(i)*ry(i+1),4, dmatvec, dmatvec_transp)
+          anorm = normest(.false., usenrm, dmatvec, dmatvec_transp, ry(i)*n(i)*ry(i+1), 4)
           call dexp_mv(ry(i)*n(i)*ry(i+1),order,tau/2,crnew(i)%p,curcr,eps,anorm,dmatvec)
           if ( i < d ) then
              !In this case, we have to put S(i+1) backwards in time (heh)
@@ -316,7 +325,7 @@ contains
              call dphi_left(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), & 
              ra(i), ra(i+1), phinew(i)%p, crA(pa(i)), curcr, curcr, phitmp)
              call dinit_sfun(ry(i+1), ry(i+1), ra(i+1), ry(i+1), ry(i+1), phitmp, phinew(i+1)%p)
-             anorm = normest(ry(i+1)*ry(i+1), 4, dsfun_matvec, dsfun_matvec_transp)
+             anorm = normest(.false., usenrm, dsfun_matvec, dsfun_matvec_transp, ry(i+1)*ry(i+1), 4)
              call dexp_mv(ry(i+1)*ry(i+1), order, -tau/2, R, Stmp, eps, anorm, dsfun_matvec)
              call dgemm('n','n',ry(i)*n(i),ry(i+1),ry(i+1),1d0,curcr, ry(i)*n(i), Stmp, ry(i+1), 0d0, crnew(i)%p, ry(i)*n(i))
              call dcopy(ry(i)*n(i)*ry(i+1),crnew(i)%p,1,curcr,1)
@@ -351,7 +360,7 @@ contains
              call dphi_left(ry(i), n(i), ry(i+1), ry(i), n(i), ry(i+1), ra(i), &
              ra(i+1), phinew(i)%p, crA(pa(i)), crnew(i)%p, crnew(i)%p, phitmp)
              call dinit_sfun(ry(i+1), ry(i+1), ra(i+1), ry(i+1), ry(i+1), phitmp, phinew(i+1)%p)
-             anorm = normest(ry(i+1)*ry(i+1),4,dsfun_matvec,dsfun_matvec_transp)
+             anorm = normest(.false., usenrm, dsfun_matvec, dsfun_matvec_transp, ry(i+1)*ry(i+1), 4)
              call dexp_mv(ry(i+1)*ry(i+1), order, -tau/2, R, Stmp, eps, anorm, dsfun_matvec)
              call dgemm('n','n',ry(i)*n(i),ry(i+1),ry(i+1),1d0,crnew(i)%p,ry(i)*n(i),Stmp,ry(i+1),0d0,curcr,ry(i)*n(i))
           else
@@ -359,7 +368,7 @@ contains
           end if
           call init_bfun_sizes(ry(i),n(i),ry(i+1),ry(i),n(i),ry(i+1),ra(i),ra(i+1),ry(i)*n(i)*ry(i+1),ry(i)*n(i)*ry(i+1))
           call dinit_bfun_main(phinew(i)%p,crA(pa(i):pa(i+1)-1),phinew(i+1)%p)
-          anorm = normest(ry(i)*n(i)*ry(i+1),4, dmatvec, dmatvec_transp)
+          anorm = normest(.false., usenrm, dmatvec, dmatvec_transp, ry(i)*n(i)*ry(i+1), 4)
           call dexp_mv(ry(i)*n(i)*ry(i+1), order, tau/2, curcr, crnew(i)%p, eps, anorm, dmatvec)
           if ( i < d ) then
              call dqr(ry(i)*n(i),ry(i+1),crnew(i)%p,R)
@@ -419,7 +428,7 @@ contains
 
   end subroutine tt_ksl
 
-  subroutine ztt_ksl(d,n,m,ra,crA, crY0, ry, tau, rmax, kickrank, nswp, verb, typ0, order0)
+  subroutine ztt_ksl(d,n,m,ra,crA, crY0, ry, tau, rmax, kickrank, nswp, verb, typ0, order0, usenrm0)
     use dispmodule
     use matrix_util ! dqr
     use ttals   ! als stuff
@@ -446,9 +455,9 @@ contains
     integer,allocatable :: pa(:)
     integer :: i, swp, dir, mm, nn, rnew, rmax2 
     integer :: typ
-    integer, optional, intent(in) :: order0
+    integer, optional, intent(in) :: order0, usenrm0
     integer :: max_phi_size, max_core_size, max_R_size
-    integer :: order
+    integer :: order, usenrm
     real(8) :: ermax, min_res
     real(8) anorm
     complex(8) ZERO, ONE
@@ -480,6 +489,17 @@ contains
     if (present(verb)) then
        verb0 = verb
     end if
+
+    ! What norm to use in while solving KSL differential equations 
+    usenrm = 1 ! 0 - Lapack 1-norm, 1 - Use Higham's 1-norm approximation 
+    if ( present(usenrm0) ) then
+       if ( usenrm0 < 2 ) then 
+          usenrm = usenrm0
+       else
+          print *, 'Wrong arg usenrm: ', usenrm0, 'allowed values <0, 1>'
+       endif
+    endif
+
     allocate(pa(d+1))
     call compute_ps(d,ra,n(1:d)*m(1:d),pa)
     max_phi_size = 0
@@ -550,7 +570,7 @@ contains
            call init_bfun_sizes(ry(i), n(i), ry(i + 1), ry(i), n(i), ry(i + 1), &
                ra(i), ra(i + 1), ry(i) * n(i) * ry(i + 1), ry(i) * n(i) * ry(i + 1))
            call zinit_bfun_main(phinew(i) % p, crA(pa(i):pa(i+1)-1), phinew(i+1) % p)
-           anorm = znormest(ry(i) * n(i) * ry(i+1), 4, zmatvec, zmatvec_transp)
+           anorm = normest(.true., usenrm, zmatvec, zmatvec_transp, ry(i) * n(i) * ry(i+1), 4)
            call zexp_mv(ry(i) * n(i) * ry(i+1), order, tau0, &
                        crnew(i)%p, curcr, eps, anorm, zmatvec)
            if ( i > 1 ) then
@@ -564,7 +584,7 @@ contains
                ra(i), ra(i+1), phinew(i+1)%p, crA(pa(i)), curcr, curcr, phitmp)
                !phitmp is now ry(i) x ra(i) x ry(i) 
                call zinit_sfun(ry(i), ry(i), ra(i), rnew, rnew, phinew(i)%p, phitmp)
-               anorm = znormest(ry(i)*rnew, 4, zsfun_matvec, zsfun_matvec_transp)
+               anorm = normest(.true., usenrm, zsfun_matvec, zsfun_matvec_transp, ry(i)*rnew, 4)
                call zexp_mv(ry(i)*rnew, order, -tau0, R, Stmp, eps, anorm, zsfun_matvec)
                call zgemm('n', 'n', ry(i-1) * n(i-1), rnew, ry(i), ONE, crnew(i-1)%p,&
                ry(i-1) * n(i-1), Stmp, ry(i), ZERO, curcr, ry(i-1) * n(i-1))
@@ -579,7 +599,7 @@ contains
            ra(i+1), ry(i)*n(i)*ry(i+1), ry(i)*n(i)*ry(i+1))
            call zinit_bfun_main(phinew(i)%p, crA(pa(i):pa(i+1)-1), phinew(i+1)%p)
 
-           anorm = znormest(ry(i) * n(i) * ry(i+1), 4, zmatvec, zmatvec_transp)
+           anorm = normest(.true., usenrm, zmatvec, zmatvec_transp, ry(i) * n(i) * ry(i+1), 4)
            call zexp_mv(ry(i) * n(i) * ry(i+1), order, tau0, &
                        crnew(i) % p, curcr, eps, anorm, zmatvec)
            if ( i < d ) then ! Update S
@@ -589,7 +609,7 @@ contains
                call zphi_left(ry(i), n(i), rnew, ry(i), n(i), rnew, &
                ra(i), ra(i+1), phinew(i) % p, crA(pa(i)), curcr, curcr, phitmp)
                call zinit_sfun(rnew, rnew, ra(i+1), ry(i+1), ry(i+1), phitmp, phinew(i+1)%p)
-               anorm = znormest(rnew * ry(i+1), 4, zsfun_matvec, zsfun_matvec_transp)
+               anorm = normest(.true., usenrm, zsfun_matvec, zsfun_matvec_transp, rnew * ry(i+1), 4)
                call zexp_mv(rnew * ry(i+1), order, -tau0, R, Stmp, eps, anorm, zsfun_matvec)
                call zgemm('n', 'n', rnew, n(i+1) * ry(i+2), ry(i+1), ONE, &
                Stmp, rnew, crnew(i+1) % p, ry(i+1), &
