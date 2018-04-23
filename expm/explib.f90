@@ -114,10 +114,11 @@ module explib
              w(1:n) = 0d0
          end if
      end if
-     if ( present(verb) ) then 
+     if ( present(verb) ) then
         write(*, '(a, I5)') 'matvecs: ', iwsp(1) 
         print *,'time covered:', wsp(8)
-        print *,'error:', wsp(6) 
+        print *,'error:', wsp(6)
+        print *,'anorm:', anorm
      end if
      deallocate(wsp)
      deallocate(iwsp)
