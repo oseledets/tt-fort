@@ -230,7 +230,7 @@ contains
     !Inner parameters
     eps = 1e-8 !For local solvers
 
-    call disp('Solving a real-valued dynamical problem with tau='//tostring(tau))
+    !call disp('Solving a real-valued dynamical problem with tau='//tostring(tau))
     kickrank0 = 5;
     if (present(kickrank)) then
        kickrank0 = kickrank
@@ -244,12 +244,12 @@ contains
        verb0 = verb
     end if
     ! What norm to use in while solving KSL differential equations 
-    usenrm = 1 ! 0 - Lapack 1-norm, 1 - Use Higham's 1-norm approximation 
+    usenrm = 1 ! 0 - Lapack 1-norm, 1 - Use Higham's 1-norm approximation 2 - use fixed norm (test purposes) 
     if ( present(usenrm0) ) then
-       if ( usenrm0 < 2 ) then 
+       if ( usenrm0 < 3 ) then 
           usenrm = usenrm0
        else
-          print *, 'Wrong arg usenrm: ', usenrm0, 'allowed values <0, 1>'
+          print *, 'Wrong arg usenrm: ', usenrm0, 'allowed values <0, 1, 2>'
        endif
     endif
     allocate(pa(d+1))
@@ -476,7 +476,7 @@ contains
     !Inner parameters
     eps = 1e-8 !For local solvers
 
-    call disp('Solving a complex-valued dynamical problem with tau='//tostring(tau))
+    !call disp('Solving a complex-valued dynamical problem with tau='//tostring(tau))
     kickrank0 = 5;
     if (present(kickrank)) then
        kickrank0 = kickrank
@@ -493,7 +493,7 @@ contains
     ! What norm to use in while solving KSL differential equations 
     usenrm = 1 ! 0 - Lapack 1-norm, 1 - Use Higham's 1-norm approximation 
     if ( present(usenrm0) ) then
-       if ( usenrm0 < 2 ) then 
+       if ( usenrm0 < 3 ) then 
           usenrm = usenrm0
        else
           print *, 'Wrong arg usenrm: ', usenrm0, 'allowed values <0, 1>'

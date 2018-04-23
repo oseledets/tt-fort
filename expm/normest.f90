@@ -165,13 +165,17 @@ contains
           est = norm_true(n, matvec, matvec_transp)
        elseif (usenrm == 1) then ! Higham norm estimator
           est = normest_higham(n, t, matvec, matvec_transp)
+       elseif (usenrm == 2) then ! Use fixed norm
+          est = 1.0
        endif
     else
        if (usenrm == 0) then ! Lapack 1-norm
           est = znorm_true(n, matvec, matvec_transp)
-       else if (usenrm == 1) then ! Higham norm estimator
+       elseif (usenrm == 1) then ! Higham norm estimator
           est = znormest_higham(n, t, matvec, matvec_transp)
-       end if
+       elseif (usenrm == 2) then ! Use fixed norm
+          est = 1.0
+       endif
     end if
   end function normest
 
