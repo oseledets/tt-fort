@@ -1,3 +1,11 @@
+/**
+ *  \file gmres_3d.c
+ */
+
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+
 // extern void tt_adapt_als_mp_djac_apply_(char *ptype, long *rx1, long *n, long *rx2, double *jacs, double *x, double *y, double *work1);
 // extern void tt_adapt_als_mp_dbfun3_(long *rx1, long *m, long *rx2, long *ry1, long *n, long *ry2, long *ra1, long *ra2, double *phi1, double *A, double *phi2, double *x, double *y, double *res1, double *res2);
 extern void djac_apply(char *ptype, long *rx1, long *n, long *rx2, double *jacs, double *x, double *y, double *work1);
