@@ -14,6 +14,45 @@ for doing fast local solvers in eigenvalue and dynamical problems.
 Compilation
 ===========
 
+There are two ways to assembly project. The obsolete one is based on naked
+`make`. This approach has some drawbacks like lack of configurability, reusing
+as submodule of other project, and not cross-platform. On other hand `cmake`
+and its backend paricularly solve that issues.
+
+Barely `make` assembly will be deprecated in the future.
+
+Compilation with CMake
+----------------------
+
+In order to compile TT library one could run the following shell commands.
+
+```bash
+    mkdir build && cd build
+    cmake ../ \
+        -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+        -DCMAKE_C_COMPILER=gcc \
+        -DCMAKE_Fortran_COMPILER=ifort \
+        -DTT_DEFAULT_INTEGER=8
+    make
+```
+
+It is reasonably tunable to support for different compilers and various build
+types. Some options are described bellow.
+
+- Option `CMAKE_BUILD_TYPE`
+- Option `CMAKE_C_COMPILER`
+- Option `CMAKE_Fortran_COMPILER`
+- Option `TT_DEFAULT_INTEGER`
+- Option `WITH_BLAS`
+- Option `WITH_LAPACK`
+- Option `WITH_MKL`
+
+Linking issues are usually related to library search directories. See docs of
+`LD\_LIBRARY\_PATH` and `ldconfig`.
+
+Compilation with Make only
+---------------------
+
 1. Create file Makefile.cpu in the currect directory with the following line
 
    ```makefile
