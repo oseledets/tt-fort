@@ -1,3 +1,6 @@
+# XXX: Fix weird preprocessor directive
+add_definitions("-DINTEGER_LENGTH=${TT_INTEGER_SIZE}")
+
 set(PRIMME_CSOURCES Complex.c
                     common_numerical.c
                     convergence_d.c
