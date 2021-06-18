@@ -1,10 +1,11 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+#include <f77blas.h>
 // extern void tt_adapt_als_mp_djac_apply_(char *ptype, long *rx1, long *n, long *rx2, double *jacs, double *x, double *y, double *work1);
 // extern void tt_adapt_als_mp_dbfun3_(long *rx1, long *m, long *rx2, long *ry1, long *n, long *ry2, long *ra1, long *ra2, double *phi1, double *A, double *phi2, double *x, double *y, double *res1, double *res2);
 extern void djac_apply(char *ptype, long *rx1, long *n, long *rx2, double *jacs, double *x, double *y, double *work1);
 extern void dbfun3(long *rx1, long *m, long *rx2, long *ry1, long *n, long *ry2, long *ra1, long *ra2, double *phi1, double *A, double *phi2, double *x, double *y, double *res1, double *res2);
-
-extern double dnrm2_(long *n, double *x, long *step);
-extern double ddot_(long *n, double *x, long *xstep, double *y, long *ystep);
 
 // #define djac_apply tt_adapt_als_mp_djac_apply_
 // #define dbfun3 tt_adapt_als_mp_dbfun3_
