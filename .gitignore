@@ -4,7 +4,3 @@ Makefile.cpu
 *.o
 *.a
 *~
-primme/int_redefine.h
-test_eigb
-test_eigb.out
-test_svd
