@@ -1,7 +1,11 @@
 include Makefile.cpu
 # A preset for LAPACK with 8-byte integers and PIC (e.g. in MATLAB x64), GNU compiler
+FVERSIONGT9 := $(shell expr `gfortran -dumpversion 2> /dev/null | cut -f1 -d.` \> 9 2> /dev/null)
+ifeq "$(FVERSIONGT9)" "1"
+      FOPT   = -fallow-argument-mismatch
+endif
 ifeq ($(CPU),i8-gnu)
-      FOPT    = -fdefault-integer-8 -ffree-line-length-none -O3 -fPIC -fallow-argument-mismatch
+      FOPT   += -fdefault-integer-8 -ffree-line-length-none -O3 -fPIC
       FC   = gfortran
       LDR   = gfortran
       CC    = gcc
@@ -21,7 +25,7 @@ ifeq ($(CPU),i8-intel)
 endif
 # A preset for LAPACK with 4-byte integers and PIC (e.g. in MATLAB x32), GNU compiler
 ifeq ($(CPU),i4-gnu)
-      FOPT    = -ffree-line-length-none -O3 -fPIC
+      FOPT   += -ffree-line-length-none -O3 -fPIC
       FC   = gfortran
       LDR   = gfortran
       CC    = gcc
@@ -43,7 +47,7 @@ endif
 
 # A preset for LAPACK with 4-byte integers (e.g. standalone or python), GNU compiler
 ifeq ($(CPU),i4-gnu-nopic)
-      FOPT    = -ffree-line-length-none -O3
+      FOPT   += -ffree-line-length-none -O3
       FC   = gfortran
       LDR   = gfortran
       CC    = gcc
@@ -64,7 +68,7 @@ endif
 
 # A preset for LAPACK with 8-byte integers (e.g. standalone or python, but ILP64), GNU compiler
 ifeq ($(CPU),i8-gnu-nopic)
-      FOPT    = -fdefault-integer-8 -ffree-line-length-none -O3
+      FOPT   += -fdefault-integer-8 -ffree-line-length-none -O3
       FC   = gfortran
       LDR   = gfortran
       CC    = gcc
