@@ -1,11 +1,11 @@
 include Makefile.cpu
 # A preset for LAPACK with 8-byte integers and PIC (e.g. in MATLAB x64), GNU compiler
 ifeq ($(CPU),i8-gnu)
-      FOPT    = -fdefault-integer-8 -ffree-line-length-none -O3 -fPIC -fallow-argument-mismatch
+      FOPT    = -fdefault-integer-8 -ffree-line-length-none -O3 -fPIC
       FC   = gfortran
       LDR   = gfortran
       CC    = gcc
-      COPT = -O3 -fPIC $(CFLAGS)
+      COPT = -O3 -fPIC
       LIB   = -llapack -lblas -lgomp
       INTDEF = ""
 endif
