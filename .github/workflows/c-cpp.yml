@@ -14,12 +14,15 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: config
-      run: ln -sf Makefile.cpu.default Makefile.cpu
-           export CFLAGS="-I/usr/include/openblas"
-           sudo apt install gfortran libopenblas-dev
+      run: |
+        ln -sf Makefile.cpu.default Makefile.cpu
+        export CFLAGS="-I/usr/include/openblas"
+        sudo apt install gfortran libopenblas-dev
     - name: make
       run: make
     - name: make tests
       run: make test_eigb_g test_svd_g
     - name: make distcheck
-      run: ./test_eigb_g && ./test_svd_g
+      run: |
+        ./test_eigb_g
+        ./test_svd_g
