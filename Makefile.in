@@ -9,7 +9,7 @@ ifeq ($(CPU),i8-gnu)
       FC   = gfortran
       LDR   = gfortran
       CC    = gcc
-      COPT = -O3 -fPIC $(CFLAGS)
+      COPT = -O3 -fPIC
       LIB   = -llapack -lblas -lgomp
       INTDEF = ""
 endif
