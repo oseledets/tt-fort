@@ -24,5 +24,5 @@ jobs:
       run: make test_eigb_g test_svd_g
     - name: make distcheck
       run: |
-        ./test_eigb_g
-        ./test_svd_g
+        ./test_eigb
+        ./test_svd
