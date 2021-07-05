@@ -1,3 +1,7 @@
+# ignore default build directory
+build/
+
+# ignore stuff due to obsolete with make
 *.mod
 *.so
 Makefile.cpu
