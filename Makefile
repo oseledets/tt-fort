@@ -22,14 +22,15 @@ primme.a:
 
 
 ########### This is a test for different compilers, so I didn't put it into "all"
-test_eigb_i: mytt.a primme.a
+test_eigb_i: mytt.a primme.a test_eigb.f90
 	ifort -O2 test_eigb.f90 mytt.a primme/primme.a -o test_eigb  $(LIB)
 
-test_eigb_g: mytt.a primme.a
+test_eigb_g: mytt.a primme.a test_eigb.f90
 	gfortran $(FOPT) test_eigb.f90 mytt.a primme/primme.a -o test_eigb  $(LIB)
 
-test_svd_g: mytt.a 
+test_svd_g: mytt.a  test_svd.f90
 	gfortran $(FOPT) test_svd.f90 mytt.a -o test_svd  $(LIB)
+
 
 
 .f.o:

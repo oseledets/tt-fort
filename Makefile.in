@@ -86,3 +86,26 @@ ifeq ($(CPU),i8-intel-nopic)
       LIB   = -mkl -liomp5
       INTDEF = "// "
 endif
+
+# MPI compiler on Balena
+ifeq ($(CPU),balena)
+      FOPT    = -O3 -ffree-line-length-none
+      FC   = mpif90
+      LDR   = mpif90
+      CC    = mpicc
+      COPT = -O3
+      LIB   = -L${BLASDIR} ${BLASLIB} -lpthread
+      INTDEF = "// "
+endif
+
+# MPI compiler on mapc-4023 with MKL
+ifeq ($(CPU),4023)
+      FOPT    = -O3 -ffree-line-length-none
+      FC   = mpif90
+      LDR   = mpif90
+      CC    = mpicc
+      COPT = -O3
+      LIB = -lmkl_gf_lp64 -lmkl_sequential -lmkl_core
+      INTDEF = "// "
+endif
+
