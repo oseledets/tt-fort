@@ -147,6 +147,7 @@ contains
   character(len=*),parameter :: subnam='dtt_ort'
   integer :: l,m,k,i,j,lwork,info,nn,rr,mn,mm,kk
   integer,pointer :: r(:),n(:)
+  integer,allocatable :: csizes(:)
   double precision,allocatable :: work(:),tau(:),mat(:),u(:)
   double precision :: err,nrm
   double precision,external :: dnrm2
@@ -154,10 +155,13 @@ contains
   l=arg%l; m=arg%m
   if(m.lt.l)return
   r=>arg%r; n=>arg%n
-
-  nn=maxval(n(l:m)); rr=maxval(r(l-1:m))
-  lwork=128*nn*rr
-  allocate(work(lwork),tau(nn*rr), mat(rr*nn*rr),u(rr*nn*rr), stat=info)
+  rr=maxval(r(l-1:m))
+  allocate(csizes(m-l))
+  csizes = n(l:m) * r(l:m) * r(l-1:m-1)
+  nn = maxval(csizes)
+  deallocate(csizes)
+  lwork=128*rr
+  allocate(work(lwork),tau(rr), mat(nn),u(nn), stat=info)
   if(info.ne.0)then;write(*,*)subnam,': no memory';stop;endif
 
   do k=l,m-1
@@ -184,8 +188,8 @@ contains
    call dcopy(mn*kk, u,1,arg%u(k+1)%p,1)
   end do
   deallocate(work,tau,mat,u)
-
  end subroutine
+
  subroutine ztt_ort(arg)
   ![tt] ortogonalize from left
   implicit none
@@ -193,6 +197,7 @@ contains
   character(len=*),parameter :: subnam='ztt_ort'
   integer :: l,m,k,i,j,lwork,info,nn,rr,mn,mm,kk
   integer,pointer :: r(:),n(:)
+  integer,allocatable :: csizes(:)
   complex(8),allocatable :: work(:),tau(:),mat(:),u(:)
   double precision :: err,nrm
   double precision,external :: dznrm2
@@ -200,10 +205,13 @@ contains
   l=arg%l; m=arg%m
   if(m.lt.l)return
   r=>arg%r; n=>arg%n
-
-  nn=maxval(n(l:m)); rr=maxval(r(l-1:m))
-  lwork=128*nn*rr
-  allocate(work(lwork),tau(nn*rr), mat(rr*nn*rr),u(rr*nn*rr), stat=info)
+  rr=maxval(r(l-1:m))
+  allocate(csizes(m-l))
+  csizes = n(l:m) * r(l:m) * r(l-1:m-1)
+  nn = maxval(csizes)
+  deallocate(csizes)
+  lwork=128*rr
+  allocate(work(lwork),tau(rr), mat(nn),u(nn), stat=info)
   if(info.ne.0)then;write(*,*)subnam,': no memory';stop;endif
 
   do k=l,m-1
@@ -254,6 +262,7 @@ contains
   integer :: l,m,k,i,j,lwork,info,nn,rr,mn,mm,kk
   integer,pointer :: r(:),n(:)
   integer, optional :: rmax
+  integer, allocatable :: csizes(:)
   double precision,allocatable :: work(:),s(:),mat(:),u(:)
   double precision :: err,nrm
   double precision,external :: dnrm2
@@ -261,9 +270,17 @@ contains
   l=arg%l; m=arg%m
   if(m.le.l)return
   r=>arg%r; n=>arg%n
-  nn=maxval(n(l:m)); rr=maxval(r(l-1:m))
-  lwork=128*nn*rr
-  allocate(work(lwork),s(nn*rr), mat(rr*nn*rr),u(rr*nn*rr), stat=info)
+  rr=maxval(r(l-1:m))
+  allocate(csizes(m-l))
+  csizes = n(l:m) * r(l:m)
+  lwork = maxval(csizes(2:m))
+  csizes = csizes * r(l-1:m-1)
+  nn = maxval(csizes)
+  deallocate(csizes)
+  lwork=max(rr, lwork)
+  lwork=max(3*rr + lwork,5*rr) 
+  lwork=32*lwork
+  allocate(work(lwork),s(rr), mat(nn),u(nn), stat=info)
   if(info.ne.0)then;write(*,*)subnam,': no memory';stop;endif
 
   call dtt_ort(arg)
@@ -300,6 +317,7 @@ contains
   integer :: l,m,k,i,j,lwork,info,nn,rr,mn,mm,kk
   integer,pointer :: r(:),n(:)
   integer, intent(in), optional :: rmax
+  integer, allocatable :: csizes(:)
   double precision,allocatable :: s(:),rwork(:)
   complex(8),allocatable :: work(:),mat(:),u(:)
   double precision :: err,nrm
@@ -308,10 +326,16 @@ contains
   l=arg%l; m=arg%m
   if(m.le.l)return
   r=>arg%r; n=>arg%n
-
-  nn=maxval(n(l:m)); rr=maxval(r(l-1:m))
-  lwork=128*nn*rr
-  allocate(work(lwork),rwork(8*nn*rr),s(nn*rr), mat(rr*nn*rr),u(rr*nn*rr), stat=info)
+  rr=maxval(r(l-1:m))
+  allocate(csizes(m-l))
+  csizes = n(l:m) * r(l:m)
+  lwork = maxval(csizes(2:m))
+  csizes = csizes * r(l-1:m-1)
+  nn = maxval(csizes)
+  deallocate(csizes)
+  lwork=max(rr, lwork)
+  lwork=32*(2*rr + lwork)
+  allocate(work(lwork),rwork(5*rr),s(rr),mat(nn),u(nn), stat=info)
   if(info.ne.0)then;write(*,*)subnam,': no memory';stop;endif
 
   call ztt_ort(arg)
